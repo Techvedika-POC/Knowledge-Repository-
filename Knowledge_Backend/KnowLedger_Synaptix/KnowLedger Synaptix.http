@@ -1,0 +1,6 @@
+@KnowLedger_Synaptix_HostAddress = http://localhost:5256
+
+GET {{KnowLedger_Synaptix_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
