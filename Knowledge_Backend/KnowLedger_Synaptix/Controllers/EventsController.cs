@@ -1,4 +1,4 @@
-﻿using KnowLedger_Synaptix.Services;
+﻿using KnowLedger_Synaptix.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace KnowLedger_Synaptix.Controllers

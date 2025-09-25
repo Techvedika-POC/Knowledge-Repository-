@@ -1,5 +1,4 @@
 ﻿using KnowLedger_Synaptix.Dtos;
-using KnowLedger_Synaptix.Services;
 using KnowLedger_Synaptix.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -7,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using KnowLedger_Synaptix.Services.Interfaces;
 
 namespace KnowLedger_Synaptix.Controllers
 {
