@@ -1,5 +1,6 @@
 ﻿using KnowLedger_Synaptix.Dtos;
 using KnowLedger_Synaptix.Models;
+using KnowLedger_Synaptix.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
