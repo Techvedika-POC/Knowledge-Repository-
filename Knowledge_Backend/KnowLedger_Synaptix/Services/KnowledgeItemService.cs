@@ -17,157 +17,184 @@ namespace KnowLedger_Synaptix.Services
             _context = context;
         }
 
-        public async Task<KnowledgeItemResponseDto> UploadKnowledgeItemAsync(KnowledgeItemUploadDto dto, Guid userId)
+        public async Task<KnowledgeItem> UploadKnowledgeItemAsync(
+            KnowledgeItemUploadDto dto,
+            Guid userId
+        )
         {
-            if (dto.DomainId.HasValue && !await _context.Domains.AnyAsync(d => d.DomainId == dto.DomainId.Value))
-                throw new ArgumentException("Invalid DomainId provided.");
+            if (string.IsNullOrWhiteSpace(dto.Title) || dto.DomainId == Guid.Empty || dto.CategoryId == Guid.Empty)
+                throw new ArgumentException("Title, Domain, and Category are required.");
 
-            if (dto.CategoryId.HasValue && !await _context.Categories.AnyAsync(c => c.CategoryId == dto.CategoryId.Value))
-                throw new ArgumentException("Invalid CategoryId provided.");
-
-            if (dto.IsEventRelated && dto.EventId.HasValue &&
-                !await _context.Events.AnyAsync(e => e.EventId == dto.EventId.Value))
-                throw new ArgumentException("Invalid EventId provided.");
-
-            var entity = new KnowledgeItem
-            {
-                ItemId = Guid.NewGuid(),
-                Title = dto.Title ?? string.Empty,
-                Description = dto.Description ?? string.Empty,
-                DomainId = dto.DomainId,
-                CategoryId = dto.CategoryId,
-                Language = dto.Language ?? string.Empty,
-                Framework = ConvertToJsonArray(dto.Frameworks),
-                Metadata = ConvertToJsonArray(dto.Tags),
-                CreatedOn = DateTime.UtcNow,
-                CreatedBy = userId,
-                Attachments = new List<Attachment>(),
-                EventKnowledgeItems = new List<EventKnowledgeItem>()
-            };
-
-            if (dto.Attachments?.Any() == true)
-            {
-                foreach (var att in dto.Attachments)
-                {
-                    entity.Attachments.Add(new Attachment
-                    {
-                        AttachmentId = Guid.NewGuid(),
-                        FileName = att.FileName ?? "Unnamed",
-                        MimeType = att.MimeType ?? "application/octet-stream",
-                        FileData = att.FileData,
-                        FileSize = att.FileSize,
-                        CreatedOn = DateTime.UtcNow,
-                        CreatedBy = userId
-                    });
-                }
-            }
-
-            if (dto.IsEventRelated && dto.EventId.HasValue)
-            {
-                entity.IsEventItem = true;
-                entity.EventKnowledgeItems.Add(new EventKnowledgeItem
-                {
-                    EventItemId = Guid.NewGuid(),
-                    EventId = dto.EventId.Value,
-                    CreatedOn = DateTime.UtcNow,
-                    CreatedBy = userId
-                });
-            }
-
-            _context.KnowledgeItems.Add(entity);
+            using var transaction = await _context.Database.BeginTransactionAsync();
 
             try
             {
+                // ===== 1. Knowledge Item =====
+                var knowledgeItem = new KnowledgeItem
+                {
+                    ItemId = Guid.NewGuid(),
+                    Title = dto.Title,
+                    Description = dto.Description,
+                    DomainId = dto.DomainId,
+                    CategoryId = dto.CategoryId,
+                    OwnerId = userId,
+                    CreatedOn = DateTime.UtcNow,
+                    CreatedBy = userId,
+                    UpdatedOn = DateTime.UtcNow,
+                    UpdatedBy = userId,
+                    IsEventItem = dto.IsEventItem,
+                    Language = dto.Language,
+                    Metadata = System.Text.Json.JsonSerializer.Serialize(new { Visibility = dto.Visibility }),
+                    Framework = "Pending Review"
+                };
+                _context.KnowledgeItems.Add(knowledgeItem);
+
+                // ===== 2. Knowledge Version =====
+                var version = new KnowledgeVersion
+                {
+                    VersionId = Guid.NewGuid(),
+                    ItemId = knowledgeItem.ItemId,
+                    VersionNumber = 1,
+                    ChangesSummary = "Initial version",
+                    CreatedBy = userId,
+                    CreatedOn = DateTime.UtcNow
+                };
+                _context.KnowledgeVersions.Add(version);
+
+                // ===== 3. Attachments =====
+                if (dto.Attachments?.Count > 0)
+                {
+                    foreach (var file in dto.Attachments)
+                    {
+                        _context.Attachments.Add(new Attachment
+                        {
+                            AttachmentId = Guid.NewGuid(),
+                            ItemId = knowledgeItem.ItemId,
+                            VersionId = version.VersionId,
+                            FileName = file.FileName,
+                            MimeType = file.MimeType,
+                            FileData = file.FileData,
+                            FileSize = file.FileSize,
+                            CreatedOn = DateTime.UtcNow,
+                            CreatedBy = userId
+                        });
+                    }
+                }
+
+                // ===== 4. Tags =====
+                if (dto.Tags?.Count > 0)
+                {
+                    foreach (var tag in dto.Tags)
+                    {
+                        _context.KnowledgeTags.Add(new KnowledgeTag
+                        {
+                            TagId = Guid.NewGuid(),
+                            ItemId = knowledgeItem.ItemId,
+                            VersionId = version.VersionId,
+                            TagName = tag,
+                            CreatedOn = DateTime.UtcNow,
+                            CreatedBy = userId
+                        });
+                    }
+                }
+
                 await _context.SaveChangesAsync();
+
+                // ===== 5. Event-specific inserts =====
+                if (dto.IsEventItem && dto.EventId.HasValue)
+                {
+                    // 1️⃣ Ensure the Event exists
+                    var existingEvent = await _context.Events.FindAsync(dto.EventId.Value);
+                    if (existingEvent == null)
+                        throw new Exception($"Event with Id {dto.EventId.Value} does not exist.");
+
+                    // 2️⃣ Ensure the Owner/User exists
+                    var owner = await _context.Users.FindAsync(userId);
+                    if (owner == null)
+                        throw new Exception($"User with Id {userId} does not exist.");
+
+                    // 3️⃣ Create a Team
+                    var teamId = Guid.NewGuid();
+                    var team = new Team
+                    {
+                        TeamId = teamId,
+                        EventId = dto.EventId.Value,
+                        TeamName = dto.TeamName ?? $"{dto.Title}_Team",
+                        CreatedBy = userId,
+                        CreatedOn = DateTime.UtcNow
+                    };
+                    _context.Teams.Add(team);
+                    await _context.SaveChangesAsync();
+
+                    // 4️⃣ Add Team Members
+                    var teamMembers = new List<TeamMember>();
+
+                    // Handle dynamic member emails (multiple inputs or comma-separated)
+                    var emails = new List<string>();
+                    if (dto.TeamMemberEmails?.Count > 0)
+                        emails.AddRange(dto.TeamMemberEmails);
+
+                    emails = emails
+                        .Select(e => e.Trim())
+                        .Where(e => !string.IsNullOrEmpty(e))
+                        .Distinct()
+                        .ToList();
+
+                    if (emails.Count > 0)
+                    {
+                        var users = await _context.Users
+                            .Where(u => emails.Contains(u.Email))
+                            .ToListAsync();
+
+                        foreach (var member in users)
+                        {
+                            teamMembers.Add(new TeamMember
+                            {
+                                TeamMemberId = Guid.NewGuid(),
+                                TeamId = teamId,
+                                UserId = member.UserId,
+                                JoinedOn = DateTime.UtcNow
+                            });
+                        }
+                    }
+
+                    // If no valid emails, add owner by default
+                    if (teamMembers.Count == 0)
+                    {
+                        teamMembers.Add(new TeamMember
+                        {
+                            TeamMemberId = Guid.NewGuid(),
+                            TeamId = teamId,
+                            UserId = userId,
+                            JoinedOn = DateTime.UtcNow
+                        });
+                    }
+
+                    _context.TeamMembers.AddRange(teamMembers);
+                    await _context.SaveChangesAsync();
+
+                    // 5️⃣ Link KnowledgeItem to Event
+                    var eventKnowledgeItem = new EventKnowledgeItem
+                    {
+                        EventItemId = Guid.NewGuid(),
+                        EventId = dto.EventId.Value,
+                        ItemId = knowledgeItem.ItemId,
+                        TeamId = teamId,
+                        CreatedOn = DateTime.UtcNow,
+                        CreatedBy = userId
+                    };
+                    _context.EventKnowledgeItems.Add(eventKnowledgeItem);
+                    await _context.SaveChangesAsync();
+                }
+
+                await transaction.CommitAsync();
+                return knowledgeItem;
             }
-            catch (DbUpdateException ex)
+            catch
             {
-                throw new Exception("Error saving KnowledgeItem. Check related foreign keys.", ex);
+                await transaction.RollbackAsync();
+                throw;
             }
-
-            return MapToDto(entity);
-        }
-
-        public async Task<IEnumerable<KnowledgeItemResponseDto>> GetAllAsync()
-        {
-            var items = await _context.KnowledgeItems
-                .Include(k => k.EventKnowledgeItems)
-                .AsNoTracking()
-                .ToListAsync();
-
-            return items.Select(MapToDto);
-        }
-
-        public async Task<KnowledgeItemResponseDto?> GetByIdAsync(Guid itemId)
-        {
-            var entity = await _context.KnowledgeItems
-                .Include(k => k.EventKnowledgeItems)
-                .FirstOrDefaultAsync(k => k.ItemId == itemId);
-
-            return entity == null ? null : MapToDto(entity);
-        }
-
-        public async Task<KnowledgeItemResponseDto?> UpdateAsync(Guid itemId, KnowledgeItemUploadDto dto)
-        {
-            var entity = await _context.KnowledgeItems.FindAsync(itemId);
-            if (entity == null) return null;
-
-            if (dto.Title != null) entity.Title = dto.Title;
-            if (dto.Description != null) entity.Description = dto.Description;
-            if (dto.DomainId.HasValue) entity.DomainId = dto.DomainId;
-            if (dto.CategoryId.HasValue) entity.CategoryId = dto.CategoryId;
-            if (dto.Language != null) entity.Language = dto.Language;
-            if (dto.Frameworks != null) entity.Framework = ConvertToJsonArray(dto.Frameworks);
-            if (dto.Tags != null) entity.Metadata = ConvertToJsonArray(dto.Tags);
-
-            entity.UpdatedOn = DateTime.UtcNow;
-
-            await _context.SaveChangesAsync();
-            return MapToDto(entity);
-        }
-
-        public async Task<bool> DeleteAsync(Guid itemId)
-        {
-            var entity = await _context.KnowledgeItems.FindAsync(itemId);
-            if (entity == null) return false;
-
-            _context.KnowledgeItems.Remove(entity);
-            await _context.SaveChangesAsync();
-            return true;
-        }
-
-        public async Task<IEnumerable<Domain>> GetAllDomainsAsync() =>
-            await _context.Domains.AsNoTracking().ToListAsync();
-
-        public async Task<IEnumerable<Category>> GetCategoriesByDomainAsync(Guid domainId) =>
-            await _context.Categories.Where(c => c.DomainId == domainId).AsNoTracking().ToListAsync();
-
-        public async Task<IEnumerable<Event>> GetAllEventsAsync() =>
-            await _context.Events.AsNoTracking().ToListAsync();
-
-        private static KnowledgeItemResponseDto MapToDto(KnowledgeItem entity) => new()
-        {
-            ItemId = entity.ItemId,
-            Title = entity.Title,
-            Description = entity.Description,
-            DomainId = entity.DomainId,
-            CategoryId = entity.CategoryId,
-            Language = entity.Language,
-            Framework = entity.Framework,
-            Metadata = entity.Metadata,
-            IsEventRelated = entity.IsEventItem ?? false,
-            EventId = entity.EventKnowledgeItems.FirstOrDefault()?.EventId,
-            CreatedOn = entity.CreatedOn ?? DateTime.MinValue
-        };
-
-        private static string ConvertToJsonArray(string? value)
-        {
-            if (string.IsNullOrWhiteSpace(value))
-                return "[]";
-
-            var items = value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            var jsonItems = string.Join(",", items.Select(i => $"\"{i.Replace("\"", "\\\"")}\""));
-            return $"[{jsonItems}]";
         }
     }
 }
