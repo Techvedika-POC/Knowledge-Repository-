@@ -1,6 +1,7 @@
 ﻿using KnowLedger_Synaptix.Dtos;
 using Microsoft.EntityFrameworkCore;
 using KnowLedger_Synaptix.Models;
+using KnowLedger_Synaptix.Services.Interfaces;
 
 namespace KnowLedger_Synaptix.Services
 {
