@@ -1,8 +1,9 @@
 ﻿using KnowLedger_Synaptix.Dtos;
 using KnowLedger_Synaptix.Models;
+using KnowLedger_Synaptix.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
-namespace KnowLedger_Synaptix.Services
+namespace KnowLedger_Synaptix.Services.Implementations
 {
     public class CategoryService : ICategoryService
     {

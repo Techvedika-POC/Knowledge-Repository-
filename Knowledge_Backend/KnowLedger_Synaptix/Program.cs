@@ -10,7 +10,9 @@ builder.Services.AddDbContext<Knowledge_Repository_dbContext>(options =>
 
 // Register services 
 builder.Services.AddScoped<IKnowledgeItemService, KnowledgeItemService>();
-
+builder.Services.AddScoped<IDomainService, DomainService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<IEventService, EventService>();
 
 // Enable CORS for React frontend
 builder.Services.AddCors(options =>

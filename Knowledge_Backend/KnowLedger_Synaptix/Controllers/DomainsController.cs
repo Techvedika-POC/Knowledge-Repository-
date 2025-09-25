@@ -1,5 +1,5 @@
 ﻿using KnowLedger_Synaptix.Dtos;
-using KnowLedger_Synaptix.Services;
+using KnowLedger_Synaptix.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
