@@ -1,11 +1,12 @@
 ﻿using KnowLedger_Synaptix.Dtos;
-using KnowLedger_Synaptix.Services;
+using KnowLedger_Synaptix.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using KnowLedger_Synaptix.Services.Interfaces;
 
 namespace KnowLedger_Synaptix.Controllers
 {
@@ -21,18 +22,20 @@ namespace KnowLedger_Synaptix.Controllers
         }
 
         [HttpPost("upload")]
-        public async Task<IActionResult> Upload([FromForm] KnowledgeItemUploadDto request, [FromForm] List<IFormFile> files)
+        public async Task<IActionResult> Upload(
+            [FromForm] KnowledgeItemUploadDto request,
+            [FromForm] List<IFormFile> Files
+        )
         {
-            var attachments = new List<AttachmentDto>();
-
-            if (files != null && files.Count > 0)
+            //Map uploaded files into DTO.Attachments
+            request.Attachments = new List<FileAttachmentDto>();
+            if (Files != null)
             {
-                request.Attachments = new List<AttachmentDto>();
-                foreach (var file in files)
+                foreach (var file in Files)
                 {
                     using var ms = new MemoryStream();
                     await file.CopyToAsync(ms);
-                    request.Attachments.Add(new AttachmentDto
+                    request.Attachments.Add(new FileAttachmentDto
                     {
                         FileName = file.FileName,
                         MimeType = file.ContentType,
@@ -41,39 +44,14 @@ namespace KnowLedger_Synaptix.Controllers
                     });
                 }
             }
-            var userId = Guid.Parse("9f223c35-bb26-4fd9-91f6-3ab0aaaf3e92");
 
+            //  Replace with actual logged-in user later
+            var userId = Guid.Parse("ea7f7e02-09f0-4ab6-8e20-70f613fbb7bd");
+
+            // Call service with dto (already contains IsEventItem, EventId, TeamMemberEmails)
             var item = await _service.UploadKnowledgeItemAsync(request, userId);
 
             return Ok(new { success = true, itemId = item.ItemId });
-        }
-
-        [HttpGet("domains")]
-        public async Task<IActionResult> GetDomains()
-        {
-            var domains = await _service.GetAllDomainsAsync();
-            return Ok(domains);
-        }
-
-        [HttpGet("categories")]
-        public async Task<IActionResult> GetCategories([FromQuery] Guid domainId)
-        {
-            var categories = await _service.GetCategoriesByDomainAsync(domainId);
-            return Ok(categories);
-        }
-
-        [HttpGet("events")]
-        public async Task<IActionResult> GetEvents()
-        {
-            var events = await _service.GetAllEventsAsync();
-            return Ok(events);
-        }
-
-        [HttpGet("{id:guid}")]
-        public async Task<IActionResult> GetById(Guid id)
-        {
-            var item = await _service.GetByIdAsync(id);
-            return item == null ? NotFound() : Ok(item);
         }
     }
 }
