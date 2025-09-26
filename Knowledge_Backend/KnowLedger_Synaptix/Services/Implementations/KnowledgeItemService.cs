@@ -6,8 +6,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Text.Json;
 
-namespace KnowLedger_Synaptix.Services
+namespace KnowLedger_Synaptix.Services.Implementations
 {
     public class KnowledgeItemService : IKnowledgeItemService
     {
@@ -44,9 +45,10 @@ namespace KnowLedger_Synaptix.Services
                     UpdatedOn = DateTime.UtcNow,
                     UpdatedBy = userId,
                     IsEventItem = dto.IsEventItem,
-                    Language = dto.Language,
-                    Metadata = System.Text.Json.JsonSerializer.Serialize(new { Visibility = dto.Visibility }),
-                    Framework = "Pending Review"
+                    Language = JsonSerializer.Serialize(dto.Languages),
+                    Framework = JsonSerializer.Serialize(dto.Frameworks),
+                    Metadata = System.Text.Json.JsonSerializer.Serialize(new { dto.Visibility }),
+                   
                 };
                 _context.KnowledgeItems.Add(knowledgeItem);
 
@@ -77,7 +79,11 @@ namespace KnowLedger_Synaptix.Services
                             FileData = file.FileData,
                             FileSize = file.FileSize,
                             CreatedOn = DateTime.UtcNow,
-                            CreatedBy = userId
+                            CreatedBy = userId,
+                            UpdatedOn = DateTime.UtcNow,
+                            UpdatedBy = userId,
+
+
                         });
                     }
                 }
@@ -94,7 +100,11 @@ namespace KnowLedger_Synaptix.Services
                             VersionId = version.VersionId,
                             TagName = tag,
                             CreatedOn = DateTime.UtcNow,
-                            CreatedBy = userId
+                            CreatedBy = userId,
+                              UpdatedOn = DateTime.UtcNow,
+                            UpdatedBy = userId,
+
+
                         });
                     }
                 }
@@ -104,17 +114,17 @@ namespace KnowLedger_Synaptix.Services
                 // ===== 5. Event-specific inserts =====
                 if (dto.IsEventItem && dto.EventId.HasValue)
                 {
-                    // 1️⃣ Ensure the Event exists
+                    // Ensure the Event exists
                     var existingEvent = await _context.Events.FindAsync(dto.EventId.Value);
                     if (existingEvent == null)
                         throw new Exception($"Event with Id {dto.EventId.Value} does not exist.");
 
-                    // 2️⃣ Ensure the Owner/User exists
+                    // Ensure the Owner/User exists
                     var owner = await _context.Users.FindAsync(userId);
                     if (owner == null)
                         throw new Exception($"User with Id {userId} does not exist.");
 
-                    // 3️⃣ Create a Team
+                    // Create a Team
                     var teamId = Guid.NewGuid();
                     var team = new Team
                     {
@@ -127,19 +137,26 @@ namespace KnowLedger_Synaptix.Services
                     _context.Teams.Add(team);
                     await _context.SaveChangesAsync();
 
-                    // 4️⃣ Add Team Members
+                    // ===== 6. Add Team Members =====
                     var teamMembers = new List<TeamMember>();
 
-                    // Handle dynamic member emails (multiple inputs or comma-separated)
                     var emails = new List<string>();
-                    if (dto.TeamMemberEmails?.Count > 0)
-                        emails.AddRange(dto.TeamMemberEmails);
 
-                    emails = emails
-                        .Select(e => e.Trim())
-                        .Where(e => !string.IsNullOrEmpty(e))
-                        .Distinct()
-                        .ToList();
+                    // Split each input in TeamMemberEmails by comma
+                    if (dto.TeamMemberEmails?.Count > 0)
+                    {
+                        foreach (var emailEntry in dto.TeamMemberEmails)
+                        {
+                            emails.AddRange(emailEntry
+                                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                .Select(e => e.Trim()));
+                        }
+                    }
+
+                    // Remove duplicates and empty entries
+                    emails = emails.Where(e => !string.IsNullOrEmpty(e))
+                                   .Distinct()
+                                   .ToList();
 
                     if (emails.Count > 0)
                     {
@@ -174,7 +191,7 @@ namespace KnowLedger_Synaptix.Services
                     _context.TeamMembers.AddRange(teamMembers);
                     await _context.SaveChangesAsync();
 
-                    // 5️⃣ Link KnowledgeItem to Event
+                    // ===== 7. Link KnowledgeItem to Event =====
                     var eventKnowledgeItem = new EventKnowledgeItem
                     {
                         EventItemId = Guid.NewGuid(),
@@ -182,7 +199,8 @@ namespace KnowLedger_Synaptix.Services
                         ItemId = knowledgeItem.ItemId,
                         TeamId = teamId,
                         CreatedOn = DateTime.UtcNow,
-                        CreatedBy = userId
+                        CreatedBy = userId,
+                        UpdatedOn= DateTime.UtcNow
                     };
                     _context.EventKnowledgeItems.Add(eventKnowledgeItem);
                     await _context.SaveChangesAsync();

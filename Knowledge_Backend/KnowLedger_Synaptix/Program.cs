@@ -1,6 +1,7 @@
-﻿using KnowLedger_Synaptix.Services;
-using KnowLedger_Synaptix.Models;
+﻿using KnowLedger_Synaptix.Models;
 using Microsoft.EntityFrameworkCore;
+using KnowLedger_Synaptix.Services.Interfaces;
+using KnowLedger_Synaptix.Services.Implementations;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +14,7 @@ builder.Services.AddScoped<IKnowledgeItemService, KnowledgeItemService>();
 builder.Services.AddScoped<IDomainService, DomainService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IEventService, EventService>();
+builder.Services.AddScoped<IGlobalSearchService, GlobalSearchService>();
 
 // Enable CORS for React frontend
 builder.Services.AddCors(options =>

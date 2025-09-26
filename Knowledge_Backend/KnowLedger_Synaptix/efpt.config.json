@@ -1,5 +1,5 @@
 ﻿{
-   "CodeGenerationMode": 4,
+   "CodeGenerationMode": 5,
    "ContextClassName": "Knowledge_Repository_dbContext",
    "ContextNamespace": null,
    "FilterSchemas": false,

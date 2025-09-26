@@ -1,4 +1,5 @@
-﻿using KnowLedger_Synaptix.Services.Interfaces;
+﻿using KnowLedger_Synaptix.Dtos;
+using KnowLedger_Synaptix.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace KnowLedger_Synaptix.Controllers
@@ -14,7 +15,12 @@ namespace KnowLedger_Synaptix.Controllers
             _eventService = eventService;
         }
 
+        [HttpGet]
+        public async Task<ActionResult<List<EventDto>>> GetAllEvents()
+        {
+            var events = await _eventService.GetAllEventsAsync();
+            return Ok(events);
+        }
 
-     
     }
 }
