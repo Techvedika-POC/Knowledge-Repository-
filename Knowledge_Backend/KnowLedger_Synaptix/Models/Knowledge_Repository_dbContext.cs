@@ -492,7 +492,9 @@ public partial class Knowledge_Repository_dbContext : DbContext
                 .HasColumnType("jsonb")
                 .HasColumnName("metadata");
             entity.Property(e => e.OwnerId).HasColumnName("owner_id");
-            entity.Property(e => e.Title).HasColumnName("title");
+            entity.Property(e => e.Title)
+                .IsRequired()
+                .HasColumnName("title");
             entity.Property(e => e.UpdatedBy).HasColumnName("updated_by");
             entity.Property(e => e.UpdatedOn).HasColumnName("updated_on");
             entity.Property(e => e.Version)
