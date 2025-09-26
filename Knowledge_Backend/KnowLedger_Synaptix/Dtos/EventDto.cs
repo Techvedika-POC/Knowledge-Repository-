@@ -5,8 +5,12 @@ namespace KnowLedger_Synaptix.Dtos
     public class EventDto
     {
         public Guid EventId { get; set; }
-        public string Title { get; set; }
-        public DateTime? StartDate { get; set; }
-        public DateTime? EndDate { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string? Description { get; set; }
+   
+        public string event_type { get; set; }
+        public DateOnly? StartDate { get; set; }
+        public DateOnly? EndDate { get; set; }
+        public Guid? OwnerId { get; set; }
     }
 }

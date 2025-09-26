@@ -1,28 +1,21 @@
 ﻿using System;
-using Microsoft.AspNetCore.Http;
 
 namespace KnowLedger_Synaptix.Dtos
 {
     public class FileAttachmentDto
     {
-        public string FileName { get; set; }
-        public string MimeType { get; set; }
+        public Guid FileAttachmentId { get; set; }          
+        public Guid? LinkedEntityId { get; set; }           
+        public Guid? TeamId { get; set; }                  
+
+        public string FileName { get; set; } = string.Empty;
+        public string MimeType { get; set; } = string.Empty;
+        public byte[] FileData { get; set; } = Array.Empty<byte>();
         public long FileSize { get; set; }
-        public byte[] FileData { get; set; }
 
-        public static FileAttachmentDto FromFormFile(IFormFile file)
-        {
-            if (file == null) return null;
-
-            using var ms = new System.IO.MemoryStream();
-            file.CopyTo(ms);
-            return new FileAttachmentDto
-            {
-                FileName = file.FileName,
-                MimeType = file.ContentType,
-                FileSize = file.Length,
-                FileData = ms.ToArray()
-            };
-        }
+        public Guid? CreatedBy { get; set; }                
+        public DateTime? CreatedOn { get; set; }
+        public Guid? UpdatedBy { get; set; }                
+        public DateTime? UpdatedOn { get; set; }
     }
 }
