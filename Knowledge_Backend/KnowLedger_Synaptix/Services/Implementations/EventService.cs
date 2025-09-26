@@ -1,9 +1,13 @@
 ﻿using KnowLedger_Synaptix.Dtos;
-using Microsoft.EntityFrameworkCore;
 using KnowLedger_Synaptix.Models;
 using KnowLedger_Synaptix.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
-namespace KnowLedger_Synaptix.Services
+namespace KnowLedger_Synaptix.Services.Implementations
 {
     public class EventService : IEventService
     {
@@ -28,5 +32,8 @@ namespace KnowLedger_Synaptix.Services
                 })
                 .ToListAsync();
         }
+
+  
+        
     }
 }

@@ -13,6 +13,9 @@ public partial class Event
 
     public string Description { get; set; }
 
+
+    public string event_type { get; set; }
+
     public DateOnly? StartDate { get; set; }
 
     public DateOnly? EndDate { get; set; }

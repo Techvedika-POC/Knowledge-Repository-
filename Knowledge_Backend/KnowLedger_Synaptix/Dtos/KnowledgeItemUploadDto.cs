@@ -10,8 +10,8 @@ namespace KnowLedger_Synaptix.Dtos
         public string Description { get; set; } = string.Empty;
         public Guid DomainId { get; set; }
         public Guid CategoryId { get; set; }
-        public string Language { get; set; } = string.Empty;
-
+        public List<string> Languages { get; set; } = new List<string>();
+        public List<string> Frameworks { get; set; } = new List<string>();
         // Tags
         public List<string> Tags { get; set; } = new List<string>();
 
