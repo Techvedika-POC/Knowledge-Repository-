@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Text.Json;
-
 namespace KnowLedger_Synaptix.Services.Implementations
 {
     public class KnowledgeItemService : IKnowledgeItemService
@@ -45,10 +44,12 @@ namespace KnowLedger_Synaptix.Services.Implementations
                     UpdatedOn = DateTime.UtcNow,
                     UpdatedBy = userId,
                     IsEventItem = dto.IsEventItem,
-                    Language = JsonSerializer.Serialize(dto.Languages),
-                    Framework = JsonSerializer.Serialize(dto.Frameworks),
+
+                    Language = JsonSerializer.Serialize(dto.Language),
+                    Framework = JsonSerializer.Serialize(dto.Framework),
                     Metadata = System.Text.Json.JsonSerializer.Serialize(new { dto.Visibility }),
-                   
+                    
+
                 };
                 _context.KnowledgeItems.Add(knowledgeItem);
 
@@ -200,7 +201,8 @@ namespace KnowLedger_Synaptix.Services.Implementations
                         TeamId = teamId,
                         CreatedOn = DateTime.UtcNow,
                         CreatedBy = userId,
-                        UpdatedOn= DateTime.UtcNow
+                        UpdatedOn = DateTime.UtcNow
+
                     };
                     _context.EventKnowledgeItems.Add(eventKnowledgeItem);
                     await _context.SaveChangesAsync();
