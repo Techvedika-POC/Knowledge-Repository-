@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using KnowLedger_Synaptix.Models;
 using KnowLedger_Synaptix.Services.Interfaces;
 
-namespace KnowLedger_Synaptix.Services
+namespace KnowLedger_Synaptix.Services.Implementations
 {
     public class EventService : IEventService
     {

@@ -1,4 +1,5 @@
-﻿using KnowLedger_Synaptix.Services;
+﻿using KnowLedger_Synaptix.Services.Implementations;
+using KnowLedger_Synaptix.Services.Interfaces;
 using KnowLedger_Synaptix.Models;
 using Microsoft.EntityFrameworkCore;
 

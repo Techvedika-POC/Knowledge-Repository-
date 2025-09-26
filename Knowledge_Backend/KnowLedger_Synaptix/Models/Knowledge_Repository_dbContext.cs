@@ -478,12 +478,16 @@ public partial class Knowledge_Repository_dbContext : DbContext
                 .HasColumnName("created_on");
             entity.Property(e => e.Description).HasColumnName("description");
             entity.Property(e => e.DomainId).HasColumnName("domain_id");
-            entity.Property(e => e.Framework).HasColumnName("framework");
+            entity.Property(e => e.Framework)
+                .HasColumnType("jsonb")
+                .HasColumnName("framework");
             entity.Property(e => e.IsEventItem)
                 .HasDefaultValue(false)
                 .HasColumnName("is_event_item");
             entity.Property(e => e.KnowledgeItem1).HasColumnName("knowledge_item");
-            entity.Property(e => e.Language).HasColumnName("language");
+            entity.Property(e => e.Language)
+                .HasColumnType("jsonb")
+                .HasColumnName("language");
             entity.Property(e => e.Metadata)
                 .HasColumnType("jsonb")
                 .HasColumnName("metadata");
