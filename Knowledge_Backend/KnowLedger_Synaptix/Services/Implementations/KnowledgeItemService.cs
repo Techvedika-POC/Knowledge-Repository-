@@ -44,10 +44,12 @@ namespace KnowLedger_Synaptix.Services.Implementations
                     UpdatedOn = DateTime.UtcNow,
                     UpdatedBy = userId,
                     IsEventItem = dto.IsEventItem,
+
                     Language = JsonSerializer.Serialize(dto.Language),
                     Framework = JsonSerializer.Serialize(dto.Framework),
                     Metadata = System.Text.Json.JsonSerializer.Serialize(new { dto.Visibility }),
                     
+
                 };
                 _context.KnowledgeItems.Add(knowledgeItem);
 
@@ -78,7 +80,11 @@ namespace KnowLedger_Synaptix.Services.Implementations
                             FileData = file.FileData,
                             FileSize = file.FileSize,
                             CreatedOn = DateTime.UtcNow,
-                            CreatedBy = userId
+                            CreatedBy = userId,
+                            UpdatedOn = DateTime.UtcNow,
+                            UpdatedBy = userId,
+
+
                         });
                     }
                 }
@@ -95,7 +101,11 @@ namespace KnowLedger_Synaptix.Services.Implementations
                             VersionId = version.VersionId,
                             TagName = tag,
                             CreatedOn = DateTime.UtcNow,
-                            CreatedBy = userId
+                            CreatedBy = userId,
+                              UpdatedOn = DateTime.UtcNow,
+                            UpdatedBy = userId,
+
+
                         });
                     }
                 }
@@ -192,6 +202,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                         CreatedOn = DateTime.UtcNow,
                         CreatedBy = userId,
                         UpdatedOn = DateTime.UtcNow
+
                     };
                     _context.EventKnowledgeItems.Add(eventKnowledgeItem);
                     await _context.SaveChangesAsync();
