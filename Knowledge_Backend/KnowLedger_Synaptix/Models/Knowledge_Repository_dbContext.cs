@@ -393,6 +393,9 @@ public partial class Knowledge_Repository_dbContext : DbContext
                 .HasColumnName("created_on");
             entity.Property(e => e.Description).HasColumnName("description");
             entity.Property(e => e.EndDate).HasColumnName("end_date");
+            entity.Property(e => e.EventType)
+                .IsRequired()
+                .HasColumnName("event_type");
             entity.Property(e => e.OwnerId).HasColumnName("owner_id");
             entity.Property(e => e.StartDate).HasColumnName("start_date");
             entity.Property(e => e.Title)
@@ -755,6 +758,8 @@ public partial class Knowledge_Repository_dbContext : DbContext
 
             entity.ToTable("roles");
 
+            entity.HasIndex(e => e.RoleName, "roles_role_name_key").IsUnique();
+
             entity.Property(e => e.RoleId)
                 .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("role_id");
@@ -763,6 +768,9 @@ public partial class Knowledge_Repository_dbContext : DbContext
                 .HasDefaultValueSql("now()")
                 .HasColumnName("created_on");
             entity.Property(e => e.Description).HasColumnName("description");
+            entity.Property(e => e.RoleName)
+                .IsRequired()
+                .HasColumnName("role_name");
             entity.Property(e => e.UpdatedBy).HasColumnName("updated_by");
             entity.Property(e => e.UpdatedOn).HasColumnName("updated_on");
 
@@ -870,13 +878,17 @@ public partial class Knowledge_Repository_dbContext : DbContext
             entity.Property(e => e.CreatedOn)
                 .HasDefaultValueSql("now()")
                 .HasColumnName("created_on");
-            entity.Property(e => e.Department).HasColumnName("department");
+            entity.Property(e => e.DepartmentId).HasColumnName("department_id");
             entity.Property(e => e.Email)
                 .IsRequired()
                 .HasColumnName("email");
             entity.Property(e => e.Name)
                 .IsRequired()
                 .HasColumnName("name");
+            entity.Property(e => e.PasswordHash)
+                .IsRequired()
+                .HasDefaultValueSql("''::text")
+                .HasColumnName("password_hash");
             entity.Property(e => e.UpdatedBy).HasColumnName("updated_by");
             entity.Property(e => e.UpdatedOn).HasColumnName("updated_on");
 
@@ -884,6 +896,11 @@ public partial class Knowledge_Repository_dbContext : DbContext
                 .HasForeignKey(d => d.CreatedBy)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("users_created_by_fkey");
+
+            entity.HasOne(d => d.Department).WithMany(p => p.Users)
+                .HasForeignKey(d => d.DepartmentId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("fk_users_department");
 
             entity.HasOne(d => d.UpdatedByNavigation).WithMany(p => p.InverseUpdatedByNavigation)
                 .HasForeignKey(d => d.UpdatedBy)
