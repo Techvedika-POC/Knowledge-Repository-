@@ -2,7 +2,6 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
-
 namespace KnowLedger_Synaptix.Models;
 
 public partial class Event
@@ -12,6 +11,8 @@ public partial class Event
     public string Title { get; set; }
 
     public string Description { get; set; }
+  
+    public string EventType { get; set; }
 
     public DateOnly? StartDate { get; set; }
 

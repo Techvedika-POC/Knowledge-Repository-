@@ -7,4 +7,8 @@
         public string Email { get; set; }             // User email
         public List<string> Roles { get; set; }
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> d254d38a840fa3205332ee1ad654f1c0b600c1bf
