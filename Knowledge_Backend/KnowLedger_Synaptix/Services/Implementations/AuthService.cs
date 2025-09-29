@@ -1,6 +1,5 @@
 ﻿using BCrypt.Net;
 using KnowLedger_Synaptix.Dtos;
-using KnowLedger_Synaptix.Enums;
 using KnowLedger_Synaptix.Models;
 using KnowLedger_Synaptix.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -25,8 +24,6 @@ namespace KnowLedger_Synaptix.Services.Implementations
             _configuration = configuration;
         }
 
-
-
         public async Task<bool> RegisterAsync(RegisterDto dto, Guid? createdBy = null)
         {
             // 1. Check if email already exists
@@ -49,7 +46,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 DepartmentId = department?.DepartmentId,
                 CreatedOn = DateTime.UtcNow,
                 UpdatedOn = DateTime.UtcNow,
-                CreatedBy = createdBy, // null if self-registration, or admin ID if provided
+                CreatedBy = createdBy,
                 UpdatedBy = createdBy
             };
 
@@ -65,32 +62,30 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 await _context.SaveChangesAsync();
             }
 
-            // 6. Assign default role Contributor
+            // 6. Assign default role "Contributor"
             var contributorRole = await _context.Roles
-               //.FirstOrDefaultAsync(r => r.RoleName.ToString() == "Contributor");
-               //.FirstOrDefaultAsync(r => r.RoleName == RoleName.Contributor);
-               .FirstOrDefaultAsync(r => r.Description.ToLower() == "Can submit content or knowledge items");
+                .FirstOrDefaultAsync(r => EF.Functions.ILike(r.RoleName, "contributor"));
 
-
-            if (contributorRole != null)
+            if (contributorRole == null)
             {
-                var userRole = new UserRole
-                {
-                    UserId = user.UserId,
-                    RoleId = contributorRole.RoleId,
-                    CreatedOn = DateTime.UtcNow,
-                    UpdatedOn = DateTime.UtcNow,
-                    CreatedBy = createdBy ?? user.UserId,
-                    UpdatedBy = createdBy ?? user.UserId
-                };
-
-                _context.UserRoles.Add(userRole);
-                await _context.SaveChangesAsync();
+                throw new InvalidOperationException("Default role 'Contributor' not found in Roles table.");
             }
+
+            var userRole = new UserRole
+            {
+                UserId = user.UserId,
+                RoleId = contributorRole.RoleId,
+                CreatedOn = DateTime.UtcNow,
+                UpdatedOn = DateTime.UtcNow,
+                CreatedBy = createdBy ?? user.UserId,
+                UpdatedBy = createdBy ?? user.UserId
+            };
+
+            _context.UserRoles.Add(userRole);
+            await _context.SaveChangesAsync();
 
             return true;
         }
-
 
         public async Task<AuthResponseDto?> LoginAsync(LoginDto dto)
         {
@@ -102,9 +97,9 @@ namespace KnowLedger_Synaptix.Services.Implementations
             if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
                 return null;
 
-            // Convert enum (or DB role name) to string
+            // Collect role names (already strings in DB)
             var roles = user.UserRoleUsers
-                .Select(ur => ur.Role.RoleName.ToString()) // if RoleName is enum
+                .Select(ur => ur.Role.RoleName)
                 .ToList();
 
             // Read JWT secret safely
