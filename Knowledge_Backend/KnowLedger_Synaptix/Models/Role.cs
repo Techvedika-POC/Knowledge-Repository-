@@ -2,7 +2,6 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
-using KnowLedger_Synaptix.Enums;
 
 namespace KnowLedger_Synaptix.Models;
 
@@ -10,7 +9,8 @@ public partial class Role
 {
     public Guid RoleId { get; set; }
 
-    public RoleName RoleName { get; set; }
+    public string RoleName { get; set; }
+
     public string Description { get; set; }
 
     public DateTime? CreatedOn { get; set; }
