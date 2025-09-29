@@ -81,9 +81,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 CreatedOn = DateTime.UtcNow,
 
                 UpdatedOn = DateTime.UtcNow,
-
                 CreatedBy = createdBy,
-
                 UpdatedBy = createdBy
 
             };
@@ -111,42 +109,29 @@ namespace KnowLedger_Synaptix.Services.Implementations
             // 6. Assign default role "Contributor"
 
             var contributorRole = await _context.Roles
-
                 .FirstOrDefaultAsync(r => EF.Functions.ILike(r.RoleName, "contributor"));
 
             if (contributorRole == null)
-
             {
-
                 throw new InvalidOperationException("Default role 'Contributor' not found in Roles table.");
-
             }
 
             var userRole = new UserRole
-
             {
-
                 UserId = user.UserId,
-
                 RoleId = contributorRole.RoleId,
-
                 CreatedOn = DateTime.UtcNow,
-
                 UpdatedOn = DateTime.UtcNow,
-
                 CreatedBy = createdBy ?? user.UserId,
-
                 UpdatedBy = createdBy ?? user.UserId
-
             };
 
             _context.UserRoles.Add(userRole);
+            
 
             await _context.SaveChangesAsync();
 
             return true;
-
-        }
 
         public async Task<AuthResponseDto?> LoginAsync(LoginDto dto)
 
@@ -165,10 +150,9 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 return null;
 
             // Collect role names (already strings in DB)
-
             var roles = user.UserRoleUsers
-
                 .Select(ur => ur.Role.RoleName)
+
 
                 .ToList();
 
