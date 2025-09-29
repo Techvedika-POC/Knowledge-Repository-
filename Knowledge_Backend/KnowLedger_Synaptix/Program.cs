@@ -16,14 +16,8 @@ builder.Services.AddScoped<IKnowledgeItemService, KnowledgeItemService>();
 builder.Services.AddScoped<IDomainService, DomainService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IEventService, EventService>();
-<<<<<<< HEAD
-builder.Services.AddScoped<IAuthService, AuthService>();
-
-
-=======
 builder.Services.AddScoped<IGlobalSearchService, GlobalSearchService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
->>>>>>> d254d38a840fa3205332ee1ad654f1c0b600c1bf
 
 // Enable CORS for React frontend
 builder.Services.AddCors(options =>
