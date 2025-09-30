@@ -30,7 +30,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
 
             try
             {
-                // ===== 1. Knowledge Item =====
+                // 1. Knowledge Item =====
                 var knowledgeItem = new KnowledgeItem
                 {
                     ItemId = Guid.NewGuid(),
@@ -53,7 +53,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 };
                 _context.KnowledgeItems.Add(knowledgeItem);
 
-                // ===== 2. Knowledge Version =====
+                // ===== 2. Knowledge Version 
                 var version = new KnowledgeVersion
                 {
                     VersionId = Guid.NewGuid(),
@@ -65,7 +65,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 };
                 _context.KnowledgeVersions.Add(version);
 
-                // ===== 3. Attachments =====
+                //  3. Attachments
                 if (dto.Attachments?.Count > 0)
                 {
                     foreach (var file in dto.Attachments)
@@ -89,7 +89,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                     }
                 }
 
-                // ===== 4. Tags =====
+                //  4. Tags
                 if (dto.Tags?.Count > 0)
                 {
                     foreach (var tag in dto.Tags)
@@ -112,7 +112,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
 
                 await _context.SaveChangesAsync();
 
-                // ===== 5. Event-specific inserts =====
+                //  5. Event-specific inserts
                 if (dto.IsEventItem && dto.EventId.HasValue)
                 {
                     // Ensure the Event exists
@@ -138,7 +138,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                     _context.Teams.Add(team);
                     await _context.SaveChangesAsync();
 
-                    // ===== 6. Add Team Members =====
+                    //6. Add Team Members
                     var teamMembers = new List<TeamMember>();
 
                     var emails = new List<string>();
