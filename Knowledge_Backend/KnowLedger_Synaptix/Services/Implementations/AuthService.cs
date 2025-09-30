@@ -127,11 +127,12 @@ namespace KnowLedger_Synaptix.Services.Implementations
             };
 
             _context.UserRoles.Add(userRole);
-            
+
 
             await _context.SaveChangesAsync();
 
             return true;
+       }
 
         public async Task<AuthResponseDto?> LoginAsync(LoginDto dto)
 
