@@ -28,7 +28,6 @@ public partial class Event
 
     public Guid? UpdatedBy { get; set; }
 
-    public string EventType { get; set; }
 
     public virtual ICollection<ActivityLog> ActivityLogs { get; set; } = new List<ActivityLog>();
 
