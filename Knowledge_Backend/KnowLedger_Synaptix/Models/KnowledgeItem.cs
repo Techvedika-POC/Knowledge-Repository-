@@ -15,8 +15,6 @@ public partial class KnowledgeItem
 
     public Guid? DomainId { get; set; }
 
-    public string KnowledgeItem1 { get; set; }
-
     public Guid? CategoryId { get; set; }
 
     public Guid? OwnerId { get; set; }
@@ -38,6 +36,8 @@ public partial class KnowledgeItem
     public string Language { get; set; }
 
     public string Metadata { get; set; }
+
+    public string KnowledgeItem1 { get; set; }
 
     public virtual ICollection<ActivityLog> ActivityLogs { get; set; } = new List<ActivityLog>();
 
