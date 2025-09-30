@@ -1,7 +1,16 @@
 import React from "react";
 import { Navigate } from "react-router-dom";
+export default function ProtectedRoute({
+  children,
+  requireAdmin = false,
+  redirectPath = "/app/home",
+}) {
+  const token = localStorage.getItem("jwtToken");
+  const role = localStorage.getItem("userRole") || "user";
 
-export default function ProtectedRoute({ children }) {
-  const token = localStorage.getItem("jwtToken"); 
-  return token ? children : <Navigate to="/login" replace />;
+  if (!token) return <Navigate to="/login" replace />;
+
+  if (requireAdmin && role !== "admin") return <Navigate to="/app/home" replace />;
+
+  return children;
 }
