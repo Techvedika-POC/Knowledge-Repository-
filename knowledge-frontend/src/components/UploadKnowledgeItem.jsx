@@ -264,7 +264,6 @@ export default function UploadKnowledgeItem() {
               )
             )}
           </div>
-
           {/* Add new language */}
           <div className="flex gap-2 mt-2">
             <input

@@ -14,12 +14,6 @@ namespace KnowLedger_Synaptix.Controllers
         {
             _authService = authService;
         }
-
-<<<<<<< HEAD
-
-=======
-        
->>>>>>> d254d38a840fa3205332ee1ad654f1c0b600c1bf
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
@@ -34,11 +28,6 @@ namespace KnowLedger_Synaptix.Controllers
             return Ok("User registered successfully.");
         }
 
-<<<<<<< HEAD
-
-=======
-       
->>>>>>> d254d38a840fa3205332ee1ad654f1c0b600c1bf
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto dto)
         {
@@ -53,8 +42,4 @@ namespace KnowLedger_Synaptix.Controllers
             return Ok(authResponse);
         }
     }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> d254d38a840fa3205332ee1ad654f1c0b600c1bf
