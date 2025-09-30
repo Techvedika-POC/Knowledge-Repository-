@@ -258,14 +258,14 @@ export default function UploadKnowledgeItem() {
               ))}
             </div>
 
-            {/* Pre-populated suggestions */}
+          {/* pre-Populated Suggestions */}
           <div className="flex flex-wrap gap-2 mb-2">
             {["JavaScript", "Python", "Java", "C#", "Go", "Ruby"].map(
               (suggestion) => (
                 <button
                   key={suggestion}
                   type="button"
-                    className="px-2 py-1 rounded-[12px] bg-[#e0e7ff] text-[#3730a3] text-[12px] hover:bg-[#c7d2fe] transition"
+                  className="px-2 py-1 rounded-[12px] bg-[#e0e7ff] text-[#3730a3] text-[12px]"
                   onClick={() => {
                     if (!form.languages.includes(suggestion)) {
                       setForm((prev) => ({
@@ -281,7 +281,7 @@ export default function UploadKnowledgeItem() {
             )}
           </div>
 
-            {/* Input to add new language */}
+          {/* Add new language */}
           <div className="flex gap-2 mt-2">
             <input
               type="text"
@@ -304,7 +304,7 @@ export default function UploadKnowledgeItem() {
             />
             <button
               type="button"
-                className="px-2 py-1 rounded-[18px] bg-[#06b6d4] text-white hover:bg-[#0891b2]"
+              className="px-2 py-1 rounded-[18px] bg-[#06b6d4] text-white"
               onClick={() => {
                 const input = document.getElementById("languageInput");
                 const value = input.value.trim();
@@ -320,7 +320,6 @@ export default function UploadKnowledgeItem() {
               Add
             </button>
           </div>
-        </section>
         </section>
 
         {/* Frameworks */}
@@ -476,4 +475,4 @@ export default function UploadKnowledgeItem() {
       </form>
     </div>
   );
-}
+
