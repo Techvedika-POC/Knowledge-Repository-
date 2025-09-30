@@ -259,68 +259,68 @@ export default function UploadKnowledgeItem() {
             </div>
 
             {/* Pre-populated suggestions */}
-            <div className="flex flex-wrap gap-2 mb-2">
-              {["JavaScript", "Python", "Java", "C#", "Go", "Ruby"].map(
-                (suggestion) => (
-                  <button
-                    key={suggestion}
-                    type="button"
+          <div className="flex flex-wrap gap-2 mb-2">
+            {["JavaScript", "Python", "Java", "C#", "Go", "Ruby"].map(
+              (suggestion) => (
+                <button
+                  key={suggestion}
+                  type="button"
                     className="px-2 py-1 rounded-[12px] bg-[#e0e7ff] text-[#3730a3] text-[12px] hover:bg-[#c7d2fe] transition"
-                    onClick={() => {
-                      if (!form.languages.includes(suggestion)) {
-                        setForm((prev) => ({
-                          ...prev,
-                          languages: [...prev.languages, suggestion],
-                        }));
-                      }
-                    }}
-                  >
-                    {suggestion}
-                  </button>
-                )
-              )}
-            </div>
-
-            {/* Input to add new language */}
-            <div className="flex gap-2 mt-2">
-              <input
-                type="text"
-                placeholder="Add a language..."
-                className="flex-1 px-2 py-2 border border-[#d1d5db] rounded-[8px]"
-                id="languageInput"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    const value = e.target.value.trim();
-                    if (value && !form.languages.includes(value)) {
+                  onClick={() => {
+                    if (!form.languages.includes(suggestion)) {
                       setForm((prev) => ({
                         ...prev,
-                        languages: [...prev.languages, value],
+                        languages: [...prev.languages, suggestion],
                       }));
-                      e.target.value = "";
                     }
-                  }
-                }}
-              />
-              <button
-                type="button"
-                className="px-2 py-1 rounded-[18px] bg-[#06b6d4] text-white hover:bg-[#0891b2]"
-                onClick={() => {
-                  const input = document.getElementById("languageInput");
-                  const value = input.value.trim();
+                  }}
+                >
+                  {suggestion}
+                </button>
+              )
+            )}
+          </div>
+
+            {/* Input to add new language */}
+          <div className="flex gap-2 mt-2">
+            <input
+              type="text"
+              placeholder="Add a language..."
+              className="flex-1 px-2 py-2 border border-[#d1d5db] rounded-[8px]"
+              id="languageInput"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  const value = e.target.value.trim();
                   if (value && !form.languages.includes(value)) {
                     setForm((prev) => ({
                       ...prev,
                       languages: [...prev.languages, value],
                     }));
-                    input.value = "";
+                    e.target.value = "";
                   }
-                }}
-              >
-                Add
-              </button>
-            </div>
-          </section>
+                }
+              }}
+            />
+            <button
+              type="button"
+                className="px-2 py-1 rounded-[18px] bg-[#06b6d4] text-white hover:bg-[#0891b2]"
+              onClick={() => {
+                const input = document.getElementById("languageInput");
+                const value = input.value.trim();
+                if (value && !form.languages.includes(value)) {
+                  setForm((prev) => ({
+                    ...prev,
+                    languages: [...prev.languages, value],
+                  }));
+                  input.value = "";
+                }
+              }}
+            >
+              Add
+            </button>
+          </div>
+        </section>
         </section>
 
         {/* Frameworks */}

@@ -2,6 +2,7 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
+
 namespace KnowLedger_Synaptix.Models;
 
 public partial class Event
@@ -11,7 +12,7 @@ public partial class Event
     public string Title { get; set; }
 
     public string Description { get; set; }
-  
+
     public string EventType { get; set; }
 
     public DateOnly? StartDate { get; set; }
@@ -28,7 +29,10 @@ public partial class Event
 
     public Guid? UpdatedBy { get; set; }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> d28a140357eeb67798a19d51849f1d88a3c8c9a7
     public virtual ICollection<ActivityLog> ActivityLogs { get; set; } = new List<ActivityLog>();
 
     public virtual User CreatedByNavigation { get; set; }
