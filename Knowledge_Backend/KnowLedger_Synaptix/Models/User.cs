@@ -13,8 +13,6 @@ public partial class User
 
     public string Email { get; set; }
 
-    public string Department { get; set; }
-
     public DateTime? CreatedOn { get; set; }
 
     public DateTime? UpdatedOn { get; set; }
@@ -22,6 +20,10 @@ public partial class User
     public Guid? CreatedBy { get; set; }
 
     public Guid? UpdatedBy { get; set; }
+
+    public string PasswordHash { get; set; }
+
+    public Guid? DepartmentId { get; set; }
 
     public virtual ICollection<ActivityLog> ActivityLogs { get; set; } = new List<ActivityLog>();
 
@@ -40,6 +42,8 @@ public partial class User
     public virtual ICollection<Category> CategoryUpdatedByNavigations { get; set; } = new List<Category>();
 
     public virtual User CreatedByNavigation { get; set; }
+
+    public virtual Department Department { get; set; }
 
     public virtual ICollection<Department> DepartmentCreatedByNavigations { get; set; } = new List<Department>();
 

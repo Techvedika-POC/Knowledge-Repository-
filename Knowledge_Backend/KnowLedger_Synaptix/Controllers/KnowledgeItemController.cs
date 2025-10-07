@@ -46,7 +46,7 @@ namespace KnowLedger_Synaptix.Controllers
             }
 
             //  Replace with actual logged-in user later
-            var userId = Guid.Parse("ea7f7e02-09f0-4ab6-8e20-70f613fbb7bd");
+            var userId = Guid.Parse("9f223c35-bb26-4fd9-91f6-3ab0aaaf3e92");
 
             // Call service with dto (already contains IsEventItem, EventId, TeamMemberEmails)
             var item = await _service.UploadKnowledgeItemAsync(request, userId);
