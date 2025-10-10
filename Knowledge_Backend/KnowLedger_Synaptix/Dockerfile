@@ -1,26 +1,24 @@
 # Stage 1: Build
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-WORKDIR /src
+WORKDIR /app
 
-# Copy solution and project files
-COPY ["Knowledge_Backend/KnowLedger_Synaptix/KnowLedger Synaptix.csproj", "Knowledge_Backend/KnowLedger_Synaptix/"]
+# Copy the .csproj and restore
+COPY ["KnowLedger Synaptix.csproj", "./"]
+RUN dotnet restore "KnowLedger Synaptix.csproj"
 
-# Restore dependencies
-RUN dotnet restore "Knowledge_Backend/KnowLedger_Synaptix/KnowLedger Synaptix.csproj"
-
-# Copy everything
+# Copy all source files
 COPY . .
 
-# Build and publish release version
-RUN dotnet publish "Knowledge_Backend/KnowLedger_Synaptix/KnowLedger Synaptix.csproj" -c Release -o /app/publish
+# Build and publish
+RUN dotnet publish "KnowLedger Synaptix.csproj" -c Release -o /app/publish
 
 # Stage 2: Runtime
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
 COPY --from=build /app/publish .
 
-# Expose the port your API runs on (default 8080)
+# Expose port 8080
+ENV ASPNETCORE_URLS=http://+:8080
 EXPOSE 8080
 
-# Start the app
 ENTRYPOINT ["dotnet", "KnowLedger Synaptix.dll"]
