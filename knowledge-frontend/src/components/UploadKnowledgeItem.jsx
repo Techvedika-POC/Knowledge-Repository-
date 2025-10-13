@@ -29,7 +29,6 @@ export default function UploadKnowledgeItem() {
     description: "",
   });
   const [activeTab, setActiveTab] = useState("File");
-
   useEffect(() => {
     axios
       .get(`${API_BASE_URL}/domains`)

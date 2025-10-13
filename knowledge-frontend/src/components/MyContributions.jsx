@@ -308,7 +308,6 @@ export default function MyContributions() {
       </div>
 
       {/* TOOLTIP */}
-    {/* TOOLTIP */}
 {hoveredItem && hoveredItem.visible && (
   <div
     className="absolute bg-white rounded-lg p-3 shadow-lg border border-gray-200 text-sm z-50 max-w-xs"
