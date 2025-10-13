@@ -10,6 +10,16 @@ namespace KnowLedger_Synaptix.Services.Interfaces
         Task<KnowledgeItem> UploadKnowledgeItemAsync(KnowledgeItemUploadDto dto, Guid userId);
 
         Task<KnowledgeItemDetailsDto> GetKnowledgeItemDetailsAsync(Guid itemId);
+        Task<IEnumerable<KnowledgeItemFilterDto>> GetKnowledgeItemSummariesAsync(
+      string sortOrder = "desc",
+      DateTime? filterDate = null
+        );
+        Task<IEnumerable<KnowledgeItemFilterDto>> GetKnowledgeItemsByDomainAsync(Guid domainId);
+
+        // Get knowledge items by Category
+        Task<IEnumerable<KnowledgeItemFilterDto>> GetKnowledgeItemsByCategoryAsync(Guid categoryId);
+
+        Task<IEnumerable<KnowledgeItemFilterDto>> GetAllKnowledgeItemsAsync();
 
     }
 }

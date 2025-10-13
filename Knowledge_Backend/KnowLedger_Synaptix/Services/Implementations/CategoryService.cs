@@ -46,7 +46,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
         public async Task<CategoryDto?> GetCategoryByNameAsync(string categoryName)
         {
             return await _context.Categories
-                .Where(c => c.CategoryName.ToLower() == categoryName.ToLower()) // case-insensitive
+                .Where(c => c.CategoryName.ToLower() == categoryName.ToLower()) 
                 .Select(c => new CategoryDto
                 {
                     CategoryId = c.CategoryId,

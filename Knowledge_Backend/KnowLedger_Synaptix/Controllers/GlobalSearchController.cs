@@ -18,7 +18,7 @@ namespace KnowLedger_Synaptix.Controllers
             _globalSearchService = globalSearchService;
         }
 
-        // GET: api/GlobalSearch?keyword=abc
+       
         [HttpGet]
         public async Task<ActionResult<List<GlobalSearchResultDto>>> Get([FromQuery] string keyword)
         {
@@ -36,7 +36,7 @@ namespace KnowLedger_Synaptix.Controllers
             }
             catch (Exception ex)
             {
-                // Optionally log the exception
+               
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }

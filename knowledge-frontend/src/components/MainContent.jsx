@@ -477,8 +477,6 @@ const MainContent = () => {
                             userId={userId} // ← Add this
                         />
                     )}
-
-
                     {activeSection === "trending" && (
                         <TrendingSection
                             trending={trending}

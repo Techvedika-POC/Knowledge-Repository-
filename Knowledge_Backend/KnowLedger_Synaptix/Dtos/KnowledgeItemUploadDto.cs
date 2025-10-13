@@ -10,8 +10,8 @@ namespace KnowLedger_Synaptix.Dtos
         public string Description { get; set; } = string.Empty;
         public Guid DomainId { get; set; }
         public Guid CategoryId { get; set; }
-        public List<string> Language { get; set; } = new List<string>();
-        public List<string> Framework{ get; set; } = new List<string>();
+        public List<string> Language { get; set; } = new ();
+        public List<string> Framework{ get; set; } = new ();
         // Tags
         public List<string> Tags { get; set; } = new List<string>();
 
@@ -22,9 +22,9 @@ namespace KnowLedger_Synaptix.Dtos
         public List<FileAttachmentDto> Attachments { get; set; } = new List<FileAttachmentDto>();
 
         // Event-related
-        public bool IsEventItem { get; set; } = false;   // If true, link with Event
-        public Guid? EventId { get; set; }               // Event ID
-        public List<string>? TeamMemberEmails { get; set; }   // Use emails instead of IDs
+        public bool IsEventItem { get; set; } = false;   
+        public Guid? EventId { get; set; }              
+        public List<string>? TeamMemberEmails { get; set; }   
         public string? TeamName { get; set; }
     }
 

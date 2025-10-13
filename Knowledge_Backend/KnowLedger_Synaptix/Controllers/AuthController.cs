@@ -14,6 +14,7 @@ namespace KnowLedger_Synaptix.Controllers
         {
             _authService = authService;
         }
+
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
@@ -29,17 +30,26 @@ namespace KnowLedger_Synaptix.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginDto dto)
+        public async Task<IActionResult> Login([FromBody] LoginDto request)
         {
-            if (dto == null)
-                return BadRequest("Invalid request.");
+            if (request == null || string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
+                return BadRequest(new { message = "Email and password are required" });
 
-            var authResponse = await _authService.LoginAsync(dto);
+            var user = await _authService.LoginAsync(request);
 
-            if (authResponse == null)
-                return Unauthorized("Invalid email or password.");
+            if (user == null)
+                return Unauthorized(new { message = "Invalid email or password" });
 
-            return Ok(authResponse);
+            return Ok(new
+            {
+                token = user.Token,
+                name = user.Name,
+                email = user.Email,
+                roles = user.Roles,
+                expires = DateTime.UtcNow.AddMinutes(60)
+            });
         }
     }
 }
+
+
