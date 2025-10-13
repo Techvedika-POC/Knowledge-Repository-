@@ -95,6 +95,7 @@ public partial class Knowledge_Repository_dbContext : DbContext
             entity.Property(e => e.ActivityId)
                 .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("activity_id");
+            entity.Property(e => e.Action).HasColumnName("action");
             entity.Property(e => e.CreatedOn)
                 .HasDefaultValueSql("now()")
                 .HasColumnName("created_on");
@@ -495,12 +496,20 @@ public partial class Knowledge_Repository_dbContext : DbContext
                 .HasColumnType("jsonb")
                 .HasColumnName("metadata");
             entity.Property(e => e.OwnerId).HasColumnName("owner_id");
-            entity.Property(e => e.Title).HasColumnName("title");
+            entity.Property(e => e.Status)
+                .HasDefaultValueSql("'Draft'::knowledge_status_enum")
+                .HasColumnName("status");
+            entity.Property(e => e.Title)
+                .IsRequired()
+                .HasColumnName("title");
             entity.Property(e => e.UpdatedBy).HasColumnName("updated_by");
             entity.Property(e => e.UpdatedOn).HasColumnName("updated_on");
             entity.Property(e => e.Version)
                 .HasDefaultValue(1)
                 .HasColumnName("version");
+            entity.Property(e => e.Visibility)
+                .HasDefaultValueSql("'Public'::visibility_enum")
+                .HasColumnName("visibility");
 
             entity.HasOne(d => d.Category).WithMany(p => p.KnowledgeItems)
                 .HasForeignKey(d => d.CategoryId)

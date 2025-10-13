@@ -5,6 +5,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 export default function Sidebar() {
   const [user, setUser] = useState({ name: "", email: "" });
   const [menuOpen, setMenuOpen] = useState(false);
+  const [roles, setRoles] = useState([]);
   const menuRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
@@ -12,7 +13,9 @@ export default function Sidebar() {
   useEffect(() => {
     const name = localStorage.getItem("userName");
     const email = localStorage.getItem("userEmail");
+    const storedRoles = JSON.parse(localStorage.getItem("userRoles")) || [];
     setUser({ name: name || "Guest", email: email || "" });
+    setRoles(storedRoles);
   }, []);
 
   useEffect(() => {
@@ -27,18 +30,21 @@ export default function Sidebar() {
 
   const handleLogout = () => {
     localStorage.clear();
-    navigate("/"); // safer than window.location.href
+    navigate("/");
   };
 
   return (
     <div className="flex flex-col h-full w-[250px] bg-gradient-to-b from-[#0b2239] via-[#102c47] to-[#133553] text-white font-inter p-4 flex-shrink-0">
       {/* Top Content */}
       <div className="flex flex-col flex-1 overflow-hidden">
-        <h1 className="text-[20px] font-semibold text-[#22d3ee] mb-6">
-          KnowLedger Synaptix
-        </h1>
-
-        {/* Primary */}
+        <div className="text-center mb-6">
+          <h1 className="text-[20px] font-semibold text-[#22d3ee]">
+            KnowLedger Synaptix
+          </h1>
+          <p className="text-[11px] font-medium text-[#94a3b8] mt-1">
+            Innovate • Collaborate • Build
+          </p>
+        </div>
         <div>
           <p className="text-[11px] font-medium uppercase tracking-[0.5px] text-[#94a3b8] mb-2">
             Primary
@@ -68,13 +74,26 @@ export default function Sidebar() {
               active={location.pathname === "/app/contributions"}
               onClick={() => navigate("/app/contributions")}
             />
-            <MenuItem
-              icon={<Star size={18} />}
-              label="Admin Dashboard"
-              active={location.pathname === "/app/admin"}
-              onClick={() => navigate("/app/admin")}
-            />
 
+            {/* Admin Dashboard – only if user has admin role */}
+            {roles.includes("Admin") && (
+              <MenuItem
+                icon={<Star size={18} />}
+                label="Admin Dashboard"
+                active={location.pathname === "/app/admin"}
+                onClick={() => navigate("/app/admin")}
+              />
+            )}
+
+            {/* Approver Dashboard – only if user has approver role */}
+            {roles.includes("Approver") && (
+              <MenuItem
+                icon={<Star size={18} />}
+                label="Approver Dashboard"
+                active={location.pathname === "/app/approver"}
+                onClick={() => navigate("/app/approver")}
+              />
+            )}
           </nav>
         </div>
         {/* Secondary */}
@@ -150,9 +169,7 @@ function MenuItem({ icon, label, active, onClick }) {
   return (
     <div
       onClick={onClick}
-      className={`flex items-center gap-3 px-3 py-2 rounded-[8px] text-[14px] cursor-pointer transition-all ${active
-          ? "bg-[#15314d] text-[#22d3ee]"
-          : "text-[#f1f5f9] hover:bg-white/10"
+      className={`flex items-center gap-3 px-3 py-2 rounded-[8px] text-[14px] cursor-pointer transition-all ${active ? "bg-[#15314d] text-[#22d3ee]" : "text-[#f1f5f9] hover:bg-white/10"
         }`}
     >
       {icon}

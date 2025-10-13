@@ -39,7 +39,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
         public async Task<DomainDto?> GetDomainByNameAsync(string domainName)
         {
             return await _context.Domains
-                .Where(d => d.DomainName.ToLower() == domainName.ToLower()) // case-insensitive
+                .Where(d => d.DomainName.ToLower() == domainName.ToLower()) 
                 .Include(d => d.Categories)
                 .Select(d => new DomainDto
                 {

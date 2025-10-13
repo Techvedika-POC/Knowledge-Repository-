@@ -13,12 +13,17 @@ import IdeathonPage from "./components/IdeathonPage";
 import HackathonPage from "./components/HackathonPage";
 import CodingChallengePage from "./components/CodingChallangePage";
 import KnowledgeQuestPage from "./components/KnowledgeQuestPage";
+import ApproverDashboard from "./components/ApproverDashboard";
+
 
 function AppShell() {
   return (
     <div className="flex h-screen w-screen overflow-hidden">
       <Sidebar />
       <main className="flex-1 p-5 overflow-y-auto bg-[#f9fafe]">
+        {/* <main className="flex-1 p-5 overflow-hidden bg-[#f9fafe]"> */}
+        {/* <main className="flex-1 p-5 bg-[#f9fafe]"> */}
+
         <Routes>
           {/* Default MainContent */}
           <Route path="home" element={<MainContent />} />
@@ -40,7 +45,14 @@ function AppShell() {
               </ProtectedRoute>
             }
           />
-          {/* Redirect unknown routes under /app */}
+           <Route
+            path="approver"
+            element={
+              <ProtectedRoute requireApprover={true}>
+                <ApproverDashboard />
+              </ProtectedRoute>
+            }
+          />
           <Route path="*" element={<Navigate to="home" replace />} />
         </Routes>
       </main>
