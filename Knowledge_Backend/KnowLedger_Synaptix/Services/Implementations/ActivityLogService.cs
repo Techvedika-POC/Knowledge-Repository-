@@ -54,7 +54,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                     Title = k.Title,
                     Category = k.Category != null ? k.Category.CategoryName : null,
                     Domain = k.Domain != null ? k.Domain.DomainName : null,
-                    Description = k.Description, // full description
+                    Description = k.Description, 
                     Status = k.Status,
                     Date = k.CreatedOn
                 })
@@ -90,7 +90,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
 
             if (date.HasValue)
             {
-                // Convert to UTC to avoid PostgreSQL error
+               
                 var selectedDate = DateTime.SpecifyKind(date.Value.Date, DateTimeKind.Utc);
 
                 query = query.Where(k =>

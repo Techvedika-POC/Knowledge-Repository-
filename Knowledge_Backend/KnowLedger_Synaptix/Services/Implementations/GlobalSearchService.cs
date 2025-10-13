@@ -24,7 +24,6 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 return new List<GlobalSearchResultDto>();
 
             keyword = keyword.ToLower();
-
             // Unified search: KnowledgeItems, Domains, Categories, Attachments, Tags
             var query = from k in _context.KnowledgeItems
                         join d in _context.Domains on k.DomainId equals d.DomainId into kd
