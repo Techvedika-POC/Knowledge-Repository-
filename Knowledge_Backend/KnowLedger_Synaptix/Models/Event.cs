@@ -13,8 +13,6 @@ public partial class Event
 
     public string Description { get; set; }
 
-    public string EventType { get; set; }
-
     public DateOnly? StartDate { get; set; }
 
     public DateOnly? EndDate { get; set; }
@@ -29,10 +27,8 @@ public partial class Event
 
     public Guid? UpdatedBy { get; set; }
 
-<<<<<<< HEAD
+    public string EventType { get; set; }
 
-=======
->>>>>>> d28a140357eeb67798a19d51849f1d88a3c8c9a7
     public virtual ICollection<ActivityLog> ActivityLogs { get; set; } = new List<ActivityLog>();
 
     public virtual User CreatedByNavigation { get; set; }
