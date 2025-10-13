@@ -132,7 +132,6 @@ const Navbar = () => {
 
   return (
     <>
-      {/* Navbar */}
       <div
         className="sticky top-0 left-0 w-full bg-white shadow-md border-b z-10 px-4"
         style={{ height: "50px", minHeight: "40px", borderColor: "#e5e7eb" }}

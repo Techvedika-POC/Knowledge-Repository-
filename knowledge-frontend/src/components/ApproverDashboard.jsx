@@ -8,7 +8,6 @@ export default function ApproverPage() {
   const [actionLoading, setActionLoading] = useState(null);
   const [previewItem, setPreviewItem] = useState(null);
   const [error, setError] = useState("");
-
   const fetchPendingItems = async () => {
     setLoading(true);
     setError("");
@@ -59,7 +58,7 @@ export default function ApproverPage() {
         </h2>
         {error && (
           <p className="text-sm text-red-500 text-center mb-4">{error}</p>
-        )}     
+        )}
         {loading ? (
           <p className="text-sm text-gray-500 text-center">Loading...</p>
         ) : items.length === 0 ? (
