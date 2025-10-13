@@ -9,6 +9,10 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import LandingPage from "./components/LandingPage";
 import MyContributions from "./components/MyContributions";
 import AdminDashboard from "./components/AdminDashboard";
+import IdeathonPage from "./components/IdeathonPage";
+import HackathonPage from "./components/HackathonPage";
+import CodingChallengePage from "./components/CodingChallangePage";
+import KnowledgeQuestPage from "./components/KnowledgeQuestPage";
 
 function AppShell() {
   return (
@@ -16,7 +20,16 @@ function AppShell() {
       <Sidebar />
       <main className="flex-1 p-5 overflow-y-auto bg-[#f9fafe]">
         <Routes>
+          {/* Default MainContent */}
           <Route path="home" element={<MainContent />} />
+
+          {/* Quick Event Pages */}
+          <Route path="events/ideathon" element={<IdeathonPage />} />
+          <Route path="events/hackathon" element={<HackathonPage />} />
+          <Route path="events/coding-challenge" element={<CodingChallengePage />} />
+          <Route path="events/knowledge-quest" element={<KnowledgeQuestPage />} />
+
+          {/* Other Routes */}
           <Route path="upload" element={<UploadKnowledgeItem />} />
           <Route path="contributions" element={<MyContributions />} />
           <Route
@@ -27,7 +40,7 @@ function AppShell() {
               </ProtectedRoute>
             }
           />
-
+          {/* Redirect unknown routes under /app */}
           <Route path="*" element={<Navigate to="home" replace />} />
         </Routes>
       </main>
@@ -44,7 +57,7 @@ export default function App() {
         <Route path="/signup" element={<SignUp />} />
         <Route path="/login" element={<Login />} />
 
-        {/* Protected App */}
+        {/* Protected App Shell */}
         <Route
           path="/app/*"
           element={
@@ -53,7 +66,6 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-
         {/* Redirect unknown routes */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

@@ -16,6 +16,7 @@ export default function UploadKnowledgeItem() {
   const [domains, setDomains] = useState([]);
   const [categories, setCategories] = useState([]);
   const [events, setEvents] = useState([]);
+  
 
   const [form, setForm] = useState({
     name: "",

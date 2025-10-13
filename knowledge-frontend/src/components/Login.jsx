@@ -18,18 +18,27 @@ export default function Login() {
     try {
       const res = await axios.post(`${API_BASE_URL}/auth/login`, form);
       const token = res.data.token;
+
       localStorage.setItem("jwtToken", token);
+
       if (res.data.name) localStorage.setItem("userName", res.data.name);
       if (res.data.email) localStorage.setItem("userEmail", res.data.email);
       if (res.data.roles) {
         localStorage.setItem("userRoles", JSON.stringify(res.data.roles));
       }
+      if (res.data.userId) {
+        localStorage.setItem("userId", res.data.userId);
+      } else if (res.data.id) {
+        localStorage.setItem("userId", res.data.id); 
+      } else {
+        console.warn("userId missing from login response");
+      }
 
-      alert(" Login successful!");
-      navigate("/app"); 
+      alert("Login successful!");
+      navigate("/app");
     } catch (err) {
       console.error("Login failed", err);
-      alert(err.response?.data?.message || " Invalid email or password.");
+      alert(err.response?.data?.message || "Invalid email or password.");
     } finally {
       setLoading(false);
     }
@@ -43,7 +52,6 @@ export default function Login() {
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Email */}
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Email address
@@ -59,7 +67,6 @@ export default function Login() {
             />
           </div>
 
-          {/* Password */}
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Password
@@ -75,7 +82,6 @@ export default function Login() {
             />
           </div>
 
-          {/* Submit Button */}
           <button
             type="submit"
             disabled={loading}

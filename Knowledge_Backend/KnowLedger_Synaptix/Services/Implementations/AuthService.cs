@@ -204,18 +204,14 @@ namespace KnowLedger_Synaptix.Services.Implementations
             var token = tokenHandler.CreateToken(tokenDescriptor);
 
             return new AuthResponseDto
-
             {
-
                 Token = tokenHandler.WriteToken(token),
-
                 Name = user.Name,
-
                 Email = user.Email,
-
-                Roles = roles
-
+                Roles = roles,
+                UserId = user.UserId // <--- added
             };
+
 
         }
 
