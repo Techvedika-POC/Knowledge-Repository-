@@ -9,12 +9,16 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import LandingPage from "./components/LandingPage";
 import MyContributions from "./components/MyContributions";
 import AdminDashboard from "./components/AdminDashboard";
+import ApproverDashboard from "./components/ApproverDashboard";
 
 function AppShell() {
   return (
     <div className="flex h-screen w-screen overflow-hidden">
       <Sidebar />
       <main className="flex-1 p-5 overflow-y-auto bg-[#f9fafe]">
+        {/* <main className="flex-1 p-5 overflow-hidden bg-[#f9fafe]"> */}
+        {/* <main className="flex-1 p-5 bg-[#f9fafe]"> */}
+
         <Routes>
           <Route path="home" element={<MainContent />} />
           <Route path="upload" element={<UploadKnowledgeItem />} />
@@ -24,6 +28,14 @@ function AppShell() {
             element={
               <ProtectedRoute requireAdmin={true}>
                 <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+           <Route
+            path="approver"
+            element={
+              <ProtectedRoute requireApprover={true}>
+                <ApproverDashboard />
               </ProtectedRoute>
             }
           />
