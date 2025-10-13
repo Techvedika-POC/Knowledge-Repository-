@@ -1,16 +1,19 @@
 ﻿using KnowLedger_Synaptix.Dtos;
 using KnowLedger_Synaptix.Models;
+using KnowLedger_Synaptix.Services.Implementations;
+using KnowLedger_Synaptix.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
-using KnowLedger_Synaptix.Services.Interfaces;
 
 namespace KnowLedger_Synaptix.Controllers
 {
     [Route("api/[controller]")]
+    [Authorize]
     [ApiController]
     public class KnowledgeItemController : ControllerBase
     {
@@ -45,13 +48,51 @@ namespace KnowLedger_Synaptix.Controllers
                 }
             }
 
-            //  Replace with actual logged-in user later
-            var userId = Guid.Parse("9f223c35-bb26-4fd9-91f6-3ab0aaaf3e92");
+            // Get logged-in user ID from JWT token claims
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim))
+                return Unauthorized("User not logged in.");
 
-            // Call service with dto (already contains IsEventItem, EventId, TeamMemberEmails)
+            var userId = Guid.Parse(userIdClaim);
+
+            // Call service with DTO (already contains IsEventItem, EventId, TeamMemberEmails)
             var item = await _service.UploadKnowledgeItemAsync(request, userId);
 
             return Ok(new { success = true, itemId = item.ItemId });
         }
+        [AllowAnonymous]
+
+        [HttpGet("Datewise")]
+        public async Task<ActionResult<IEnumerable<KnowledgeItemFilterDto>>> GetKnowledgeItemSummaries(
+      [FromQuery] string sortOrder = "desc",
+      [FromQuery] DateTime? filterDate = null
+  )
+        {
+            var result = await _service.GetKnowledgeItemSummariesAsync(sortOrder, filterDate);
+            return Ok(result);
+        }
+        [AllowAnonymous]
+        [HttpGet("ByDomain/{domainId}")]
+        public async Task<ActionResult<IEnumerable<KnowledgeItemFilterDto>>> GetByDomain(Guid domainId)
+        {
+            var result = await _service.GetKnowledgeItemsByDomainAsync(domainId);
+            return Ok(result);
+        }
+        [AllowAnonymous]
+        [HttpGet("ByCategory/{categoryId}")]
+        public async Task<ActionResult<IEnumerable<KnowledgeItemFilterDto>>> GetByCategory(Guid categoryId)
+        {
+            var result = await _service.GetKnowledgeItemsByCategoryAsync(categoryId);
+            return Ok(result);
+        }
+        [HttpGet("All")]
+        [AllowAnonymous]
+        public async Task<ActionResult<IEnumerable<KnowledgeItemFilterDto>>> GetAllKnowledgeItems()
+        {
+            var result = await _service.GetAllKnowledgeItemsAsync();
+            return Ok(result);
+        }
+
+
     }
 }

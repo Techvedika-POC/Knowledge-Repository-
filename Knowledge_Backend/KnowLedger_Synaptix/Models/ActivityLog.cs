@@ -15,6 +15,8 @@ public partial class ActivityLog
 
     public Guid? EventId { get; set; }
 
+    public string Action { get; set; }
+
     public string Details { get; set; }
 
     public DateTime? CreatedOn { get; set; }

@@ -14,11 +14,7 @@ namespace KnowLedger_Synaptix.Controllers
         {
             _authService = authService;
         }
-<<<<<<< HEAD
 
-
-=======
->>>>>>> d28a140357eeb67798a19d51849f1d88a3c8c9a7
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
@@ -33,26 +29,27 @@ namespace KnowLedger_Synaptix.Controllers
             return Ok("User registered successfully.");
         }
 
-<<<<<<< HEAD
-
-=======
->>>>>>> d28a140357eeb67798a19d51849f1d88a3c8c9a7
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginDto dto)
+        public async Task<IActionResult> Login([FromBody] LoginDto request)
         {
-            if (dto == null)
-                return BadRequest("Invalid request.");
+            if (request == null || string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
+                return BadRequest(new { message = "Email and password are required" });
 
-            var authResponse = await _authService.LoginAsync(dto);
+            var user = await _authService.LoginAsync(request);
 
-            if (authResponse == null)
-                return Unauthorized("Invalid email or password.");
+            if (user == null)
+                return Unauthorized(new { message = "Invalid email or password" });
 
-            return Ok(authResponse);
+            return Ok(new
+            {
+                token = user.Token,
+                name = user.Name,
+                email = user.Email,
+                roles = user.Roles,
+                expires = DateTime.UtcNow.AddMinutes(60)
+            });
         }
     }
-<<<<<<< HEAD
-
-=======
->>>>>>> d28a140357eeb67798a19d51849f1d88a3c8c9a7
 }
+
+

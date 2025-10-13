@@ -132,6 +132,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
             await _context.SaveChangesAsync();
 
             return true;
+        }
 
         public async Task<AuthResponseDto?> LoginAsync(LoginDto dto)
 
