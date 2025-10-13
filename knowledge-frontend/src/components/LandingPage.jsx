@@ -6,22 +6,22 @@ const features = [
   {
     title: "Knowledge Capture",
     desc: "Upload files, paste links, or type notes. AI automatically structures content into knowledge items.",
-    image: "/assets/capture.jpg",
+    image: "./Assets/Capture.jpg",
   },
   {
     title: "Smart Discovery",
     desc: "AI-powered semantic search finds relevant content across your organization’s knowledge repository.",
-    image: "/assets/smart_discovery.jpg",
+    image: "./Assets/Smart_Discovery.jpg",
   },
   {
     title: "Collaboration & Reuse",
     desc: "Comment, rate, link ideas to projects, and reuse organizational knowledge seamlessly.",
-    image: "/assets/collaboration.jpg",
+    image: "./Assets/Collaboration.jpg",
   },
   {
     title: "AI Assistant",
     desc: "Ask questions naturally and get instant structured answers from multiple sources.",
-    image: "/assets/ai_assistant.png",
+    image: "./Assets/AI_Assistant.png",
   },
 ];
 
