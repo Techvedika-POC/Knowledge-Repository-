@@ -13,7 +13,6 @@ namespace KnowLedger_Synaptix.Services.Implementations
         {
             _context = context;
         }
-
         // Fetch pending items for approver
         public async Task<List<KnowledgeItemDto>> GetPendingKnowledgeItemsAsync()
         {
@@ -51,8 +50,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 })
                 .ToListAsync();
         }
-
-        public async Task<bool> ApproveKnowledgeItemAsync(Guid itemId, Guid approverId)
+       public async Task<bool> ApproveKnowledgeItemAsync(Guid itemId, Guid approverId)
         {
             var item = await _context.KnowledgeItems.FindAsync(itemId);
             if (item == null || item.Status != "Pending") return false;
@@ -65,8 +63,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
             await _context.SaveChangesAsync();
             return true;
         }
-
-        public async Task<bool> RejectKnowledgeItemAsync(Guid itemId, Guid approverId)
+         public async Task<bool> RejectKnowledgeItemAsync(Guid itemId, Guid approverId)
         {
             var item = await _context.KnowledgeItems.FindAsync(itemId);
             if (item == null || item.Status != "Pending") return false;
