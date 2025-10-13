@@ -18,14 +18,22 @@ export default function Login() {
       const token = res.data.token;
 
       localStorage.setItem("jwtToken", token);
+
       if (res.data.name) localStorage.setItem("userName", res.data.name);
       if (res.data.email) localStorage.setItem("userEmail", res.data.email);
       if (res.data.roles) {
         localStorage.setItem("userRoles", JSON.stringify(res.data.roles));
       }
+      if (res.data.userId) {
+        localStorage.setItem("userId", res.data.userId);
+      } else if (res.data.id) {
+        localStorage.setItem("userId", res.data.id); 
+      } else {
+        console.warn("userId missing from login response");
+      }
 
       alert("Login successful!");
-      navigate("/app/home"); // redirect to home
+      navigate("/app");
     } catch (err) {
       console.error("Login failed", err);
       alert(err.response?.data?.message || "Invalid email or password.");
@@ -52,6 +60,7 @@ export default function Login() {
               className="mt-1 block w-full border rounded-md p-2"
             />
           </div>
+
           <div>
             <label>Password</label>
             <input
@@ -63,6 +72,7 @@ export default function Login() {
               className="mt-1 block w-full border rounded-md p-2"
             />
           </div>
+
           <button
             type="submit"
             disabled={loading}

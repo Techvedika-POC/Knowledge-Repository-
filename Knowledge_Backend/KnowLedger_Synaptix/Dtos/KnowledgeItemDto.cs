@@ -55,5 +55,8 @@ namespace KnowLedger_Synaptix.Dtos
 
         // Metadata (JSON/string)
         public string Metadata { get; set; }
+        public string ContributorName { get; set; }
+        public int EngagementScore { get; set; }
+       
     }
 }

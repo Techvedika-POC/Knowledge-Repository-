@@ -18,6 +18,13 @@ namespace KnowLedger_Synaptix.Controllers
     public class KnowledgeItemController : ControllerBase
     {
         private readonly IKnowledgeItemService _service;
+        [HttpGet("{itemId}/details")]
+        public async Task<ActionResult<KnowledgeItemDetailsDto>> GetKnowledgeItemDetails(Guid itemId)
+        {
+            var details = await _service.GetKnowledgeItemDetailsAsync(itemId);
+            if (details == null) return NotFound();
+            return Ok(details);
+        }
 
         public KnowledgeItemController(IKnowledgeItemService service)
         {

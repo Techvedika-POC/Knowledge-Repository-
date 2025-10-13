@@ -10,8 +10,10 @@
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-icons": "^5.5.0",
+    "react-modal": "^3.16.3",
     "react-router-dom": "^6.30.1",
     "react-scripts": "5.0.1",
+    "swiper": "^12.0.2",
     "web-vitals": "^5.1.0"
   },
   "scripts": {
@@ -43,5 +45,5 @@
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17"
   },
-  "proxy": "http://localhost:7098"
+  "proxy": "https://localhost:7098"
 }

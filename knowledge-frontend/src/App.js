@@ -1,5 +1,7 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+
+// Components
 import Sidebar from "./components/SideBar";
 import UploadKnowledgeItem from "./components/UploadKnowledgeItem";
 import MainContent from "./components/MainContent";
@@ -11,18 +13,36 @@ import MyContributions from "./components/MyContributions";
 import AdminDashboard from "./components/AdminDashboard";
 import ApproverDashboard from "./components/ApproverDashboard";
 
+// Event Pages (placeholders, replace with real components)
+import IdeathonPage from "./components/events/IdeathonPage";
+import HackathonPage from "./components/events/HackathonPage";
+import CodingChallengePage from "./components/events/CodingChallengePage";
+import KnowledgeQuestPage from "./components/events/KnowledgeQuestPage";
+
+// Protected App Shell
 function AppShell() {
   return (
     <div className="flex h-screen w-screen overflow-hidden">
+      {/* Sidebar */}
       <Sidebar />
-      <main className="flex-1 p-5 overflow-y-auto bg-[#f9fafe]">
-        {/* <main className="flex-1 p-5 overflow-hidden bg-[#f9fafe]"> */}
-        {/* <main className="flex-1 p-5 bg-[#f9fafe]"> */}
 
+      {/* Main content */}
+      <main className="flex-1 p-5 overflow-y-auto bg-[#f9fafe]">
         <Routes>
+          {/* Default MainContent */}
           <Route path="home" element={<MainContent />} />
+
+          {/* Quick Event Pages */}
+          <Route path="events/ideathon" element={<IdeathonPage />} />
+          <Route path="events/hackathon" element={<HackathonPage />} />
+          <Route path="events/coding-challenge" element={<CodingChallengePage />} />
+          <Route path="events/knowledge-quest" element={<KnowledgeQuestPage />} />
+
+          {/* Other Pages */}
           <Route path="upload" element={<UploadKnowledgeItem />} />
           <Route path="contributions" element={<MyContributions />} />
+
+          {/* Admin Dashboard */}
           <Route
             path="admin"
             element={
@@ -31,7 +51,9 @@ function AppShell() {
               </ProtectedRoute>
             }
           />
-           <Route
+
+          {/* Approver Dashboard */}
+          <Route
             path="approver"
             element={
               <ProtectedRoute requireApprover={true}>
@@ -40,6 +62,7 @@ function AppShell() {
             }
           />
 
+          {/* Redirect unknown /app routes to /app/home */}
           <Route path="*" element={<Navigate to="home" replace />} />
         </Routes>
       </main>
@@ -47,6 +70,7 @@ function AppShell() {
   );
 }
 
+// Main App Component
 export default function App() {
   return (
     <Router>
@@ -56,7 +80,7 @@ export default function App() {
         <Route path="/signup" element={<SignUp />} />
         <Route path="/login" element={<Login />} />
 
-        {/* Protected App */}
+        {/* Protected App Shell */}
         <Route
           path="/app/*"
           element={

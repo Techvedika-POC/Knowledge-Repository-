@@ -1,5 +1,10 @@
+using KnowLedger_Synaptix.Models;
+using KnowLedger_Synaptix.Services;
+using KnowLedger_Synaptix.Services.Implementations;
 using KnowLedger_Synaptix.Services.Implementations;
 using KnowLedger_Synaptix.Services.Interfaces;
+using KnowLedger_Synaptix.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using KnowLedger_Synaptix.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -20,6 +25,14 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IGlobalSearchService, GlobalSearchService>();
 builder.Services.AddScoped<IDepartmentService, DepartmentService>();
+builder.Services.AddScoped<IFreshPickService, FreshPickService>();
+builder.Services.AddScoped<ITrendingService, TrendingService>();
+builder.Services.AddScoped<ITopicHighlightService, TopicHighlightService>();
+builder.Services.AddScoped<IDaySpotlightService, DaySpotlightService>();
+builder.Services.AddScoped<IEngagementService, EngagementService>();
+
+
+// Enable CORS for React frontend
 builder.Services.AddScoped<IApproverService, ApproverService>();
 builder.Services.AddScoped<IActivityLogService , ActivityLogService>();
 // CORS
