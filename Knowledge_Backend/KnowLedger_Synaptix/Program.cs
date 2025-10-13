@@ -32,7 +32,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend",
         policy => policy
-            .WithOrigins("http://localhost:3000") 
+            .WithOrigins("http://localhost:3000", "https://knowledge-frontend-n567.onrender.com") 
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials());
@@ -57,7 +57,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.UseRouting();
 // Use CORS
 app.UseCors("AllowFrontend");
 
