@@ -88,48 +88,38 @@ const handleSubmit = async (e) => {
     formData.append("CategoryId", form.categoryId);
     formData.append("Description", form.description);
 
-    // Languages (split comma, trim, append individually)
     (form.languages || "")
       .split(",")
       .map((l) => l.trim())
       .filter((l) => l)
       .forEach((lang) => formData.append("Language", lang));
 
-    // Frameworks (split comma, trim, append individually)
     (frameworks || "")
       .split(",")
       .map((f) => f.trim())
       .filter((f) => f)
       .forEach((fw) => formData.append("Framework", fw));
-
-    // Tags
  (form.tags || []).forEach(tag => formData.append("Tags", tag));
 
-
-
-    // Attachments
     (files || []).forEach((file) => formData.append("Attachments", file));
 
-    // Event-related
     if (form.isEventItem) {
       formData.append("IsEventItem", true);
       formData.append("EventId", form.eventId);
       formData.append("TeamName", form.teamName);
-
-      // Split, trim, remove empty, include uploader automatically
       let emails = (form.teamMemberEmails || "")
         .split(",")
         .map((e) => e.trim())
         .filter((e) => e);
 
-      const userEmail = localStorage.getItem("userEmail"); // optional: fetch uploader email
+      const userEmail = localStorage.getItem("userEmail");
       if (userEmail && !emails.includes(userEmail)) emails.push(userEmail);
 
-      // Append each email separately
+
       emails.forEach((email) => formData.append("TeamMemberEmails", email));
     }
 
-    // POST to backend
+   
     const response = await axios.post(
       `${API_BASE_URL}/knowledgeitem/upload`,
       formData,

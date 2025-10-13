@@ -57,18 +57,9 @@ export default function ApproverPage() {
         <h2 className="text-3xl font-bold text-indigo-700 mb-6 text-center">
           Pending Knowledge Approvals
         </h2>
-
-        {/* Metrics */}
-        {/* <div className="flex flex-wrap gap-6 mb-6 items-start">
-          <div className="bg-white p-4 rounded-lg shadow-md flex flex-col items-start">
-            <span className="text-gray-500 text-sm">Total Pending</span>
-            <span className="text-xl font-bold text-indigo-600">{totalPending}</span>
-          </div>
-        </div> */}
-        {/* Error */}
         {error && (
           <p className="text-sm text-red-500 text-center mb-4">{error}</p>
-        )}        {/* Table */}
+        )}     
         {loading ? (
           <p className="text-sm text-gray-500 text-center">Loading...</p>
         ) : items.length === 0 ? (
