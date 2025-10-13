@@ -1,12 +1,6 @@
 import React, { useState } from "react";
 import Navbar from "./Navbar";
-import FreshPicks from "./FreshPicks";
-import Trending from "./Trending";
-import Topics from "./Topics";
-import DaySpotlight from "./DaySpotlight";
-import QuickEvents from "./QuickEvents";
-import LeaderboardTabs from "./LeaderboardTabs";
-import SectionTabs from "./SectionTabs";
+
 
 const MainContent = () => {
   const [activeTab, setActiveTab] = useState("Leaderboard");
@@ -23,12 +17,7 @@ const MainContent = () => {
           activeTab={activeTab}
           onTabChange={setActiveTab}
         /> */}
-        <FreshPicks />
-        <Trending />
-        <Topics />
-        <DaySpotlight />
-        <QuickEvents />
-        <LeaderboardTabs />
+      
       </main>
     </div>
   );
