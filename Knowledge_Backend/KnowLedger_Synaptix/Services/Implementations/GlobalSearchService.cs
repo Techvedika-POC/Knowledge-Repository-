@@ -9,6 +9,9 @@ using System.Threading.Tasks;
 
 namespace KnowLedger_Synaptix.Services.Implementations
 {
+    /// <summary>
+    /// Service to perform global search across knowledge items, domains, categories, attachments, and tags.
+    /// </summary>
     public class GlobalSearchService : IGlobalSearchService
     {
         private readonly Knowledge_Repository_dbContext _context;
@@ -18,13 +21,20 @@ namespace KnowLedger_Synaptix.Services.Implementations
             _context = context;
         }
 
+        /// <summary>
+        /// Performs a keyword-based search across multiple related entities.
+        /// </summary>
+        /// <param name="keyword">Search keyword</param>
+        /// <returns>List of GlobalSearchResultDto containing search results</returns>
         public async Task<List<GlobalSearchResultDto>> GlobalSearchAsync(string keyword)
         {
+            // Return empty list if keyword is null or whitespace
             if (string.IsNullOrWhiteSpace(keyword))
                 return new List<GlobalSearchResultDto>();
 
             keyword = keyword.ToLower();
-            // Unified search: KnowledgeItems, Domains, Categories, Attachments, Tags
+
+            // Search across KnowledgeItems, Domains, Categories, Attachments, and Tags
             var query = from k in _context.KnowledgeItems
                         join d in _context.Domains on k.DomainId equals d.DomainId into kd
                         from domain in kd.DefaultIfEmpty()
@@ -38,14 +48,17 @@ namespace KnowLedger_Synaptix.Services.Implementations
                               || (category != null && category.CategoryName.ToLower().Contains(keyword))
                         select new GlobalSearchResultDto
                         {
-                            //Type = "KnowledgeItem",
                             Id = k.ItemId,
                             Name = k.Title,
+                            // Return a snippet of description, truncate if longer than 200 characters
                             Snippet = k.Description.Length > 200 ? k.Description.Substring(0, 200) + "..." : k.Description,
+                            CreatedOn = k.CreatedOn ?? DateTime.MinValue
                         };
 
+            // Execute query and remove duplicates
             var results = await query.Distinct().ToListAsync();
 
+            // Order by creation date descending
             return results.OrderByDescending(r => r.CreatedOn).ToList();
         }
     }

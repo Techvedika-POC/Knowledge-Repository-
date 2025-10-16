@@ -2,7 +2,7 @@
 {
     public class ApproverActionDto
     {
-        public Guid ItemId { get; set; }   // The knowledge item ID
+        public Guid ItemId { get; set; }   
         public string Action { get; set; } // "Approve" or "Reject"
     }
 }
