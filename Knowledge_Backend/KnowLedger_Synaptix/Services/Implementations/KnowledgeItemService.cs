@@ -18,6 +18,45 @@ namespace KnowLedger_Synaptix.Services.Implementations
         {
             _context = context;
         }
+        public async Task<KnowledgeItemDetailsDto?> GetKnowledgeItemDetailsAsync(Guid itemId)
+        {
+            var item = await _context.KnowledgeItems
+                .Include(k => k.Category)
+                .Include(k => k.Domain)
+                .Include(k => k.Owner)
+                .Include(k => k.KnowledgeTags)
+                .Include(k => k.Attachments)
+                .FirstOrDefaultAsync(k => k.ItemId == itemId);
+
+            if (item == null) return null;
+
+            return new KnowledgeItemDetailsDto
+            {
+                ItemId = item.ItemId,
+                Title = item.Title ?? "",
+                Description = item.Description ?? "",
+                ContributorName = item.Owner?.Name ?? "",
+                EngagementScore = 0, 
+                CreatedOn = item.CreatedOn ?? DateTime.MinValue,
+                Tags = item.KnowledgeTags?.Select(t => t.TagName).ToList() ?? new List<string>(),
+                Attachments = item.Attachments?.Select(a => new AttachmentDto
+                {
+                    FileName = a.FileName ?? "",
+                    MimeType = a.MimeType ?? "",
+                    FileUrl = $"/attachments/{a.AttachmentId}",
+                    FileSize = a.FileSize ?? 0
+                }).ToList() ?? new List<AttachmentDto>(),
+                Language = item.Language ?? "",
+                Framework = item.Framework ?? "",
+                Metadata = item.Metadata ?? "",
+                Visibility = string.Empty, 
+                CategoryName = item.Category?.CategoryName ?? "",
+                DomainName = item.Domain?.DomainName ?? "",
+                OwnerName = item.Owner?.Name ?? ""
+            };
+        }
+
+
 
         public async Task<KnowledgeItem> UploadKnowledgeItemAsync(KnowledgeItemUploadDto dto, Guid userId)
         {

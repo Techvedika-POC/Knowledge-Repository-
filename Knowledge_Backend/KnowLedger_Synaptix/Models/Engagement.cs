@@ -9,21 +9,23 @@ public partial class Engagement
 {
     public Guid EngagementId { get; set; }
 
-    public Guid? ItemId { get; set; }
+    public Guid ItemId { get; set; }
 
-    public Guid? UserId { get; set; }
+    public Guid UserId { get; set; }
 
     public string CommentText { get; set; }
 
     public int? Points { get; set; }
 
-    public DateTime? CreatedOn { get; set; }
+    public DateTime CreatedOn { get; set; }
 
     public DateTime? UpdatedOn { get; set; }
 
     public Guid? CreatedBy { get; set; }
 
     public Guid? UpdatedBy { get; set; }
+
+    public string EngagementType { get; set; }
 
     public virtual User CreatedByNavigation { get; set; }
 

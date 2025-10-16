@@ -1,4 +1,5 @@
-﻿using System;
+
+using System;
 
 namespace KnowLedger_Synaptix.Dtos
 {
@@ -6,6 +7,8 @@ namespace KnowLedger_Synaptix.Dtos
     {
         // Unique identifier
         public Guid ItemId { get; set; }
+        public int EngagementScore { get; set; }
+        public DateTime CreatedOn { get; set; }
 
         // Main title of the knowledge item
         public string Title { get; set; }
@@ -40,8 +43,6 @@ namespace KnowLedger_Synaptix.Dtos
         // Is this an event-related item?
         public bool? IsEventItem { get; set; }
 
-        // Created/Updated info
-        public DateTime? CreatedOn { get; set; }
         public Guid? CreatedBy { get; set; }
         public string CreatedByName { get; set; } // From CreatedByNavigation
 

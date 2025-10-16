@@ -96,7 +96,6 @@ export default function Sidebar() {
             )}
           </nav>
         </div>
-
         {/* Secondary */}
         <div className="mt-6">
           <p className="text-[11px] font-medium uppercase tracking-[0.5px] text-[#94a3b8] mb-2">

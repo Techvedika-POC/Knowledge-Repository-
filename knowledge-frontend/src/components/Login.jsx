@@ -1,6 +1,8 @@
 import React, { useState } from "react";
-import api from "../api"; // use centralized Axios
+import axios from "axios";
+import api from "../api"; 
 import { useNavigate } from "react-router-dom";
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 export default function Login() {
   const navigate = useNavigate();
@@ -18,10 +20,18 @@ export default function Login() {
       const token = res.data.token;
 
       localStorage.setItem("jwtToken", token);
+
       if (res.data.name) localStorage.setItem("userName", res.data.name);
       if (res.data.email) localStorage.setItem("userEmail", res.data.email);
       if (res.data.roles) {
         localStorage.setItem("userRoles", JSON.stringify(res.data.roles));
+      }
+      if (res.data.userId) {
+        localStorage.setItem("userId", res.data.userId);
+      } else if (res.data.id) {
+        localStorage.setItem("userId", res.data.id); 
+      } else {
+        console.warn("userId missing from login response");
       }
 
       alert("Login successful!");

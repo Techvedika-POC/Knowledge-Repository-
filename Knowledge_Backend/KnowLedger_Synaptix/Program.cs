@@ -1,6 +1,7 @@
+using KnowLedger_Synaptix.Models;
+using KnowLedger_Synaptix.Services;
 using KnowLedger_Synaptix.Services.Implementations;
 using KnowLedger_Synaptix.Services.Interfaces;
-using KnowLedger_Synaptix.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -20,14 +21,18 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IGlobalSearchService, GlobalSearchService>();
 builder.Services.AddScoped<IDepartmentService, DepartmentService>();
+builder.Services.AddScoped<IFreshPickService, FreshPickService>();
+builder.Services.AddScoped<ITrendingService, TrendingService>();
+builder.Services.AddScoped<ITopicHighlightService, TopicHighlightService>();
+builder.Services.AddScoped<IDaySpotlightService, DaySpotlightService>();
+builder.Services.AddScoped<IEngagementService, EngagementService>();
 builder.Services.AddScoped<IApproverService, ApproverService>();
 builder.Services.AddScoped<IActivityLogService , ActivityLogService>();
-// CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend",
         policy => policy
-            .WithOrigins("http://localhost:3000")
+            .WithOrigins("http://localhost:3000", "https://knowledge-frontend-n567.onrender.com") 
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials());
@@ -76,8 +81,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseCors("AllowFrontend"); // CORS BEFORE authentication
-app.UseAuthentication();      // Authentication BEFORE authorization
+app.UseRouting();
+app.UseCors("AllowFrontend");
+app.UseAuthentication();      // Authentication BEFORE authorizatione
 app.UseAuthorization();
 
 app.MapControllers();
