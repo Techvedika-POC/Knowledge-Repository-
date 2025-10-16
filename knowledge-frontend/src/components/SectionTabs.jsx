@@ -15,7 +15,7 @@ export default function SectionTabs({ activeSection, onSectionChange }) {
         <button
           key={section.key}
           onClick={() => onSectionChange(section.key)}
-          className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+          className={`px-4 py-2 rounded-full text-[18px] font-medium transition ${
             activeSection === section.key ? "bg-indigo-600 text-white" : section.color
           }`}
         >

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import api from "../api"; // use centralized Axios
 import { useNavigate } from "react-router-dom";
 
+
 export default function Login() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: "", password: "" });
@@ -16,8 +17,13 @@ export default function Login() {
     try {
       const res = await api.post("/auth/login", form);
       const token = res.data.token;
+       const userId = res.data.userId;
 
       localStorage.setItem("jwtToken", token);
+        localStorage.setItem("userId", userId);
+console.log("Login response:", res.data);
+console.log("Storing userId:", userId);
+
 
       if (res.data.name) localStorage.setItem("userName", res.data.name);
       if (res.data.email) localStorage.setItem("userEmail", res.data.email);

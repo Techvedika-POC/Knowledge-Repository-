@@ -1,4 +1,5 @@
 ﻿using KnowLedger_Synaptix.Dtos;
+using KnowLedger_Synaptix.Models;
 using KnowLedger_Synaptix.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,9 +17,18 @@ namespace KnowLedger_Synaptix.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<EventDto>>> GetAllEvents()
+        public async Task<ActionResult<List<Event>>> GetAllEvents()
         {
             var events = await _eventService.GetAllEventsAsync();
+            return Ok(events);
+        }
+        // GET: api/events/type/{eventType}
+        [HttpGet("type/{eventType}")]
+        public async Task<ActionResult<List<Event>>> GetEventsByType(string eventType)
+        {
+            var events = await _eventService.GetEventsByTypeAsync(eventType);
+            if (events == null || events.Count == 0)
+                return NotFound($"No events found for type: {eventType}");
             return Ok(events);
         }
 

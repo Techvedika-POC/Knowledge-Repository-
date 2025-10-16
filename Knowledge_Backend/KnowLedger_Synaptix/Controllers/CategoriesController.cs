@@ -1,4 +1,5 @@
 ﻿using KnowLedger_Synaptix.Dtos;
+using KnowLedger_Synaptix.Models;
 using KnowLedger_Synaptix.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -17,14 +18,14 @@ namespace KnowLedger_Synaptix.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<CategoryDto>>> GetAllCategories()
+        public async Task<ActionResult<List<Category>>> GetAllCategories()
         {
             var categories = await _categoryService.GetAllCategoriesAsync();
             return Ok(categories);
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<CategoryDto>> GetCategoryById(Guid id)
+        public async Task<ActionResult<Category>> GetCategoryById(Guid id)
         {
             var category = await _categoryService.GetCategoryByIdAsync(id);
             if (category == null)
@@ -33,7 +34,7 @@ namespace KnowLedger_Synaptix.Controllers
         }
 
         [HttpGet("byname/{name}")]
-        public async Task<ActionResult<CategoryDto>> GetCategoryByName(string name)
+        public async Task<ActionResult<Category>> GetCategoryByName(string name)
         {
             var category = await _categoryService.GetCategoryByNameAsync(name);
             if (category == null)

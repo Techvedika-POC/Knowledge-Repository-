@@ -40,14 +40,15 @@ namespace KnowLedger_Synaptix.Controllers
             if (user == null)
                 return Unauthorized(new { message = "Invalid email or password" });
 
-            return Ok(new
-            {
-                token = user.Token,
-                name = user.Name,
-                email = user.Email,
-                roles = user.Roles,
-                expires = DateTime.UtcNow.AddMinutes(60)
-            });
+            //return Ok(new
+            //{
+            //    token = user.Token,
+            //    name = user.Name,
+            //    email = user.Email,
+            //    roles = user.Roles,
+            //    expires = DateTime.UtcNow.AddMinutes(60)
+            //});
+            return Ok(user);
         }
     }
 }

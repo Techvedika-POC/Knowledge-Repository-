@@ -8,8 +8,22 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="llm_env\**" />
+    <Content Remove="llm_env\**" />
+    <EmbeddedResource Remove="llm_env\**" />
+    <None Remove="llm_env\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Dtos\FreshPickDto.cs" />
     <Compile Remove="Dtos\KnowledgeItemUploadRequest.cs" />
     <Compile Remove="Dtos\MyContributionDto.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Remove="wwwroot\uploads\6410e7f2-c016-45b4-abc8-3817a7a0c496.docx" />
+    <Content Remove="wwwroot\uploads\8bec52c4-0bcd-4ab2-9d40-8c0ad00b1c00.docx" />
+    <Content Remove="wwwroot\uploads\random.txt" />
   </ItemGroup>
 
   <ItemGroup>
@@ -27,8 +41,13 @@
     </PackageReference>
     <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.14.0" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
+    <PackageReference Include="OpenAI" Version="2.5.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.4" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\uploads\" />
   </ItemGroup>
 
 </Project>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import api from "../api";
 import { User } from "lucide-react";
 import EngagementButtons from "./EngagementButtons";
 
@@ -7,7 +8,8 @@ export default function KnowledgeCardsDisplay({
     items = [],
     title,
     onPreview,
-    userId
+    userId,
+     onReset
 }) {
     const [showAll, setShowAll] = useState(false);
     const [engagementData, setEngagementData] = useState({});
@@ -25,8 +27,8 @@ export default function KnowledgeCardsDisplay({
                 items.map(async (item) => {
                     const id = item.itemId || item.id;
                     if (!id) return;
-                    const res = await axios.get(
-                        `/api/Engagement/summary/${id}?userId=${userId}`
+                    const res = await api.get(
+                        `/Engagement/summary/${id}?userId=${userId}`
                     );
                     data[id] = res.data;
                 })
@@ -48,11 +50,11 @@ export default function KnowledgeCardsDisplay({
         const isLiked = engagementData[id]?.userEngagementTypes?.includes("Like");
         try {
             if (isLiked) {
-                await axios.delete(`/api/Engagement/like/${id}`, {
+                await api.delete(`/Engagement/like/${id}`, {
                     params: { userId }
                 });
             } else {
-                await axios.post(`/api/Engagement/like/${id}`, null, {
+                await api.post(`/Engagement/like/${id}`, null, {
                     params: { userId }
                 });
             }
@@ -68,11 +70,11 @@ export default function KnowledgeCardsDisplay({
         const isFav = engagementData[id]?.userEngagementTypes?.includes("Favourite");
         try {
             if (isFav) {
-                await axios.delete(`/api/Engagement/favourite/${id}`, {
+                await api.delete(`/Engagement/favourite/${id}`, {
                     params: { userId }
                 });
             } else {
-                await axios.post(`/api/Engagement/favourite/${id}`, null, {
+                await api.post(`/Engagement/favourite/${id}`, null, {
                     params: { userId }
                 });
             }
@@ -86,8 +88,8 @@ export default function KnowledgeCardsDisplay({
         const id = item.itemId || item.id;
         if (!id) return;
         try {
-            await axios.post(
-                `/api/Engagement/comment/${id}`,
+            await api.post(
+                `/Engagement/comment/${id}`,
                 { CommentText: commentText },
                 { params: { userId } }
             );
@@ -98,8 +100,8 @@ export default function KnowledgeCardsDisplay({
     };
 
     return (
-<div className="relative pb-16 p-6 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-3xl shadow-lg">
-    {/* Section Title */}
+        <div className="relative pb-16 p-6 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-3xl shadow-lg">
+            {/* Section Title */}
 
             {loading && (
                 <p className="text-center text-gray-500">Loading engagements...</p>
@@ -161,7 +163,7 @@ export default function KnowledgeCardsDisplay({
                                     <span
                                         className={`px-2 py-1 text-xs font-medium text-${themeColor}-800 bg-${themeColor}-100 rounded-full`}
                                     >
-                                        {item.ownerName || "Unknown Contributor"}
+                                        {item.submittedBy || item.OwnerName}
                                     </span>
                                 </div>
 
@@ -190,17 +192,31 @@ export default function KnowledgeCardsDisplay({
                 })}
             </div>
 
-            {/* View More Button */}
-            {items.length > 3 && (
-                <div className="flex justify-center mt-8">
-                    <button
-                        onClick={() => setShowAll(!showAll)}
-                        className={`px-6 py-2 text-sm font-medium text-black bg-blue-300 rounded-full shadow hover:bg-${themeColor}-600 transition`}
-                    >
-                        {showAll ? "View Less" : "View More"}
-                    </button>
-                </div>
-            )}
+          {/* View More & Reset Buttons */}
+{items.length > 3 && (
+  <div className="flex justify-center mt-8 gap-4">
+    {/* View More / Less Button */}
+    <button
+      onClick={() => setShowAll(!showAll)}
+      className={`px-6 py-2 text-sm font-medium text-black bg-blue-300 rounded-full shadow hover:bg-${themeColor}-600 transition`}
+    >
+      {showAll ? "View Less" : "View More"}
+    </button>
+
+    {/* Reset Button */}
+    <button
+      onClick={() => {
+        setShowAll(false);
+        fetchEngagementData();
+         if (onReset) onReset();
+      }}
+      className={`px-6 py-2 text-sm font-medium text-black bg-blue-300 rounded-full shadow hover:bg-${themeColor}-600 transition`}
+    >
+      Reset
+    </button>
+  </div>
+)}
+
         </div>
     );
 }

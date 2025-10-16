@@ -1,37 +1,39 @@
 import React, { useState, useEffect } from "react";
 import KnowledgeCardsDisplay from "./KnowledgeCardsDisplay";
 import PreviewModal from "./PreviewModal";
-import axios from "axios"; // for API calls
+import axios from "axios";
+import api from "../api";
 
 export default function FreshPicksSection({
   freshPicks,
   handleLike,
   handleFavourite,
   handleComment,
-  userId, // <- we need userId to fetch user engagements
+  userId: propUserId, 
 }) {
+  // Get userId from localStorage if not passed as prop
+  const userId = propUserId || localStorage.getItem("userId");
+
   const [selectedItem, setSelectedItem] = useState(null);
   const [engagement, setEngagement] = useState({
     likedItems: [],
     favouritedItems: [],
   });
+  const [showFreshPicks, setShowFreshPicks] = useState(true); 
 
-  // Fetch user engagements from backend when component mounts
+  // Fetch user engagements on mount
   useEffect(() => {
-    const fetchUserEngagements = async () => {
-      if (!userId) {
-        console.warn("User ID is missing — skipping engagement fetch.");
-        return;
-      }
+    if (!userId) return;
 
+    const fetchUserEngagements = async () => {
       try {
-        const res = await axios.get(`/api/engagement/user-engagements/${userId}`);
+        const res = await api.get(`/engagement/user-engagements/${userId}`);
         const likedItems = res.data
-          .filter(e => e.engagementType === "Like")
-          .map(e => e.itemId);
+          .filter((e) => e.engagementType === "Like")
+          .map((e) => e.itemId);
         const favouritedItems = res.data
-          .filter(e => e.engagementType === "Favourite")
-          .map(e => e.itemId);
+          .filter((e) => e.engagementType === "Favourite")
+          .map((e) => e.itemId);
 
         setEngagement({ likedItems, favouritedItems });
       } catch (error) {
@@ -43,74 +45,87 @@ export default function FreshPicksSection({
   }, [userId]);
 
 
-  const updateLocalStorage = (newEngagement) => {
+  const updateEngagement = (newEngagement) => {
     setEngagement(newEngagement);
     localStorage.setItem("engagement", JSON.stringify(newEngagement));
   };
 
   const handleLikeClick = async (item) => {
+    if (!userId) {
+      console.warn("Cannot like — user not logged in.");
+      return;
+    }
+
     const itemId = item.itemId || item.id;
     const alreadyLiked = engagement.likedItems.includes(itemId);
-
     const likedItems = alreadyLiked
       ? engagement.likedItems.filter((id) => id !== itemId)
       : [...engagement.likedItems, itemId];
 
-    updateLocalStorage({ ...engagement, likedItems });
+    updateEngagement({ ...engagement, likedItems });
 
     try {
       if (alreadyLiked) {
-        await axios.delete(`/api/engagement/like/${itemId}?userId=${userId}`);
+        await api.delete(`/engagement/like/${itemId}?userId=${userId}`);
       } else {
-        await axios.post(`/api/engagement/like/${itemId}?userId=${userId}`);
+        await api.post(`/engagement/like/${itemId}?userId=${userId}`);
       }
-      handleLike(item); // Callback to update parent state/UI
+      handleLike(item);
     } catch (error) {
       console.error("Failed to update like:", error);
+      updateEngagement(engagement); 
     }
   };
 
   const handleFavouriteClick = async (item) => {
+    if (!userId) {
+      console.warn("Cannot favourite — user not logged in.");
+      return;
+    }
+
     const itemId = item.itemId || item.id;
     const alreadyFavourited = engagement.favouritedItems.includes(itemId);
-
     const favouritedItems = alreadyFavourited
       ? engagement.favouritedItems.filter((id) => id !== itemId)
       : [...engagement.favouritedItems, itemId];
 
-    updateLocalStorage({ ...engagement, favouritedItems });
+    updateEngagement({ ...engagement, favouritedItems });
 
     try {
       if (alreadyFavourited) {
-        await axios.delete(`/api/engagement/favourite/${itemId}?userId=${userId}`);
+        await api.delete(`/engagement/favourite/${itemId}?userId=${userId}`);
       } else {
-        await axios.post(`/api/engagement/favourite/${itemId}?userId=${userId}`);
+        await api.post(`/engagement/favourite/${itemId}?userId=${userId}`);
       }
-      handleFavourite(item); // Callback to update parent state/UI
+      handleFavourite(item);
     } catch (error) {
       console.error("Failed to update favourite:", error);
+      updateEngagement(engagement); // revert UI
     }
   };
+
   const handleCommentClick = async (itemId, commentText) => {
     if (!userId) {
-      console.warn("Cannot post comment — user not logged in.");
+      console.warn("Cannot comment — user not logged in.");
       return;
     }
+    if (!commentText.trim()) return;
 
     try {
-      await axios.post(
-        `/api/engagement/comment/${itemId}?userId=${userId}`,
-        { commentText },  // ✅ JSON body matches backend DTO
+      await api.post(
+        `/engagement/comment/${itemId}?userId=${userId}`,
+        { commentText: commentText.trim() },
         { headers: { "Content-Type": "application/json" } }
       );
-
-      // (Optional) Refetch engagement data for this item to show new comment
-      // Or you can optimistically append it to state if you want instant update
+      handleComment(itemId, commentText);
     } catch (error) {
       console.error("Failed to post comment:", error);
     }
   };
-
+     const handleReset = () => {
+    setShowFreshPicks(false);
+    setSelectedItem(null);
+  };
 
   return (
     <>
@@ -121,20 +136,21 @@ export default function FreshPicksSection({
         onPreview={(item) => setSelectedItem(item)}
         onLike={handleLikeClick}
         onFavourite={handleFavouriteClick}
-        onComment={handleCommentClick}   
+        onComment={handleCommentClick}
         engagement={engagement}
+         onReset={handleReset}
       />
-    {selectedItem && (
-  <PreviewModal
-    item={selectedItem}
-    onClose={() => setSelectedItem(null)}
-    onLike={handleLikeClick}
-    onFavourite={handleFavouriteClick}
-    onComment={handleCommentClick}
-    engagement={engagement}
-  />
-)}
 
+      {selectedItem && (
+        <PreviewModal
+          item={selectedItem}
+          onClose={() => setSelectedItem(null)}
+          onLike={handleLikeClick}
+          onFavourite={handleFavouriteClick}
+          onComment={handleCommentClick}
+          engagement={engagement}
+        />
+      )}
     </>
   );
 }

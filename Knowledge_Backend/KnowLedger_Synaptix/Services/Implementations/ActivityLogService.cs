@@ -62,6 +62,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
 
             return item;
         }
+        //based on the attribute we get the items uploaded by the user
         public async Task<IEnumerable<ActivityLogDto>> GetUserContributionsFilteredAsync(
             Guid userId,
             string domain = null,
@@ -114,7 +115,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 })
                 .ToListAsync();
         }
-
+        //user uplaoded domains
         public async Task<IEnumerable<string>> GetUserDomainsAsync(Guid userId)
         {
             return await _context.KnowledgeItems
@@ -123,7 +124,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 .Distinct()
                 .ToListAsync();
         }
-
+        //user uplaoded categories
         public async Task<IEnumerable<string>> GetUserCategoriesAsync(Guid userId)
         {
             return await _context.KnowledgeItems
@@ -132,6 +133,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 .Distinct()
                 .ToListAsync();
         }
+        //user uploade titles
 
         public async Task<IEnumerable<string>> GetUserTitlesAsync(Guid userId)
         {
@@ -141,5 +143,98 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 .Distinct()
                 .ToListAsync();
         }
+        //pagination 
+        public async Task<PagedResult<ActivityLogDto>> GetUserContributionsPagedAsync(
+          Guid userId,
+          int pageNumber = 1,
+          int pageSize = 10,
+          string domain = null,
+          string category = null,
+          string title = null,
+          string status = null,
+          DateTime? date = null)
+        {
+            var query = _context.KnowledgeItems
+                .Where(k => k.OwnerId == userId)
+                .Include(k => k.Category)
+                .Include(k => k.Domain)
+                .AsQueryable();
+
+            // Apply filters
+            if (!string.IsNullOrEmpty(domain))
+                query = query.Where(k => k.Domain.DomainName.ToLower().Contains(domain.ToLower()));
+
+            if (!string.IsNullOrEmpty(category))
+                query = query.Where(k => k.Category.CategoryName.ToLower().Contains(category.ToLower()));
+
+            if (!string.IsNullOrEmpty(title))
+                query = query.Where(k => k.Title.ToLower().Contains(title.ToLower()));
+
+            if (!string.IsNullOrEmpty(status))
+                query = query.Where(k => k.Status.ToLower().Contains(status.ToLower()));
+
+            if (date.HasValue)
+            {
+                var selectedDate = DateTime.SpecifyKind(date.Value.Date, DateTimeKind.Utc);
+                query = query.Where(k => k.CreatedOn >= selectedDate && k.CreatedOn < selectedDate.AddDays(1));
+            }
+
+          
+            var totalCount = await query.CountAsync();
+
+            // Apply pagination
+            var items = await query
+                .OrderByDescending(k => k.CreatedOn)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .Select(k => new ActivityLogDto
+                {
+                    UserId = k.OwnerId,
+                    ItemId = k.ItemId,
+                    Title = k.Title,
+                    Category = k.Category != null ? k.Category.CategoryName : null,
+                    Domain = k.Domain != null ? k.Domain.DomainName : null,
+                    Description = k.Description.Length > 100 ? k.Description.Substring(0, 100) + "..." : k.Description,
+                    Status = k.Status,
+                    Date = k.CreatedOn
+                })
+                .ToListAsync();
+
+            return new PagedResult<ActivityLogDto>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+            };
+        }
+        //items uplaoded by current month
+        public async Task<IEnumerable<ActivityLogDto>> GetUserContributionsThisMonthAsync(Guid userId)
+        {
+            var now = DateTime.UtcNow;
+            var firstDayOfMonth = new DateTime(now.Year, now.Month, 1);
+            var firstDayUtc = DateTime.SpecifyKind(firstDayOfMonth, DateTimeKind.Utc);
+
+            return await _context.KnowledgeItems
+                .Where(k => k.OwnerId == userId && k.CreatedOn >= firstDayUtc)
+                .Include(k => k.Category)
+                .Include(k => k.Domain)
+                .OrderByDescending(k => k.CreatedOn)
+                .Select(k => new ActivityLogDto
+                {
+                    UserId = k.OwnerId,
+                    ItemId = k.ItemId,
+                    Title = k.Title,
+                    Category = k.Category != null ? k.Category.CategoryName : null,
+                    Domain = k.Domain != null ? k.Domain.DomainName : null,
+                    Description = k.Description.Length > 100 ? k.Description.Substring(0, 100) + "..." : k.Description,
+                    Status = k.Status,
+                    Date = k.CreatedOn
+                })
+                .ToListAsync();
+        }
+
+
     }
 }

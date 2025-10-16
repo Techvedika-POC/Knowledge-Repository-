@@ -1,4 +1,5 @@
-﻿using System;
+﻿using KnowLedger_Synaptix.Models;
+using System;
 
 namespace KnowLedger_Synaptix.Dtos
 {
@@ -18,15 +19,18 @@ namespace KnowLedger_Synaptix.Dtos
 
         // Domain details
         public Guid? DomainId { get; set; }
-        public string DomainName { get; set; } // From Domain navigation
+        // From Domain navigation
+        public string DomainName { get; set; } 
 
         // Category details
         public Guid? CategoryId { get; set; }
-        public string CategoryName { get; set; } // From Category navigation
+        // From Category navigation
+        public string CategoryName { get; set; }
 
         // Owner details
         public Guid? OwnerId { get; set; }
-        public string OwnerName { get; set; } // From Owner navigation
+        // From Owner navigation
+        public string OwnerName { get; set; }
 
         // Status: Pending, Approved, Rejected
         public string Status { get; set; }
@@ -57,6 +61,12 @@ namespace KnowLedger_Synaptix.Dtos
         public string Metadata { get; set; }
         public string ContributorName { get; set; }
         public int EngagementScore { get; set; }
-       
+
+        public User User { get; set; }
+        public string SubmittedBy { get; set; } = string.Empty;
+
+
+        public List<string>? Tags { get; set; }= new List<string>();
+
     }
 }

@@ -43,7 +43,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
             _configuration = configuration;
 
         }
-
+        //Registration
         public async Task<bool> RegisterAsync(RegisterDto dto, Guid? createdBy = null)
 
         {
@@ -90,7 +90,6 @@ namespace KnowLedger_Synaptix.Services.Implementations
 
             await _context.SaveChangesAsync();
 
-            // 5. If self-registration, set CreatedBy/UpdatedBy to self
 
             if (createdBy == null)
 
@@ -133,7 +132,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
 
             return true;
         }
-
+        //login
         public async Task<AuthResponseDto?> LoginAsync(LoginDto dto)
 
         {
@@ -209,7 +208,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 Name = user.Name,
                 Email = user.Email,
                 Roles = roles,
-                UserId = user.UserId // <--- added
+                UserId = user.UserId 
             };
 
 

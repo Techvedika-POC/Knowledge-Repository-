@@ -18,9 +18,8 @@ namespace KnowLedger_Synaptix.Controllers
             _globalSearchService = globalSearchService;
         }
 
-       
         [HttpGet]
-        public async Task<ActionResult<List<GlobalSearchResultDto>>> Get([FromQuery] string keyword)
+        public async Task<ActionResult<List<KnowledgeItemDto>>> Get([FromQuery] string keyword)
         {
             if (string.IsNullOrWhiteSpace(keyword))
                 return BadRequest("Keyword cannot be empty.");
@@ -36,7 +35,6 @@ namespace KnowLedger_Synaptix.Controllers
             }
             catch (Exception ex)
             {
-               
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }

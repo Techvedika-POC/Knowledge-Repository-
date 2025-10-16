@@ -7,13 +7,14 @@ import "swiper/css/pagination";
 import KnowledgeCardsDisplay from "./KnowledgeCardsDisplay";
 import PreviewModal from "./PreviewModal";
 import axios from "axios";
+import api from "../api";
 
 const topicImages = {
-  "Artificial Intelligence": "/assets/Ai.png",
+  ArtificialIntelligence: "/assets/Ai.png",
   DevOps: "/assets/Devops.png",
-  "Governance/Policies":
+  GovernancePolicies:
     "https://images.unsplash.com/photo-1573164574572-cb89e39749b4?auto=format&fit=crop&w=800&q=60",
-  "Cloud Computing":
+  CloudComputing:
     "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=800&q=60",
   Backend: "/assets/backend.png",
   Frontend: "/assets/frontend.png",
@@ -31,7 +32,7 @@ export default function TopicsSection({ topics, userId }) {
     const fetchUserEngagements = async () => {
       if (!userId) return;
       try {
-        const res = await axios.get(`/api/engagement/user-engagements/${userId}`);
+        const res = await api.get(`/engagement/user-engagements/${userId}`);
         const likedItems = res.data
           .filter((e) => e.engagementType === "Like")
           .map((e) => e.itemId);
@@ -48,8 +49,8 @@ export default function TopicsSection({ topics, userId }) {
   const handleTopicClick = async (topicName) => {
     setSelectedTopic(topicName);
     try {
-      const res = await axios.get(
-        `/api/TopicHighlight/knowledge?domain=${encodeURIComponent(topicName)}&top=10`
+      const res = await api.get(
+        `/TopicHighlight/knowledge?domain=${encodeURIComponent(topicName)}&top=10`
       );
       setDomainKnowledgeItems(res.data || []);
     } catch (err) {
@@ -102,6 +103,12 @@ export default function TopicsSection({ topics, userId }) {
   };
   if (!topics || topics.length === 0)
     return <div className="p-4 text-gray-500">No topics available</div>;
+  const handleReset = () => {
+  setSelectedTopic(null); // clears the selected topic
+  setDomainKnowledgeItems([]); // clears the displayed cards
+};
+
+ 
 
   return (
     <div className="p-4">
@@ -154,6 +161,7 @@ export default function TopicsSection({ topics, userId }) {
             onFavourite={handleFavouriteClick}
             onComment={handleCommentClick}
             engagement={engagement}
+              onReset={handleReset}
           />
         </div>
       )}

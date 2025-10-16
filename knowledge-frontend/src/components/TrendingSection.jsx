@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import KnowledgeCardsDisplay from "./KnowledgeCardsDisplay";
 import PreviewModal from "./PreviewModal";
-import axios from "axios";
+import api from "../api";
 
 export default function TrendingSection({ trending = [] }) {
   const [selectedItem, setSelectedItem] = useState(null);
@@ -10,6 +10,10 @@ export default function TrendingSection({ trending = [] }) {
     favouritedItems: [],
   });
   const [userId, setUserId] = useState(null);
+  const [showTrending, setShowTrending] = useState(true);
+
+
+  // Load userId from localStorage on mount
   useEffect(() => {
     const storedUserId = localStorage.getItem("userId");
     if (storedUserId) {
@@ -20,10 +24,11 @@ export default function TrendingSection({ trending = [] }) {
     }
   }, []);
 
+  // Fetch user engagements when userId is available
   useEffect(() => {
-    const fetchUserEngagements = async () => {
-      console.log("Fetching engagements for userId:", userId);
+    if (!userId) return;
 
+    const fetchUserEngagements = async () => {
       // Load from localStorage first
       const storedEngagement = localStorage.getItem("engagement");
       if (storedEngagement) {
@@ -31,15 +36,8 @@ export default function TrendingSection({ trending = [] }) {
         setEngagement(JSON.parse(storedEngagement));
       }
 
-      if (!userId) {
-        console.warn("No userId yet — skipping API call.");
-        return;
-      }
-
       try {
-        const res = await axios.get(
-          `/api/engagement/user-engagements/${userId}`
-        );
+        const res = await api.get(`/engagement/user-engagements/${userId}`);
         console.log("Engagement fetched:", res.data);
 
         const likedItems = res.data
@@ -54,20 +52,23 @@ export default function TrendingSection({ trending = [] }) {
         setEngagement(newEngagement);
         localStorage.setItem("engagement", JSON.stringify(newEngagement));
       } catch (error) {
-        console.error("Failed to load user engagements:", error);
+        console.error(
+          "Failed to load user engagements:",
+          error.response?.data || error.message
+        );
       }
     };
 
-    if (userId) {
-      fetchUserEngagements();
-    }
+    fetchUserEngagements();
   }, [userId]);
 
+  // Update engagement in state and localStorage
   const updateLocalStorage = (newEngagement) => {
     setEngagement(newEngagement);
     localStorage.setItem("engagement", JSON.stringify(newEngagement));
   };
 
+  // Like/unlike handler
   const handleLikeClick = async (item) => {
     const itemId = item.itemId || item.id;
     const alreadyLiked = engagement.likedItems.includes(itemId);
@@ -78,22 +79,23 @@ export default function TrendingSection({ trending = [] }) {
 
     updateLocalStorage({ ...engagement, likedItems });
 
-    if (!userId) {
-      console.warn("No user ID — like stored locally only");
-      return;
-    }
+    if (!userId) return;
 
     try {
       if (alreadyLiked) {
-        await axios.delete(`/api/engagement/like/${itemId}?userId=${userId}`);
+        await api.delete(`/engagement/like/${itemId}?userId=${userId}`);
       } else {
-        await axios.post(`/api/engagement/like/${itemId}?userId=${userId}`);
+        await api.post(`/engagement/like/${itemId}?userId=${userId}`);
       }
     } catch (error) {
-      console.error("Failed to update like:", error);
+      console.error(
+        "Failed to update like:",
+        error.response?.data || error.message
+      );
     }
   };
 
+  // Favourite/unfavourite handler
   const handleFavouriteClick = async (item) => {
     const itemId = item.itemId || item.id;
     const alreadyFavourited = engagement.favouritedItems.includes(itemId);
@@ -104,42 +106,42 @@ export default function TrendingSection({ trending = [] }) {
 
     updateLocalStorage({ ...engagement, favouritedItems });
 
-    if (!userId) {
-      console.warn("No user ID — favourite stored locally only");
-      return;
-    }
+    if (!userId) return;
 
     try {
       if (alreadyFavourited) {
-        await axios.delete(
-          `/api/engagement/favourite/${itemId}?userId=${userId}`
-        );
+        await api.delete(`/engagement/favourite/${itemId}?userId=${userId}`);
       } else {
-        await axios.post(
-          `/api/engagement/favourite/${itemId}?userId=${userId}`
-        );
+        await api.post(`/engagement/favourite/${itemId}?userId=${userId}`);
       }
     } catch (error) {
-      console.error("Failed to update favourite:", error);
+      console.error(
+        "Failed to update favourite:",
+        error.response?.data || error.message
+      );
     }
   };
 
+  // Comment handler
   const handleCommentClick = async (itemId, commentText) => {
-    if (!userId) {
-      console.warn("Cannot post comment — user not logged in.");
-      return;
-    }
+    if (!userId) return;
 
     try {
-      await axios.post(
-        `/api/engagement/comment/${itemId}?userId=${userId}`,
-        { commentText },
-        { headers: { "Content-Type": "application/json" } }
-      );
+      await api.post(`/engagement/comment/${itemId}?userId=${userId}`, {
+        commentText,
+      });
     } catch (error) {
-      console.error("Failed to post comment:", error);
+      console.error(
+        "Failed to post comment:",
+        error.response?.data || error.message
+      );
     }
   };
+  const handleReset = () => {
+  setShowTrending(false);
+  setSelectedItem(null);
+};
+
 
   return (
     <>
@@ -152,6 +154,8 @@ export default function TrendingSection({ trending = [] }) {
         onFavourite={handleFavouriteClick}
         onComment={handleCommentClick}
         engagement={engagement}
+          onReset={handleReset}
+     
       />
 
       {selectedItem && (
@@ -162,6 +166,7 @@ export default function TrendingSection({ trending = [] }) {
           onFavourite={handleFavouriteClick}
           onComment={handleCommentClick}
           engagement={engagement}
+     
         />
       )}
     </>

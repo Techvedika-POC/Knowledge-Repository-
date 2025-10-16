@@ -30,7 +30,7 @@ namespace KnowLedger_Synaptix.Controllers
         {
             _service = service;
         }
-
+        [AllowAnonymous]
         [HttpPost("upload")]
         public async Task<IActionResult> Upload(
             [FromForm] KnowledgeItemUploadDto request,
@@ -67,6 +67,9 @@ namespace KnowLedger_Synaptix.Controllers
 
             return Ok(new { success = true, itemId = item.ItemId });
         }
+
+
+
         [AllowAnonymous]
 
         [HttpGet("Datewise")]

@@ -13,11 +13,11 @@ namespace KnowLedger_Synaptix.Services.Implementations
         {
             _context = context;
         }
-
-        public async Task<List<CategoryDto>> GetAllCategoriesAsync()
+        //Get all categories
+        public async Task<List<Category>> GetAllCategoriesAsync()
         {
             return await _context.Categories
-                .Select(c => new CategoryDto
+                .Select(c => new Category
                 {
                     CategoryId = c.CategoryId,
                     CategoryName = c.CategoryName,
@@ -27,12 +27,12 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 })
                 .ToListAsync();
         }
-
-        public async Task<CategoryDto?> GetCategoryByIdAsync(Guid categoryId)
+        //get category by id
+        public async Task<Category?> GetCategoryByIdAsync(Guid categoryId)
         {
             return await _context.Categories
                 .Where(c => c.CategoryId == categoryId)
-                .Select(c => new CategoryDto
+                .Select(c => new Category
                 {
                     CategoryId = c.CategoryId,
                     CategoryName = c.CategoryName,
@@ -42,12 +42,12 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 })
                 .FirstOrDefaultAsync();
         }
-
-        public async Task<CategoryDto?> GetCategoryByNameAsync(string categoryName)
+        //get category by name
+        public async Task<Category?> GetCategoryByNameAsync(string categoryName)
         {
             return await _context.Categories
                 .Where(c => c.CategoryName.ToLower() == categoryName.ToLower()) 
-                .Select(c => new CategoryDto
+                .Select(c => new Category
                 {
                     CategoryId = c.CategoryId,
                     CategoryName = c.CategoryName,

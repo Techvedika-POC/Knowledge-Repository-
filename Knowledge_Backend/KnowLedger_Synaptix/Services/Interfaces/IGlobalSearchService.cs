@@ -6,7 +6,9 @@ namespace KnowLedger_Synaptix.Services.Interfaces
 {
     public interface IGlobalSearchService
     {
-        
-        Task<List<GlobalSearchResultDto>> GlobalSearchAsync(string keyword);
+        /// <summary>
+        /// Searches for knowledge items matching the specified keyword.
+        /// </summary>
+        Task<List<KnowledgeItemDto>> GlobalSearchAsync(string keyword);
     }
 }

@@ -118,5 +118,32 @@ namespace KnowLedger_Synaptix.Controllers
             var titles = await _activityLogService.GetUserTitlesAsync(userId);
             return Ok(titles);
         }
+        [HttpGet("my/paged")]
+        public async Task<IActionResult> GetMyContributionsPaged(
+          [FromQuery] int pageNumber = 1,
+          [FromQuery] int pageSize = 10,
+          [FromQuery] string domain = null,
+          [FromQuery] string category = null,
+          [FromQuery] string title = null,
+          [FromQuery] string status = null,
+          [FromQuery] DateTime? date = null)
+        {
+            // Get logged-in user's ID from claims
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userIdStr, out var userId))
+                return Unauthorized("Invalid user.");
+
+            var pagedResult = await _activityLogService.GetUserContributionsPagedAsync(
+                userId, pageNumber, pageSize, domain, category, title, status, date);
+
+            return Ok(pagedResult);
+        }
+        [HttpGet("user/contributions/month")]
+        public async Task<IActionResult> GetUserContributionsThisMonth()
+        {
+            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            var contributions = await _activityLogService.GetUserContributionsThisMonthAsync(userId);
+            return Ok(contributions);
+        }
     }
 }

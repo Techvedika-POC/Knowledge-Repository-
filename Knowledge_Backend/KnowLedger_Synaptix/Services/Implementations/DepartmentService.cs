@@ -16,11 +16,11 @@ namespace KnowLedger_Synaptix.Services.Implementations
         {
             _context = context;
         }
-
-        public async Task<IEnumerable<DepartmentDto>> GetDepartmentsAsync()
+        //Get all departments
+        public async Task<IEnumerable<Department>> GetDepartmentsAsync()
         {
             return await _context.Departments
-                .Select(d => new DepartmentDto
+                .Select(d => new Department
                 {
                     DepartmentId = d.DepartmentId,
                     DepartmentName = d.DepartmentName,

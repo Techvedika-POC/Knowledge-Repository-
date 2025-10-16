@@ -35,6 +35,22 @@ namespace KnowLedger_Synaptix.Controllers
             if (!result) return BadRequest("Item cannot be approved.");
             return Ok("Item approved successfully.");
         }
+        [HttpGet("pending/paged")]
+        public async Task<IActionResult> GetPendingPaged([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+        {
+            var (items, totalCount) = await _approverService.GetPendingKnowledgeItemsAsync(pageNumber, pageSize);
+
+            int totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+            return Ok(new
+            {
+                items,
+                totalCount,
+                totalPages,
+                pageNumber,
+                pageSize
+            });
+        }
 
 
 

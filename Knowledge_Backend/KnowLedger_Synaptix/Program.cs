@@ -1,13 +1,14 @@
 using KnowLedger_Synaptix.Models;
+using KnowLedger_Synaptix.Models;
 using KnowLedger_Synaptix.Services;
 using KnowLedger_Synaptix.Services.Implementations;
 using KnowLedger_Synaptix.Services.Implementations;
 using KnowLedger_Synaptix.Services.Interfaces;
 using KnowLedger_Synaptix.Services.Interfaces;
-using Microsoft.EntityFrameworkCore;
-using KnowLedger_Synaptix.Models;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
@@ -36,15 +37,20 @@ builder.Services.AddScoped<IEngagementService, EngagementService>();
 builder.Services.AddScoped<IApproverService, ApproverService>();
 builder.Services.AddScoped<IActivityLogService , ActivityLogService>();
 // CORS
+// Read allowed origins from appsettings.json
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend",
-        policy => policy
-            .WithOrigins("http://localhost:3000")
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials());
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins(allowedOrigins!)
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
 });
+
 
 // Controllers
 builder.Services.AddControllers()
@@ -72,6 +78,7 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+
 // Authorization
 builder.Services.AddAuthorization();
 
@@ -87,7 +94,15 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+app.UseStaticFiles(); // serves all files in wwwroot
 
+// Serve uploads folder specifically (optional, already in wwwroot)
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(
+        Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads")),
+    RequestPath = "/uploads"
+});
 app.UseHttpsRedirection();
 app.UseCors("AllowFrontend"); // CORS BEFORE authentication
 app.UseAuthentication();      // Authentication BEFORE authorization

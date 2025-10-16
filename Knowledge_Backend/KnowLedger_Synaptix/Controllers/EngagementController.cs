@@ -90,6 +90,20 @@ public class EngagementController : ControllerBase
         await _service.RemoveEngagementAsync(itemId, userId, "Favourite");
         return Ok(new { message = "Favourite removed." });
     }
+    [HttpGet("top-liked")]
+    public async Task<IActionResult> GetTopLikedItems([FromQuery] int top = 5)
+    {
+        try
+        {
+            var leaderboard = await _service.GetTopLikedItemsAsync(top);
+            return Ok(leaderboard);
+        }
+        catch (Exception ex)
+        {
+            // Log exception here if you have a logging service
+            return StatusCode(500, new { message = "Failed to retrieve leaderboard", error = ex.Message });
+        }
+    }
 
 
 

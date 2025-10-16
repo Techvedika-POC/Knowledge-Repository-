@@ -14,10 +14,10 @@ import AdminDashboard from "./components/AdminDashboard";
 import ApproverDashboard from "./components/ApproverDashboard";
 
 // Event Pages (placeholders, replace with real components)
-import IdeathonPage from "./components/events/IdeathonPage";
-import HackathonPage from "./components/events/HackathonPage";
-import CodingChallengePage from "./components/events/CodingChallengePage";
-import KnowledgeQuestPage from "./components/events/KnowledgeQuestPage";
+import IdeathonPage from "./components/IdeathonPage";
+import HackathonPage from "./components/HackathonPage";
+import CodingChallengePage from "./components/CodingChallengePage";
+import KnowledgeQuestPage from "./components/KnowledgeQuestPage";
 
 // Protected App Shell
 function AppShell() {
@@ -27,13 +27,16 @@ function AppShell() {
       <Sidebar />
 
       {/* Main content */}
-      <main className="flex-1 p-5 overflow-y-auto bg-[#f9fafe]">
+      {/* <main className="flex-1 p-5 overflow-y-auto bg-[#f9fafe]"> */}
+      <main class="flex-1 overflow-y-auto bg-[#f9fafe] p-0 pt-0 pl-0">
+
         <Routes>
           {/* Default MainContent */}
           <Route path="home" element={<MainContent />} />
 
           {/* Quick Event Pages */}
           <Route path="events/ideathon" element={<IdeathonPage />} />
+          <Route path="/upload-knowledge" element={<UploadKnowledgeItem />} />
           <Route path="events/hackathon" element={<HackathonPage />} />
           <Route path="events/coding-challenge" element={<CodingChallengePage />} />
           <Route path="events/knowledge-quest" element={<KnowledgeQuestPage />} />

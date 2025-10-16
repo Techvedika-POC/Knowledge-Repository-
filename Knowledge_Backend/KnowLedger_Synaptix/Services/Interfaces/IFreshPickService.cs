@@ -4,6 +4,10 @@ namespace KnowLedger_Synaptix.Services.Interfaces
 {
     public interface IFreshPickService
     {
-        Task<List<FreshPickDto>> GetFreshPicksAsync(int count = 10);
+        /// <summary>
+        /// Retrieves the  recently upload knowledge articles
+        /// </summary>
+      
+        Task<List<KnowledgeItemFilterDto>> GetFreshPicksAsync(int count = 10);
     }
 }

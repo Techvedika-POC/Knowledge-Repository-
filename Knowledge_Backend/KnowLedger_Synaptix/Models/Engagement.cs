@@ -9,15 +9,15 @@ public partial class Engagement
 {
     public Guid EngagementId { get; set; }
 
-    public Guid ItemId { get; set; }
+    public Guid? ItemId { get; set; }
 
-    public Guid UserId { get; set; }
+    public Guid? UserId { get; set; }
 
     public string CommentText { get; set; }
 
     public int? Points { get; set; }
 
-    public DateTime CreatedOn { get; set; }
+    public DateTime? CreatedOn { get; set; }
 
     public DateTime? UpdatedOn { get; set; }
 

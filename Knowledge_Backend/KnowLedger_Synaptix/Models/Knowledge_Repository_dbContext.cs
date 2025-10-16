@@ -163,6 +163,7 @@ public partial class Knowledge_Repository_dbContext : DbContext
             entity.Property(e => e.FileName).HasColumnName("file_name");
             entity.Property(e => e.FilePath).HasColumnName("file_path");
             entity.Property(e => e.FileSize).HasColumnName("file_size");
+            entity.Property(e => e.FileType).HasColumnName("file_type");
             entity.Property(e => e.ItemId).HasColumnName("item_id");
             entity.Property(e => e.Message).HasColumnName("message");
             entity.Property(e => e.MimeType).HasColumnName("mime_type");
@@ -350,7 +351,6 @@ public partial class Knowledge_Repository_dbContext : DbContext
             entity.Property(e => e.CreatedOn)
                 .HasDefaultValueSql("now()")
                 .HasColumnName("created_on");
-            entity.Property(e => e.EngagementType).HasMaxLength(50);
             entity.Property(e => e.ItemId).HasColumnName("item_id");
             entity.Property(e => e.Points)
                 .HasDefaultValue(0)
@@ -366,6 +366,7 @@ public partial class Knowledge_Repository_dbContext : DbContext
 
             entity.HasOne(d => d.Item).WithMany(p => p.Engagements)
                 .HasForeignKey(d => d.ItemId)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("engagements_item_id_fkey");
 
             entity.HasOne(d => d.UpdatedByNavigation).WithMany(p => p.EngagementUpdatedByNavigations)

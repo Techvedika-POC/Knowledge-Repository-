@@ -4,8 +4,19 @@ namespace KnowLedger_Synaptix.Services.Interfaces
 {
     public interface ICategoryService
     {
-        Task<List<CategoryDto>> GetAllCategoriesAsync();
-        Task<CategoryDto?> GetCategoryByIdAsync(Guid categoryId);
-        Task<CategoryDto?> GetCategoryByNameAsync(string categoryName);
+        /// <summary>
+        /// Retrieves all categories available.
+        /// </summary>
+        Task<List<Category>> GetAllCategoriesAsync();
+
+        /// <summary>
+        /// Retrieves a category by its unique identifier.
+        /// </summary>
+        Task<Category?> GetCategoryByIdAsync(Guid categoryId);
+
+        /// <summary>
+        /// Retrieves a category by its name.
+        /// </summary>
+        Task<Category?> GetCategoryByNameAsync(string categoryName);
     }
 }

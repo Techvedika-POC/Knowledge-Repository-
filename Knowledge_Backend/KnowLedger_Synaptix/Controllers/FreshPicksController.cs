@@ -16,7 +16,7 @@ namespace KnowLedger_Synaptix.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<FreshPickDto>>> GetFreshPicks([FromQuery] int count = 10)
+        public async Task<ActionResult<List<KnowledgeItemFilterDto>>> GetFreshPicks([FromQuery] int count = 10)
         {
             var picks = await _freshPickService.GetFreshPicksAsync(count);
             return Ok(picks);

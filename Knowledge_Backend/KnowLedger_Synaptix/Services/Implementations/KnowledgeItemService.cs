@@ -18,6 +18,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
         {
             _context = context;
         }
+        //getting all details of a particular knowledge item
         public async Task<KnowledgeItemDetailsDto?> GetKnowledgeItemDetailsAsync(Guid itemId)
         {
             var item = await _context.KnowledgeItems
@@ -57,7 +58,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
         }
 
 
-
+        //uploading the knowledge items by a user
         public async Task<KnowledgeItem> UploadKnowledgeItemAsync(KnowledgeItemUploadDto dto, Guid userId)
         {
             if (string.IsNullOrWhiteSpace(dto.Title) || dto.DomainId == Guid.Empty || dto.CategoryId == Guid.Empty)
@@ -67,12 +68,13 @@ namespace KnowLedger_Synaptix.Services.Implementations
 
             try
             {
-                // 1️⃣ Create Knowledge Item
+                // Create Knowledge Item
                 var knowledgeItem = new KnowledgeItem
                 {
                     ItemId = Guid.NewGuid(),
                     Title = dto.Title,
                     Description = dto.Description,
+                    KnowledgeItem1 = dto.Description ?? "",  
                     DomainId = dto.DomainId,
                     CategoryId = dto.CategoryId,
                     OwnerId = userId,
@@ -88,7 +90,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 };
                 _context.KnowledgeItems.Add(knowledgeItem);
 
-                // 2️⃣ Create Initial Version
+                //  Create Initial Version
                 var version = new KnowledgeVersion
                 {
                     VersionId = Guid.NewGuid(),
@@ -99,35 +101,47 @@ namespace KnowLedger_Synaptix.Services.Implementations
                     CreatedOn = DateTime.UtcNow
                 };
                 _context.KnowledgeVersions.Add(version);
+                var attachmentsList = new List<Attachment>();
 
-                // 3️⃣ Add Attachments
-                if (dto.Attachments?.Count > 0)
+             
+                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+
+                if (!Directory.Exists(uploadsFolder))
                 {
-                    foreach (var file in dto.Attachments)
-                    {
-                        _context.Attachments.Add(new Attachment
-                        {
-                            AttachmentId = Guid.NewGuid(),
-                            ItemId = knowledgeItem.ItemId,
-                            VersionId = version.VersionId,
-                            FileName = file.FileName,
-                            MimeType = file.MimeType,
-                            FileData = file.FileData,
-                            FileSize = file.FileSize,
-                            CreatedOn = DateTime.UtcNow,
-                            CreatedBy = userId,
-                            UpdatedOn = DateTime.UtcNow,
-                            UpdatedBy = userId
-                        });
-                    }
+                    Directory.CreateDirectory(uploadsFolder); // Make sure the folder exists
                 }
 
-                // 4️⃣ Add Tags (fixed)
-                var tagsList = dto.Tags ?? new List<string>();
-
-                foreach (var tag in tagsList)
+                foreach (var file in dto.Attachments)
                 {
-                    _context.KnowledgeTags.Add(new KnowledgeTag
+                    var attachmentId = Guid.NewGuid();
+                    var filePath = Path.Combine(uploadsFolder, file.FileName); // Save file to the uploads folder
+                    await File.WriteAllBytesAsync(filePath, file.FileData); // Save metadata to the database
+
+                    var attachment = new Attachment
+                    {
+                        AttachmentId = attachmentId,
+                        ItemId = knowledgeItem.ItemId,
+                        VersionId = version.VersionId,
+                        FileName = file.FileName,
+                        FilePath = $"/uploads/{file.FileName}", // This is the URL path
+                        FileData = file.FileData, // optional: you may skip storing raw data in DB if stored on disk
+                        MimeType = file.MimeType,
+                        FileSize = file.FileSize,
+                        FileType = file.MimeType,
+                        CreatedOn = DateTime.UtcNow,
+                        CreatedBy = userId,
+                        UpdatedOn = DateTime.UtcNow,
+                        UpdatedBy = userId
+                    };
+
+                    _context.Attachments.Add(attachment);
+                }
+
+                await _context.SaveChangesAsync();
+
+                // Add Tags
+                var tagsList = (dto.Tags ?? new List<string>())
+                    .Select(tag => new KnowledgeTag
                     {
                         TagId = Guid.NewGuid(),
                         ItemId = knowledgeItem.ItemId,
@@ -137,15 +151,12 @@ namespace KnowLedger_Synaptix.Services.Implementations
                         CreatedBy = userId,
                         UpdatedOn = DateTime.UtcNow,
                         UpdatedBy = userId
-                    });
-                }
+                    }).ToList();
+                _context.KnowledgeTags.AddRange(tagsList);
 
-                await _context.SaveChangesAsync();
-
-
-                // 5️⃣ Event-related
-                // 5️⃣ Event-related
+                // Event-related 
                 if (dto.IsEventItem && dto.EventId.HasValue)
+                
                 {
                     var existingEvent = await _context.Events.FindAsync(dto.EventId.Value)
                         ?? throw new Exception($"Event with Id {dto.EventId.Value} does not exist.");
@@ -160,35 +171,19 @@ namespace KnowLedger_Synaptix.Services.Implementations
                         CreatedOn = DateTime.UtcNow
                     };
                     _context.Teams.Add(team);
-                    await _context.SaveChangesAsync();
 
-                    // 6️⃣ Team Members
+                    var uploader = await _context.Users.FindAsync(userId)
+                        ?? throw new Exception("Uploader not found in Users table.");
 
-                    // 1️⃣ Fetch uploader automatically
-                    var uploader = await _context.Users.FindAsync(userId);
-                    if (uploader == null)
-                        throw new Exception("Uploader not found in Users table.");
-
-                    var emails = new List<string>();
-
-                    // 2️⃣ Include only provided team member emails (exclude uploader)
-                    if (dto.TeamMemberEmails?.Count > 0)
-                    {
-                        foreach (var entry in dto.TeamMemberEmails)
-                        {
-                            emails.AddRange(entry
-                                .Split(',', StringSplitOptions.RemoveEmptyEntries)
-                                .Select(e => e.Trim())
-                                .Where(e => !string.IsNullOrEmpty(e) && e != uploader.Email)); // exclude uploader
-                        }
-                    }
-
-                    // Remove duplicates
-                    emails = emails.Distinct().ToList();
+                    // Add team members
+                    var emails = dto.TeamMemberEmails?
+                        .SelectMany(e => e.Split(',', StringSplitOptions.RemoveEmptyEntries))
+                        .Select(e => e.Trim())
+                        .Where(e => !string.IsNullOrEmpty(e) && e != uploader.Email)
+                        .Distinct()
+                        .ToList() ?? new List<string>();
 
                     var teamMembers = new List<TeamMember>();
-
-                    // Add team member emails
                     foreach (var email in emails)
                     {
                         var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
@@ -204,7 +199,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                         }
                     }
 
-                    // Finally, add uploader once
+                    // Add the team member who is uploading
                     teamMembers.Add(new TeamMember
                     {
                         TeamMemberId = Guid.NewGuid(),
@@ -212,12 +207,10 @@ namespace KnowLedger_Synaptix.Services.Implementations
                         UserId = uploader.UserId,
                         JoinedOn = DateTime.UtcNow
                     });
-
                     _context.TeamMembers.AddRange(teamMembers);
-                    await _context.SaveChangesAsync();
 
-                    // 7️⃣ Link Item to Event
-                    var eventKnowledgeItem = new EventKnowledgeItem
+                    // Link item to event
+                    _context.EventKnowledgeItems.Add(new EventKnowledgeItem
                     {
                         EventItemId = Guid.NewGuid(),
                         EventId = dto.EventId.Value,
@@ -226,24 +219,21 @@ namespace KnowLedger_Synaptix.Services.Implementations
                         CreatedOn = DateTime.UtcNow,
                         CreatedBy = userId,
                         UpdatedOn = DateTime.UtcNow
-                    };
-                    _context.EventKnowledgeItems.Add(eventKnowledgeItem);
-                    await _context.SaveChangesAsync();
+                    });
                 }
 
-
-                // 8️⃣ Log Activity
+                // 6️ Activity Log
                 var activityDetails =
                     $"Knowledge item '{knowledgeItem.Title}' uploaded by user. " +
                     $"Languages: {string.Join(", ", dto.Language ?? new List<string>())}; " +
                     $"Frameworks: {string.Join(", ", dto.Framework ?? new List<string>())}; " +
-                    $"Attachments: {dto.Attachments?.Count ?? 0}; " +
-                    $"Tags: {string.Join(", ", tagsList)};";
+                    $"Attachments: {attachmentsList.Count}; " +
+                    $"Tags: {string.Join(", ", tagsList.Select(t => t.TagName))};";
 
                 if (dto.IsEventItem)
                     activityDetails += $" Team: {dto.TeamName ?? "N/A"}; Members: {string.Join(", ", dto.TeamMemberEmails ?? new List<string>())};";
 
-                var activity = new ActivityLog
+                _context.ActivityLogs.Add(new ActivityLog
                 {
                     ActivityId = Guid.NewGuid(),
                     UserId = userId,
@@ -252,21 +242,24 @@ namespace KnowLedger_Synaptix.Services.Implementations
                     Action = "Upload Knowledge Item",
                     Details = activityDetails,
                     CreatedOn = DateTime.UtcNow
-                };
+                });
 
-                _context.ActivityLogs.Add(activity);
+                // Save everything in one transaction**
                 await _context.SaveChangesAsync();
-
                 await transaction.CommitAsync();
+
                 return knowledgeItem;
             }
-            catch
+            catch (Exception ex)
             {
                 await transaction.RollbackAsync();
+                // Log exception
+                Console.WriteLine(ex);
                 throw;
             }
         }
 
+        //get knowldege items by datewise realted to the user
         public async Task<IEnumerable<KnowledgeItemFilterDto>> GetKnowledgeItemSummariesAsync(
      string sortOrder = "desc",
      DateTime? filterDate = null)
@@ -312,6 +305,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
             var query = _context.KnowledgeItems
                 .Include(k => k.Domain)
                 .Include(k => k.Category)
+                .Include(k => k.Owner) // include the owner user
                 .Where(k => k.DomainId == domainId);
 
             var result = await query
@@ -321,6 +315,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                     DomainName = k.Domain.DomainName,
                     CategoryName = k.Category.CategoryName,
                     Description = k.Description,
+                    SubmittedBy = k.Owner != null ? k.Owner.Name : "Unknown", // get owner name
                     CreatedOn = k.CreatedOn ?? DateTime.MinValue
                 })
                 .ToListAsync();
@@ -334,6 +329,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
             var query = _context.KnowledgeItems
                 .Include(k => k.Domain)
                 .Include(k => k.Category)
+                .Include(k => k.Owner) // include the owner user
                 .Where(k => k.CategoryId == categoryId);
 
             var result = await query
@@ -343,22 +339,27 @@ namespace KnowLedger_Synaptix.Services.Implementations
                     DomainName = k.Domain.DomainName,
                     CategoryName = k.Category.CategoryName,
                     Description = k.Description,
+                    SubmittedBy = k.Owner != null ? k.Owner.Name : "Unknown", // get owner name
                     CreatedOn = k.CreatedOn ?? DateTime.MinValue
                 })
                 .ToListAsync();
 
             return result;
         }
+        //Getting knowledge items of the user
         public async Task<IEnumerable<KnowledgeItemFilterDto>> GetAllKnowledgeItemsAsync()
         {
             return await _context.KnowledgeItems
                 .Include(k => k.Domain)
                 .Include(k => k.Category)
+                 .Include(k => k.Owner)
                 .OrderByDescending(k => k.CreatedOn)
                 .Select(k => new KnowledgeItemFilterDto
                 {
                     Title = k.Title,
                     Description = k.Description,
+                    
+                    SubmittedBy = k.Owner != null ? k.Owner.Name : "Unknown", // get owner name
                     DomainName = k.Domain.DomainName,
                     CategoryName = k.Category.CategoryName,
                     CreatedOn = k.CreatedOn ?? DateTime.MinValue

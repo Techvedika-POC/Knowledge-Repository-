@@ -50,6 +50,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 })
                 .ToListAsync();
         }
+        //Approval 
        public async Task<bool> ApproveKnowledgeItemAsync(Guid itemId, Guid approverId)
         {
             var item = await _context.KnowledgeItems.FindAsync(itemId);
@@ -63,6 +64,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
             await _context.SaveChangesAsync();
             return true;
         }
+        //reject
          public async Task<bool> RejectKnowledgeItemAsync(Guid itemId, Guid approverId)
         {
             var item = await _context.KnowledgeItems.FindAsync(itemId);
@@ -76,5 +78,50 @@ namespace KnowLedger_Synaptix.Services.Implementations
             await _context.SaveChangesAsync();
             return true;
         }
+        //pagination
+        public async Task<(List<KnowledgeItemDto> Items, int TotalCount)> GetPendingKnowledgeItemsAsync(int pageNumber, int pageSize)
+        {
+            var query = _context.KnowledgeItems
+                .AsNoTracking()
+                .Include(k => k.Domain)
+                .Include(k => k.Category)
+                .Include(k => k.CreatedByNavigation)
+                .Where(k => k.Status == "Pending")
+                .AsQueryable();
+
+            int totalCount = await query.CountAsync();
+
+            var items = await query
+                .OrderBy(k => k.CreatedOn) 
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .Select(k => new KnowledgeItemDto
+                {
+                    ItemId = k.ItemId,
+                    Title = k.Title,
+                    Description = k.Description,
+                    DomainId = k.DomainId,
+                    DomainName = k.Domain != null ? k.Domain.DomainName : string.Empty,
+                    CategoryId = k.CategoryId,
+                    CategoryName = k.Category != null ? k.Category.CategoryName : string.Empty,
+                    OwnerId = k.OwnerId,
+                    OwnerName = k.Owner != null ? k.Owner.Name : string.Empty,
+                    Status = k.Status,
+                    IsEventItem = k.IsEventItem,
+                    Framework = k.Framework,
+                    Language = k.Language,
+                    Metadata = k.Metadata,
+                    CreatedOn = k.CreatedOn,
+                    CreatedBy = k.CreatedBy,
+                    CreatedByName = k.CreatedByNavigation != null ? k.CreatedByNavigation.Name : string.Empty,
+                    UpdatedOn = k.UpdatedOn,
+                    UpdatedBy = k.UpdatedBy,
+                    UpdatedByName = k.UpdatedByNavigation != null ? k.UpdatedByNavigation.Name : string.Empty
+                })
+                .ToListAsync();
+
+            return (items, totalCount);
+        }
+
     }
 }
