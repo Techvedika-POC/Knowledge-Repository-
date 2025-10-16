@@ -1,4 +1,6 @@
+
 ﻿using KnowLedger_Synaptix.Models;
+
 using System;
 
 namespace KnowLedger_Synaptix.Dtos
@@ -7,6 +9,8 @@ namespace KnowLedger_Synaptix.Dtos
     {
         // Unique identifier
         public Guid ItemId { get; set; }
+        public int EngagementScore { get; set; }
+        public DateTime CreatedOn { get; set; }
 
         // Main title of the knowledge item
         public string Title { get; set; }
@@ -44,8 +48,6 @@ namespace KnowLedger_Synaptix.Dtos
         // Is this an event-related item?
         public bool? IsEventItem { get; set; }
 
-        // Created/Updated info
-        public DateTime? CreatedOn { get; set; }
         public Guid? CreatedBy { get; set; }
         public string CreatedByName { get; set; } // From CreatedByNavigation
 
@@ -59,14 +61,16 @@ namespace KnowLedger_Synaptix.Dtos
 
         // Metadata (JSON/string)
         public string Metadata { get; set; }
+
         public string ContributorName { get; set; }
-        public int EngagementScore { get; set; }
+       
 
         public User User { get; set; }
         public string SubmittedBy { get; set; } = string.Empty;
 
 
         public List<string>? Tags { get; set; }= new List<string>();
+
 
     }
 }

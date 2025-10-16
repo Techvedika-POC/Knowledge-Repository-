@@ -1,6 +1,7 @@
 ﻿
 namespace KnowLedger_Synaptix.Dtos
 {
+
     public class AuthResponseDto
     {
         public Guid UserId { get; set; }
@@ -9,4 +10,5 @@ namespace KnowLedger_Synaptix.Dtos
         public string Email { get; set; }             
         public List<string> Roles { get; set; }
     }
+
 }

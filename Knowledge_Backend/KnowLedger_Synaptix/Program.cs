@@ -1,10 +1,13 @@
+
 using KnowLedger_Synaptix.Models;
-using KnowLedger_Synaptix.Models;
+
 using KnowLedger_Synaptix.Services;
 using KnowLedger_Synaptix.Services.Implementations;
-using KnowLedger_Synaptix.Services.Implementations;
+
 using KnowLedger_Synaptix.Services.Interfaces;
-using KnowLedger_Synaptix.Services.Interfaces;
+
+using Microsoft.EntityFrameworkCore;
+
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -33,6 +36,7 @@ builder.Services.AddScoped<IDaySpotlightService, DaySpotlightService>();
 builder.Services.AddScoped<IEngagementService, EngagementService>();
 
 
+
 // Enable CORS for React frontend
 builder.Services.AddScoped<IApproverService, ApproverService>();
 builder.Services.AddScoped<IActivityLogService , ActivityLogService>();
@@ -49,64 +53,78 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod()
               .AllowCredentials();
     });
-});
 
-
-// Controllers
-builder.Services.AddControllers()
-    .AddNewtonsoftJson(options =>
-        options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
-
-// JWT Authentication
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
+    builder.Services.AddScoped<IApproverService, ApproverService>();
+    builder.Services.AddScoped<IActivityLogService, ActivityLogService>();
+    builder.Services.AddCors(options =>
     {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
-        ValidAudience = builder.Configuration["JwtSettings:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:SecretKey"]))
-    };
+        options.AddPolicy("AllowFrontend",
+            policy => policy
+                .WithOrigins("http://localhost:3000", "https://knowledge-frontend-n567.onrender.com")
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials());
+
+    });
+
+
+    // Controllers
+    builder.Services.AddControllers()
+        .AddNewtonsoftJson(options =>
+            options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
+
+    // JWT Authentication
+    builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
+            ValidAudience = builder.Configuration["JwtSettings:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:SecretKey"]))
+        };
+    });
+
+
+    // Authorization
+    builder.Services.AddAuthorization();
+
+    // Swagger
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen();
+
+    var app = builder.Build();
+
+    // Middleware
+    if (app.Environment.IsDevelopment())
+    {
+        app.UseSwagger();
+        app.UseSwaggerUI();
+    }
+    app.UseStaticFiles(); // serves all files in wwwroot
+
+    // Serve uploads folder specifically (optional, already in wwwroot)
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new PhysicalFileProvider(
+            Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads")),
+        RequestPath = "/uploads"
+    });
+    app.UseHttpsRedirection();
+    app.UseRouting();
+    app.UseCors("AllowFrontend");
+    app.UseAuthentication();      // Authentication BEFORE authorizatione
+    app.UseAuthorization();
+
+    app.MapControllers();
+    app.Run();
 });
-
-
-// Authorization
-builder.Services.AddAuthorization();
-
-// Swagger
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
-var app = builder.Build();
-
-// Middleware
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-app.UseStaticFiles(); // serves all files in wwwroot
-
-// Serve uploads folder specifically (optional, already in wwwroot)
-app.UseStaticFiles(new StaticFileOptions
-{
-    FileProvider = new PhysicalFileProvider(
-        Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads")),
-    RequestPath = "/uploads"
-});
-app.UseHttpsRedirection();
-app.UseCors("AllowFrontend"); // CORS BEFORE authentication
-app.UseAuthentication();      // Authentication BEFORE authorization
-app.UseAuthorization();
-
-app.MapControllers();
-app.Run();

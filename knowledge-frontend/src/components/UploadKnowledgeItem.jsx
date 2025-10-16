@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { API_BASE_URL } from "../config";
 import { FaLightbulb } from "react-icons/fa";
 import { useLocation } from "react-router-dom";
 

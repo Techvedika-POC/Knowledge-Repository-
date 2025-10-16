@@ -10,6 +10,7 @@ namespace KnowLedger_Synaptix.Services.Interfaces
         /// <summary>
         /// Uploads a new knowledge item created by a specific user.
         /// </summary>
+
         Task<KnowledgeItem> UploadKnowledgeItemAsync(KnowledgeItemUploadDto dto, Guid userId);
 
         /// <summary>
@@ -17,9 +18,11 @@ namespace KnowLedger_Synaptix.Services.Interfaces
         /// </summary>
         Task<KnowledgeItemDetailsDto> GetKnowledgeItemDetailsAsync(Guid itemId);
 
+
         /// <summary>
         /// Retrieves a summarized list of knowledge items, optionally filtered by date and sorted by creation order.
         /// </summary>
+
         Task<IEnumerable<KnowledgeItemFilterDto>> GetKnowledgeItemSummariesAsync(
             string sortOrder = "desc",
             DateTime? filterDate = null
@@ -39,5 +42,6 @@ namespace KnowLedger_Synaptix.Services.Interfaces
         /// Retrieves all knowledge items available in the system.
         /// </summary>
         Task<IEnumerable<KnowledgeItemFilterDto>> GetAllKnowledgeItemsAsync();
+
     }
 }

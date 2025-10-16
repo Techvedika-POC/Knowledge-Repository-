@@ -41,7 +41,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                     Framework = k.Framework,
                     Language = k.Language,
                     Metadata = k.Metadata,
-                    CreatedOn = k.CreatedOn,
+                    
                     CreatedBy = k.CreatedBy,
                     CreatedByName = k.CreatedByNavigation != null ? k.CreatedByNavigation.Name : string.Empty,
                     UpdatedOn = k.UpdatedOn,
@@ -111,7 +111,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                     Framework = k.Framework,
                     Language = k.Language,
                     Metadata = k.Metadata,
-                    CreatedOn = k.CreatedOn,
+                    
                     CreatedBy = k.CreatedBy,
                     CreatedByName = k.CreatedByNavigation != null ? k.CreatedByNavigation.Name : string.Empty,
                     UpdatedOn = k.UpdatedOn,
