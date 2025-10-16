@@ -21,15 +21,15 @@ namespace KnowLedger_Synaptix.Dtos
 
         // Domain details
         public Guid? DomainId { get; set; }
-        public string DomainName { get; set; } // From Domain navigation
+        public string DomainName { get; set; } 
 
         // Category details
         public Guid? CategoryId { get; set; }
-        public string CategoryName { get; set; } // From Category navigation
+        public string CategoryName { get; set; } 
 
         // Owner details
         public Guid? OwnerId { get; set; }
-        public string OwnerName { get; set; } // From Owner navigation
+        public string OwnerName { get; set; } 
 
         // Status: Pending, Approved, Rejected
         public string Status { get; set; }
@@ -42,13 +42,16 @@ namespace KnowLedger_Synaptix.Dtos
 
         // Is this an event-related item?
         public bool? IsEventItem { get; set; }
+        public string ContributorName { get; set; }
 
         public Guid? CreatedBy { get; set; }
-        public string CreatedByName { get; set; } // From CreatedByNavigation
+        public string CreatedByName { get; set; } 
 
         public DateTime? UpdatedOn { get; set; }
+        public List<string> Tags { get; set; } = new List<string>();
+
         public Guid? UpdatedBy { get; set; }
-        public string UpdatedByName { get; set; } // From UpdatedByNavigation
+        public string UpdatedByName { get; set; } 
 
         // Programming info
         public string Framework { get; set; }

@@ -1,7 +1,13 @@
 import React, { useState } from "react";
 import axios from "axios";
-// import { API_BASE_URL } from "../config";
 import { useNavigate } from "react-router-dom";
+
+const dev = process.env.NODE_ENV !== "production";
+const API_BASE_URL = dev
+  ? process.env.REACT_APP_API_BASE_URL
+  : "https://your-production-url.com/api";
+
+
 export default function Signup() {
   const navigate = useNavigate();
   const [form, setForm] = useState({

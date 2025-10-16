@@ -49,45 +49,56 @@ export default function EngagementButtons({
     setShowCommentModal(false);
   };
 
+  // Base button style for hover only
+  const buttonClass =
+    "flex items-center gap-1 p-2 rounded-full hover:bg-gray-200 transition cursor-pointer";
+
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-4">
-        {/* Preview Button */}
+      <div className="flex items-center gap-3">
+        {/* Preview */}
         <button
           onClick={(e) => { e.stopPropagation(); onPreview(item); }}
-          className="flex items-center p-2 rounded-full bg-purple-50 hover:bg-purple-100"
+          className={buttonClass}
           title="Preview"
         >
-          <Eye size={20} className="text-purple-500" />
+          <Eye size={20} />
         </button>
 
-        {/* Like Button */}
-        <button
-          onClick={handleLike}
-          className={`flex items-center p-2 rounded-full ${liked ? "bg-red-100" : "bg-red-50 hover:bg-red-100"}`}
-          title="Like"
-        >
-          <Heart size={20} className={liked ? "text-red-500" : "text-red-300"} />
-          <span className="ml-1 text-sm">{likeCount}</span>
-        </button>
+    {/* Like */}
+<button
+  onClick={handleLike}
+  className={buttonClass}
+  title="Like"
+>
+  <Heart
+    size={20}
+    className={liked ? "text-red-600" : "text-red-300"}  // darker when liked
+  />
+  <span className="text-sm">{likeCount}</span>
+</button>
 
-        {/* Favourite Button */}
-        <button
-          onClick={handleFavourite}
-          className={`flex items-center p-2 rounded-full ${favoured ? "bg-yellow-200" : "bg-yellow-50 hover:bg-yellow-100"}`}
-          title="Favourite"
-        >
-          <Star size={20} className={favoured ? "text-yellow-500" : "text-yellow-300"} />
-        </button>
+{/* Favourite */}
+<button
+  onClick={handleFavourite}
+  className={buttonClass}
+  title="Favourite"
+>
+  <Star
+    size={20}
+    className={favoured ? "text-yellow-600" : "text-yellow-300"}  // darker when favourited
+  />
+</button>
 
-        {/* Comment Button */}
+
+        {/* Comment */}
         <button
           onClick={(e) => { e.stopPropagation(); setShowCommentModal(true); }}
-          className="flex items-center p-2 rounded-full bg-blue-50 hover:bg-blue-100"
+          className={buttonClass}
           title="Comments"
         >
-          <MessageCircle size={20} className="text-blue-500" />
-          <span className="ml-1 text-sm">{comments?.length || 0}</span>
+          <MessageCircle size={20} />
+          <span className="text-sm">{comments?.length || 0}</span>
         </button>
       </div>
 
@@ -95,7 +106,6 @@ export default function EngagementButtons({
       {showCommentModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="relative bg-white p-6 rounded-xl shadow-xl max-w-lg w-full mx-4">
-
             {/* Close Button */}
             <button
               className="absolute top-3 right-3 text-gray-600 hover:text-gray-900 text-xl font-bold"
@@ -105,7 +115,7 @@ export default function EngagementButtons({
               ✕
             </button>
 
-            <h3 className="text-xl font-bold text-purple-700 mb-4">
+            <h3 className="text-xl font-bold text-gray-800 mb-4">
               Comments
             </h3>
 
@@ -133,14 +143,14 @@ export default function EngagementButtons({
             <div className="flex gap-2">
               <input
                 type="text"
-                className="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-purple-400"
+                className="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-gray-400"
                 placeholder="Add a comment..."
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
               />
               <button
                 onClick={handleCommentSend}
-                className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 shadow"
+                className="px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-900 transition"
               >
                 Send
               </button>

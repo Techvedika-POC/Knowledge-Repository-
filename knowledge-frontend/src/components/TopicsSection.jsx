@@ -23,83 +23,28 @@ export default function TopicsSection({ topics, userId }) {
   const [selectedTopic, setSelectedTopic] = useState(null);
   const [domainKnowledgeItems, setDomainKnowledgeItems] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
-  const [engagement, setEngagement] = useState({
-    likedItems: [],
-    favouritedItems: [],
-  });
-  useEffect(() => {
-    const fetchUserEngagements = async () => {
-      if (!userId) return;
-      try {
-        const res = await axios.get(`/api/engagement/user-engagements/${userId}`);
-        const likedItems = res.data
-          .filter((e) => e.engagementType === "Like")
-          .map((e) => e.itemId);
-        const favouritedItems = res.data
-          .filter((e) => e.engagementType === "Favourite")
-          .map((e) => e.itemId);
-        setEngagement({ likedItems, favouritedItems });
-      } catch (err) {
-        console.error("Error fetching user engagements:", err);
-      }
-    };
-    fetchUserEngagements();
-  }, [userId]);
+  const [mappedItems, setMappedItems] = useState([]);
+
   const handleTopicClick = async (topicName) => {
     setSelectedTopic(topicName);
     try {
       const res = await axios.get(
         `/api/TopicHighlight/knowledge?domain=${encodeURIComponent(topicName)}&top=10`
       );
-      setDomainKnowledgeItems(res.data || []);
+      const items = res.data || [];
+      // Normalize contributor/owner name
+      const normalized = items.map(item => ({
+        ...item,
+        ownerName: item.ownerName || item.contributorName || "Unknown Contributor",
+      }));
+      setMappedItems(normalized);
+      setDomainKnowledgeItems(normalized);
     } catch (err) {
       console.error("Failed to fetch domain knowledge items:", err);
       setDomainKnowledgeItems([]);
     }
   };
-  const updateLocalStorage = (newEngagement) => {
-    setEngagement(newEngagement);
-    localStorage.setItem("engagement", JSON.stringify(newEngagement));
-  };
 
-  const handleLikeClick = async (item) => {
-    const itemId = item.itemId || item.id;
-    const alreadyLiked = engagement.likedItems.includes(itemId);
-    const likedItems = alreadyLiked
-      ? engagement.likedItems.filter((id) => id !== itemId)
-      : [...engagement.likedItems, itemId];
-    updateLocalStorage({ ...engagement, likedItems });
-    try {
-      const method = alreadyLiked ? "delete" : "post";
-      await axios[method](`/api/engagement/like/${itemId}?userId=${userId}`);
-    } catch (error) {
-      console.error("Error updating like:", error);
-    }
-  };
-
-  const handleFavouriteClick = async (item) => {
-    const itemId = item.itemId || item.id;
-    const alreadyFavourited = engagement.favouritedItems.includes(itemId);
-    const favouritedItems = alreadyFavourited
-      ? engagement.favouritedItems.filter((id) => id !== itemId)
-      : [...engagement.favouritedItems, itemId];
-    updateLocalStorage({ ...engagement, favouritedItems });
-    try {
-      const method = alreadyFavourited ? "delete" : "post";
-      await axios[method](`/api/engagement/favourite/${itemId}?userId=${userId}`);
-    } catch (error) {
-      console.error("Error updating favourite:", error);
-    }
-  };
-
-  const handleCommentClick = async (itemId, commentText) => {
-    if (!userId) return;
-    try {
-      await axios.post(`/api/engagement/comment/${itemId}?userId=${userId}`, { commentText });
-    } catch (error) {
-      console.error("Error posting comment:", error);
-    }
-  };
   if (!topics || topics.length === 0)
     return <div className="p-4 text-gray-500">No topics available</div>;
 
@@ -139,34 +84,25 @@ export default function TopicsSection({ topics, userId }) {
         ))}
       </Swiper>
 
-      {/* Knowledge Cards (after clicking a topic) */}
-      {selectedTopic && domainKnowledgeItems.length > 0 && (
+      {selectedTopic && mappedItems.length > 0 && (
         <div className="mt-8">
           <h3 className="text-xl font-semibold text-purple-600 mb-4">
             {selectedTopic} Knowledge Items
           </h3>
           <KnowledgeCardsDisplay
-            items={domainKnowledgeItems}
+            items={mappedItems}
             title={selectedTopic}
             userId={userId}
             onPreview={(item) => setSelectedItem(item)}
-            onLike={handleLikeClick}
-            onFavourite={handleFavouriteClick}
-            onComment={handleCommentClick}
-            engagement={engagement}
           />
         </div>
       )}
 
-      {/* Preview Modal */}
       {selectedItem && (
         <PreviewModal
           item={selectedItem}
           onClose={() => setSelectedItem(null)}
-          onLike={handleLikeClick}
-          onFavourite={handleFavouriteClick}
-          onComment={handleCommentClick}
-          engagement={engagement}
+          userId={userId}
         />
       )}
     </div>

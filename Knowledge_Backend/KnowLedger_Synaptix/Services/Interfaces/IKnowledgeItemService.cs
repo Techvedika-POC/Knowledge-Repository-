@@ -15,8 +15,6 @@ namespace KnowLedger_Synaptix.Services.Interfaces
       DateTime? filterDate = null
         );
         Task<IEnumerable<KnowledgeItemFilterDto>> GetKnowledgeItemsByDomainAsync(Guid domainId);
-
-        // Get knowledge items by Category
         Task<IEnumerable<KnowledgeItemFilterDto>> GetKnowledgeItemsByCategoryAsync(Guid categoryId);
 
         Task<IEnumerable<KnowledgeItemFilterDto>> GetAllKnowledgeItemsAsync();

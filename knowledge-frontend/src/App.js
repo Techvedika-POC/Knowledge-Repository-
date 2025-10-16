@@ -17,12 +17,14 @@ import ApproverDashboard from "./components/ApproverDashboard";
 
 
 function AppShell() {
+  console.log("REACT_APP_API_URL at App:", process.env.REACT_APP_API_URL);
   return (
+    
     <div className="flex h-screen w-screen overflow-hidden">
+
       <Sidebar />
       <main className="flex-1 p-5 overflow-y-auto bg-[#f9fafe]">
-        {/* <main className="flex-1 p-5 overflow-hidden bg-[#f9fafe]"> */}
-        {/* <main className="flex-1 p-5 bg-[#f9fafe]"> */}
+
 
         <Routes>
           {/* Default MainContent */}

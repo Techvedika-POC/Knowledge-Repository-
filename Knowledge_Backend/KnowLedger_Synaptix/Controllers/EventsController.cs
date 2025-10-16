@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace KnowLedger_Synaptix.Controllers
 {
+    // Handles event-related endpoints, like retrieving all events.
     [Route("api/[controller]")]
     [ApiController]
     public class EventsController : ControllerBase

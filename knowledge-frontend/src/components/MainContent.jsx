@@ -20,6 +20,7 @@ import SectionTabs from "./SectionTabs";
 import FreshPicksSection from "./FreshPicksSection";
 import TrendingSection from "./TrendingSection";
 import TopicsSection from "./TopicsSection";
+import Navbar from "./Navbar";
 import DaySpotlightSection from "./DaySpotlightSection";
 import { useNavigate } from "react-router-dom";
 const MainContent = () => {
@@ -56,6 +57,7 @@ const MainContent = () => {
     const [currentPage, setCurrentPage] = useState(null);
     const navigate = useNavigate();
     const userId = localStorage.getItem("userId");
+
     const handleTopicClick = async (topicName) => {
         setSelectedDomain(topicName);
 
@@ -192,76 +194,6 @@ const MainContent = () => {
         };
     }, []);
 
-    const handleLike = async (item) => {
-        try {
-            if (!item?.itemId) {
-                console.error("Invalid item: missing itemId");
-                return;
-            }
-
-            const url = `/api/engagement/like/${item.itemId}?userId=${userId}`;
-            console.log("Calling Like URL:", url);
-
-            const res = await fetch(url, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-            });
-
-            if (!res.ok) {
-                const errMsg = await res.text();
-                throw new Error(errMsg);
-            }
-
-            console.log("Liked item successfully:", item.itemId);
-        } catch (error) {
-            console.error("Error liking item:", error);
-        }
-    };
-
-    const handleComment = async (item, commentText) => {
-        try {
-            if (!item?.itemId || !commentText.trim()) return;
-
-            const url = `/api/engagement/comment/${item.itemId}?userId=${userId}`;
-            console.log("Calling Comment URL:", url);
-
-            const res = await fetch(url, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ commentText: commentText.trim() }), // send as JSON object
-            });
-
-            if (!res.ok) {
-                const errMsg = await res.text();
-                throw new Error(errMsg);
-            }
-
-            console.log("Commented successfully on item:", item.itemId);
-        } catch (error) {
-            console.error("Error commenting:", error);
-        }
-    };
-
-    const handleFavourite = async (item) => {
-        try {
-            const response = await fetch(
-                `/api/engagement/favourite/${item.itemId}?userId=${userId}`,
-                {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                }
-            );
-
-            if (!response.ok) throw new Error("Failed to favourite item");
-
-            const data = await response.json();
-            console.log("Favourite API response:", data);
-            return true; // success
-        } catch (error) {
-            console.error("Error favouriting item:", error);
-            return false; // failed
-        }
-    };
     const leaderboardData = [
         {
             title: "Top Contributor",
@@ -360,123 +292,26 @@ const MainContent = () => {
     ];
     return (
         <div className="flex flex-col gap-7 w-full p-2">
+            <div className="mt-2">
+                <Navbar />
+            </div>
             {/* Header */}
             <div className="relative flex justify-center items-center p-2">
-                <div className="text-center">
-                    <h1 className="text-2xl font-bold text-gray-900">
-                        KnowLedger Synaptix
-                    </h1>
-                    <p className="text-sm text-gray-500 mt-1">
-                        Innovate • Collaborate • Build
-                    </p>
-                </div>
-            </div>
-            {/* Search Bar */}
-            <form onSubmit={handleSearch} className="relative w-full">
-                <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-violet-500" />
-                <input
-                    type="text"
-                    placeholder="Search knowledge"
-                    value={keyword}
-                    onChange={(e) => setKeyword(e.target.value)}
-                    className="w-full border border-gray-200 rounded-full px-12 py-3 shadow-inner focus:outline-none focus:ring-2 focus:ring-violet-400 text-violet-600 placeholder-violet-500 bg-white"
-                />
-            </form>
-            {/* Search Results */}
-            {isSearching && <p className="text-gray-500 text-sm mt-2">🔍 Searching...</p>}
-            {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
-
-            {searchResults.length > 0 && (
-                <div className="bg-gradient-to-r from-blue-100 via-purple-100 to-pink-100 rounded-xl p-6 shadow-md flex flex-col gap-4">
-                    <h3 className="text-xl font-bold text-gray-800 border-b border-gray-300 pb-2">
-                        Search Results
-                    </h3>
-                    <div className="flex flex-wrap gap-6 justify-start">
-                        {searchResults.map((item, idx) => (
-                            <div
-                                key={idx}
-                                className="bg-white rounded-2xl shadow-md hover:shadow-lg p-5 flex flex-col w-full sm:w-[48%] lg:w-[30%] transition-transform transform hover:-translate-y-1"
-                            >
-                                <h4 className="text-lg font-bold text-indigo-700 mb-2">
-                                    {item.title || item.name}
-                                </h4>
-                                <p className="text-sm text-gray-600 mb-3 line-clamp-3">
-                                    {item.description || item.snippet}
-                                </p>
-                                <div className="flex gap-4 text-sm mt-auto">
-                                    <button className="px-3 py-1 rounded-lg bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition">
-                                        👍 Like
-                                    </button>
-                                    <button className="px-3 py-1 rounded-lg bg-pink-100 text-pink-700 hover:bg-pink-200 transition">
-                                        💬 Comment
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-            <div className="bg-white rounded-xl p-4 shadow flex flex-col lg:flex-row gap-6 items-center">
-                {/* Filters Section */}
-                <div className="flex flex-wrap gap-3 items-center flex-1">
-                    <button className="px-4 py-2 rounded-full bg-cyan-100 text-cyan-700 text-sm flex items-center gap-2 hover:bg-cyan-200 transition">
-                        <FaLayerGroup /> Domain
-                    </button>
-                    <button className="px-4 py-2 rounded-full bg-blue-100 text-blue-700 text-sm flex items-center gap-2 hover:bg-blue-200 transition">
-                        <FaFolderOpen /> Category
-                    </button>
-                    <button className="px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-sm flex items-center gap-2 hover:bg-gray-200 transition">
-                        <FaCalendarAlt /> Date
-                    </button>
-                    <button className="px-4 py-2 rounded-full bg-indigo-100 text-indigo-700 text-sm flex items-center gap-2 hover:bg-indigo-200 transition">
-                        <FaFilter /> Browse All
-                    </button>
-                </div>
-
-                {/* Ask Assistant Section */}
-                <div className="flex-none w-full lg:w-80">
-                    <div className="bg-white rounded-xl p-4 flex flex-col gap-3 border border-gray-100">
-                        {/* Ask Anything Title */}
-                        <div className="flex items-center gap-2">
-                            <FaRobot className="text-purple-500 text-lg" />
-                            <p className="font-medium text-gray-700">Ask Anything</p>
-                        </div>
-
-                        {/* Suggestions + Ask Button */}
-                        <div className="flex justify-between gap-3 items-center">
-                            <div className="flex flex-wrap gap-2 flex-1">
-                                <span className="px-3 py-1 rounded-full text-sm bg-purple-100 text-purple-700 hover:border hover:border-purple-300 cursor-pointer transition">
-                                    Ask about Zero Trust
-                                </span>
-                                <span className="px-3 py-1 rounded-full text-sm bg-purple-100 text-purple-700 hover:border hover:border-purple-300 cursor-pointer transition">
-                                    Find latest API guides
-                                </span>
-                                <span className="px-3 py-1 rounded-full text-sm bg-purple-100 text-purple-700 hover:border hover:border-purple-300 cursor-pointer transition">
-                                    Who leads observability?
-                                </span>
-                            </div>
-
-                            <button className="bg-purple-500 text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-purple-600 transition">
-                                Ask
-                            </button>
-                        </div>
-                    </div>
-                </div>
             </div>
             <div className="p-6">
                 {/* Section Tabs */}
                 <SectionTabs activeSection={activeSection} onSectionChange={setActiveSection} />
+
                 <div className="mt-4">
                     {/* Fresh Picks Section */}
                     {activeSection === "freshPicks" && (
                         <FreshPicksSection
                             freshPicks={freshPicks}
-                            handleLike={(itemId) => handleLike(itemId)}
-                            handleFavourite={(itemId) => handleFavourite(itemId)}
-                            handleComment={(itemId, comment) => handleComment(itemId, comment)}
-                            userId={userId} // ← Add this
+                            userId={userId} // only pass userId
                         />
                     )}
+
+                    {/* Trending Section */}
                     {activeSection === "trending" && (
                         <TrendingSection
                             trending={trending}
@@ -484,18 +319,17 @@ const MainContent = () => {
                             setShowAllTrending={setShowAllTrending}
                             setSelectedItem={setSelectedItem}
                             setIsModalOpen={setIsModalOpen}
-                            handleLike={(itemId) => handleLike(itemId)}
-                            handleFavourite={(itemId) => handleFavourite(itemId)}
-                            handleComment={(itemId, comment) => handleComment(itemId, comment)}
+                            userId={userId} // pass userId only
                             loading={loading}
                             error={error}
                         />
                     )}
 
+                    {/* Topics Section */}
                     {activeSection === "topics" && topics.length > 0 && (
                         <TopicsSection
                             topics={topics}
-                            userId={userId}
+                            userId={userId} // pass userId only
                         />
                     )}
 
@@ -505,6 +339,7 @@ const MainContent = () => {
                     )}
                 </div>
             </div>
+
             <div className="p-4">
                 {/* Quick Events */}
                 <div className="bg-[#FFD873] rounded-2xl p-6 shadow-md mb-6">

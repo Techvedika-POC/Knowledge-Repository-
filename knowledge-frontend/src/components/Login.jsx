@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import api from "../api"; 
 import { useNavigate } from "react-router-dom";
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+const API_BASE_URL = process.env.REACT_APP_API_URL;
 
 export default function Login() {
   const navigate = useNavigate();

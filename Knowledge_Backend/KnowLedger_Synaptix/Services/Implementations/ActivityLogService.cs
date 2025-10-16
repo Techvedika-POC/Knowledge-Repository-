@@ -9,6 +9,10 @@ using System.Threading.Tasks;
 
 namespace KnowLedger_Synaptix.Services.Implementations
 {
+    /// <summary>
+    /// Provides services to track and retrieve user activity logs, contributions,
+    /// and related metadata such as domains, categories, and titles.
+    /// </summary>
     public class ActivityLogService : IActivityLogService
     {
         private readonly Knowledge_Repository_dbContext _context;
@@ -18,9 +22,12 @@ namespace KnowLedger_Synaptix.Services.Implementations
             _context = context;
         }
 
-        // Fetch all contributions of the logged-in user
+        /// <summary>
+        /// Fetch all contributions of a specific user with summary descriptions.
+        /// </summary>
         public async Task<IEnumerable<ActivityLogDto>> GetUserContributionsAsync(Guid userId)
         {
+            // Query all knowledge items owned by the user, including category and domain
             var contributions = await _context.KnowledgeItems
                 .Where(k => k.OwnerId == userId)
                 .Include(k => k.Category)
@@ -34,16 +41,20 @@ namespace KnowLedger_Synaptix.Services.Implementations
                     Category = k.Category != null ? k.Category.CategoryName : null,
                     Domain = k.Domain != null ? k.Domain.DomainName : null,
                     Description = k.Description.Length > 100 ? k.Description.Substring(0, 100) + "..." : k.Description,
-                    Status = k.Status, // Approved / Pending / Rejected
+                    Status = k.Status, // e.g., Approved / Pending / Rejected
                     Date = k.CreatedOn
                 })
                 .ToListAsync();
 
             return contributions;
         }
-        // Fetch full details for preview
+
+        /// <summary>
+        /// Fetch full details for a specific knowledge item (for preview purposes).
+        /// </summary>
         public async Task<ActivityLogDto> GetContributionDetailsAsync(Guid itemId)
         {
+            // Query knowledge item by ID including category and domain details
             var item = await _context.KnowledgeItems
                 .Include(k => k.Category)
                 .Include(k => k.Domain)
@@ -54,7 +65,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                     Title = k.Title,
                     Category = k.Category != null ? k.Category.CategoryName : null,
                     Domain = k.Domain != null ? k.Domain.DomainName : null,
-                    Description = k.Description, 
+                    Description = k.Description,
                     Status = k.Status,
                     Date = k.CreatedOn
                 })
@@ -62,6 +73,10 @@ namespace KnowLedger_Synaptix.Services.Implementations
 
             return item;
         }
+
+        /// <summary>
+        /// Fetch user contributions with optional filters for domain, category, title, status, and date.
+        /// </summary>
         public async Task<IEnumerable<ActivityLogDto>> GetUserContributionsFilteredAsync(
             Guid userId,
             string domain = null,
@@ -70,27 +85,32 @@ namespace KnowLedger_Synaptix.Services.Implementations
             string status = null,
             DateTime? date = null)
         {
+            // Start query for user-owned knowledge items including domain and category
             var query = _context.KnowledgeItems
                 .Where(k => k.OwnerId == userId)
                 .Include(k => k.Category)
                 .Include(k => k.Domain)
                 .AsQueryable();
 
+            // Apply optional domain filter
             if (!string.IsNullOrEmpty(domain))
                 query = query.Where(k => k.Domain.DomainName.ToLower().Contains(domain.ToLower()));
 
+            // Apply optional category filter
             if (!string.IsNullOrEmpty(category))
                 query = query.Where(k => k.Category.CategoryName.ToLower().Contains(category.ToLower()));
 
+            // Apply optional title filter
             if (!string.IsNullOrEmpty(title))
                 query = query.Where(k => k.Title.ToLower().Contains(title.ToLower()));
 
+            // Apply optional status filter
             if (!string.IsNullOrEmpty(status))
                 query = query.Where(k => k.Status.ToLower().Contains(status.ToLower()));
 
+            // Apply optional date filter (only items created on that specific day)
             if (date.HasValue)
             {
-               
                 var selectedDate = DateTime.SpecifyKind(date.Value.Date, DateTimeKind.Utc);
 
                 query = query.Where(k =>
@@ -98,7 +118,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                     k.CreatedOn < selectedDate.AddDays(1));
             }
 
-
+            // Execute query and project results into DTO
             return await query
                 .OrderByDescending(k => k.CreatedOn)
                 .Select(k => new ActivityLogDto
@@ -115,6 +135,9 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 .ToListAsync();
         }
 
+        /// <summary>
+        /// Retrieve all unique domains for a specific user.
+        /// </summary>
         public async Task<IEnumerable<string>> GetUserDomainsAsync(Guid userId)
         {
             return await _context.KnowledgeItems
@@ -124,6 +147,9 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 .ToListAsync();
         }
 
+        /// <summary>
+        /// Retrieve all unique categories for a specific user.
+        /// </summary>
         public async Task<IEnumerable<string>> GetUserCategoriesAsync(Guid userId)
         {
             return await _context.KnowledgeItems
@@ -133,6 +159,9 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 .ToListAsync();
         }
 
+        /// <summary>
+        /// Retrieve all unique titles for a specific user.
+        /// </summary>
         public async Task<IEnumerable<string>> GetUserTitlesAsync(Guid userId)
         {
             return await _context.KnowledgeItems

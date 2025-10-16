@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { FaLightbulb } from "react-icons/fa";
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
-
+export const API_BASE_URL = process.env.REACT_APP_API_URL;
 export default function UploadKnowledgeItem() {
   const [frameworks, setFrameworks] = useState([
     "C#",
@@ -87,38 +86,44 @@ const handleSubmit = async (e) => {
     formData.append("CategoryId", form.categoryId);
     formData.append("Description", form.description);
 
-    (form.languages || "")
-      .split(",")
-      .map((l) => l.trim())
-      .filter((l) => l)
-      .forEach((lang) => formData.append("Language", lang));
+    // Languages: handle string or array safely
+    const languageList = Array.isArray(form.languages)
+      ? form.languages
+      : (form.languages || "").split(",").map((l) => l.trim()).filter(Boolean);
 
-    (frameworks || "")
-      .split(",")
-      .map((f) => f.trim())
-      .filter((f) => f)
-      .forEach((fw) => formData.append("Framework", fw));
- (form.tags || []).forEach(tag => formData.append("Tags", tag));
+    languageList.forEach((lang) => formData.append("Language", lang));
 
-    (files || []).forEach((file) => formData.append("Attachments", file));
+    // Frameworks: handle string or array safely
+    const frameworkList = Array.isArray(frameworks)
+      ? frameworks
+      : (frameworks || "").split(",").map((f) => f.trim()).filter(Boolean);
 
+    frameworkList.forEach((fw) => formData.append("Framework", fw));
+
+    // Tags
+    (form.tags || []).forEach((tag) => formData.append("Tags", tag));
+
+    // Attachments
+    (files || []).forEach((file) => formData.append("Files", file));
+
+    // Event-specific fields
     if (form.isEventItem) {
       formData.append("IsEventItem", true);
       formData.append("EventId", form.eventId);
       formData.append("TeamName", form.teamName);
+
       let emails = (form.teamMemberEmails || "")
         .split(",")
         .map((e) => e.trim())
-        .filter((e) => e);
+        .filter(Boolean);
 
       const userEmail = localStorage.getItem("userEmail");
       if (userEmail && !emails.includes(userEmail)) emails.push(userEmail);
 
-
       emails.forEach((email) => formData.append("TeamMemberEmails", email));
     }
 
-   
+    // Submit the form
     const response = await axios.post(
       `${API_BASE_URL}/knowledgeitem/upload`,
       formData,
@@ -135,16 +140,13 @@ const handleSubmit = async (e) => {
   } catch (err) {
     if (err.response) {
       console.error("Error response:", err.response.data);
-      alert(`Upload failed: ${err.response.data}`);
+      alert(`Upload failed: ${JSON.stringify(err.response.data)}`);
     } else {
       console.error("Error:", err.message);
       alert(`Upload failed: ${err.message}`);
     }
   }
 };
-
-
-
   return (
     <div className="max-w-[1000px] mx-auto mt-5 p-6 bg-white rounded-[12px] shadow-[0_6px_12px_rgba(0,0,0,0.05)] font-inter text-[#1f2937]">
       <div className="flex flex-wrap justify-between items-center mb-4 relative">

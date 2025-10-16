@@ -2,9 +2,17 @@
 using KnowLedger_Synaptix.Models;
 using KnowLedger_Synaptix.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace KnowLedger_Synaptix.Services.Implementations
 {
+    /// <summary>
+    /// Provides methods for approvers to fetch pending knowledge items 
+    /// and approve or reject them.
+    /// </summary>
     public class ApproverService : IApproverService
     {
         private readonly Knowledge_Repository_dbContext _context;
@@ -13,9 +21,14 @@ namespace KnowLedger_Synaptix.Services.Implementations
         {
             _context = context;
         }
-        // Fetch pending items for approver
+
+        /// <summary>
+        /// Retrieves all pending knowledge items that require approver action.
+        /// Includes domain, category, owner, and audit metadata.
+        /// </summary>
         public async Task<List<KnowledgeItemDto>> GetPendingKnowledgeItemsAsync()
         {
+            // Query for pending knowledge items including related navigation properties
             var query = _context.KnowledgeItems
                 .AsNoTracking()
                 .Include(k => k.Domain)
@@ -24,6 +37,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 .Where(k => k.Status == "Pending")
                 .AsQueryable();
 
+            // Project results into DTO for API response
             return await query
                 .Select(k => new KnowledgeItemDto
                 {
@@ -41,20 +55,31 @@ namespace KnowLedger_Synaptix.Services.Implementations
                     Framework = k.Framework,
                     Language = k.Language,
                     Metadata = k.Metadata,
-                    CreatedOn = k.CreatedOn,
+                    CreatedOn = k.CreatedOn ?? DateTime.MinValue,
+                    UpdatedOn = k.UpdatedOn ?? DateTime.MinValue,
                     CreatedBy = k.CreatedBy,
                     CreatedByName = k.CreatedByNavigation != null ? k.CreatedByNavigation.Name : string.Empty,
-                    UpdatedOn = k.UpdatedOn,
                     UpdatedBy = k.UpdatedBy,
                     UpdatedByName = k.UpdatedByNavigation != null ? k.UpdatedByNavigation.Name : string.Empty
                 })
                 .ToListAsync();
         }
-       public async Task<bool> ApproveKnowledgeItemAsync(Guid itemId, Guid approverId)
+
+        /// <summary>
+        /// Approves a pending knowledge item by updating its status and audit info.
+        /// </summary>
+        /// <param name="itemId">ID of the item to approve</param>
+        /// <param name="approverId">ID of the user approving the item</param>
+        /// <returns>True if approval succeeded; false otherwise</returns>
+        public async Task<bool> ApproveKnowledgeItemAsync(Guid itemId, Guid approverId)
         {
+            // Find the item
             var item = await _context.KnowledgeItems.FindAsync(itemId);
+
+            // Only pending items can be approved
             if (item == null || item.Status != "Pending") return false;
 
+            // Update status and audit fields
             item.Status = "Approved";
             item.UpdatedBy = approverId;
             item.UpdatedOn = DateTime.UtcNow;
@@ -63,11 +88,22 @@ namespace KnowLedger_Synaptix.Services.Implementations
             await _context.SaveChangesAsync();
             return true;
         }
-         public async Task<bool> RejectKnowledgeItemAsync(Guid itemId, Guid approverId)
+
+        /// <summary>
+        /// Rejects a pending knowledge item by updating its status and audit info.
+        /// </summary>
+        /// <param name="itemId">ID of the item to reject</param>
+        /// <param name="approverId">ID of the user rejecting the item</param>
+        /// <returns>True if rejection succeeded; false otherwise</returns>
+        public async Task<bool> RejectKnowledgeItemAsync(Guid itemId, Guid approverId)
         {
+            // Find the item
             var item = await _context.KnowledgeItems.FindAsync(itemId);
+
+            // Only pending items can be rejected
             if (item == null || item.Status != "Pending") return false;
 
+            // Update status and audit fields
             item.Status = "Rejected";
             item.UpdatedBy = approverId;
             item.UpdatedOn = DateTime.UtcNow;
