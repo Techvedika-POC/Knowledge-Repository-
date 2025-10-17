@@ -10,7 +10,8 @@ namespace KnowLedger_Synaptix.Dtos
         // Unique identifier
         public Guid ItemId { get; set; }
         public int EngagementScore { get; set; }
-        public DateTime CreatedOn { get; set; }
+        public DateTimeOffset CreatedOn { get; set; }
+
 
         // Main title of the knowledge item
         public string Title { get; set; }

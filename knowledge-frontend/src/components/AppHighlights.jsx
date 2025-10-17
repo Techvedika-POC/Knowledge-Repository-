@@ -53,7 +53,7 @@ export default function AppHighlights() {
     <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 font-sans pt-0 mt-0">
       <div className="max-w-7xl mx-auto px-4 pt-5">
         {/* Header */}
-        <h2 className="text-3xl font-bold text-center text-gray-800 ">
+        <h2 className="text-[20px] font-semibold text-black font-bold text-center  ">
           KnowLedger Synaptix Features
         </h2>
         <p className="text-center text-gray-600 text-base max-w-2xl mx-auto mt-2 mb-4">

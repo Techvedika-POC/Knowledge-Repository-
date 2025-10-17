@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { FaLightbulb } from "react-icons/fa";
 import { useLocation } from "react-router-dom";
-
+import api from "../api";
 
 export default function UploadKnowledgeItem() {
   const [frameworks, setFrameworks] = useState([
@@ -52,24 +52,24 @@ export default function UploadKnowledgeItem() {
   }, [eventId]);
 
   useEffect(() => {
-    axios
-      .get(`${API_BASE_URL}/domains`)
+    api.
+      get(`/domains`)
       .then((res) => setDomains(res.data))
       .catch((err) => console.error(err));
   }, []);
 
   useEffect(() => {
     if (form.domainId) {
-      axios
-        .get(`${API_BASE_URL}/domains/${form.domainId}/categories`)
+      api
+        .get(`/domains/${form.domainId}/categories`)
         .then((res) => setCategories(res.data))
         .catch((err) => console.error(err));
     }
   }, [form.domainId]);
 
   useEffect(() => {
-    axios
-      .get(`${API_BASE_URL}/events`)
+    api
+      .get(`/events`)
       .then((res) => setEvents(res.data))
       .catch((err) => console.error(err));
   }, []);
@@ -153,8 +153,8 @@ export default function UploadKnowledgeItem() {
         console.log(pair[0], ":", pair[1]);
       }
       // Submit the form
-      const response = await axios.post(
-        `${API_BASE_URL}/knowledgeitem/upload`,
+      const response = await api.post(
+        `/knowledgeitem/upload`,
         formData,
         {
           headers: {

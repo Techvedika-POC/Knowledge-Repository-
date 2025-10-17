@@ -60,7 +60,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                     Version = k.Version,
                     Visibility = k.Visibility,
                     IsEventItem = k.IsEventItem,
-                    CreatedOn = k.CreatedOn,
+
                     Framework = k.Framework,
                     Language = k.Language,
                     Tags = k.KnowledgeTags.Select(t => t.TagName).ToList(),
