@@ -9,6 +9,10 @@ using System.Threading.Tasks;
 
 namespace KnowLedger_Synaptix.Services.Implementations
 {
+    /// <summary>
+    /// Provides services to track and retrieve user activity logs, contributions,
+    /// and related metadata such as domains, categories, and titles.
+    /// </summary>
     public class ActivityLogService : IActivityLogService
     {
         private readonly Knowledge_Repository_dbContext _context;
@@ -21,6 +25,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
         // Fetch all contributions of the logged-in user
         public async Task<IEnumerable<ActivityLogDto>> GetUserContributionsAsync(Guid userId)
         {
+            // Query all knowledge items owned by the user, including category and domain
             var contributions = await _context.KnowledgeItems
                 .Where(k => k.OwnerId == userId)
                 .Include(k => k.Category)
@@ -44,6 +49,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
         // Fetch full details for preview
         public async Task<ActivityLogDto> GetContributionDetailsAsync(Guid itemId)
         {
+            // Query knowledge item by ID including category and domain details
             var item = await _context.KnowledgeItems
                 .Include(k => k.Category)
                 .Include(k => k.Domain)
@@ -54,7 +60,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                     Title = k.Title,
                     Category = k.Category != null ? k.Category.CategoryName : null,
                     Domain = k.Domain != null ? k.Domain.DomainName : null,
-                    Description = k.Description, 
+                    Description = k.Description,
                     Status = k.Status,
                     Date = k.CreatedOn
                 })
@@ -71,24 +77,30 @@ namespace KnowLedger_Synaptix.Services.Implementations
             string status = null,
             DateTime? date = null)
         {
+            // Start query for user-owned knowledge items including domain and category
             var query = _context.KnowledgeItems
                 .Where(k => k.OwnerId == userId)
                 .Include(k => k.Category)
                 .Include(k => k.Domain)
                 .AsQueryable();
 
+            // Apply optional domain filter
             if (!string.IsNullOrEmpty(domain))
                 query = query.Where(k => k.Domain.DomainName.ToLower().Contains(domain.ToLower()));
 
+            // Apply optional category filter
             if (!string.IsNullOrEmpty(category))
                 query = query.Where(k => k.Category.CategoryName.ToLower().Contains(category.ToLower()));
 
+            // Apply optional title filter
             if (!string.IsNullOrEmpty(title))
                 query = query.Where(k => k.Title.ToLower().Contains(title.ToLower()));
 
+            // Apply optional status filter
             if (!string.IsNullOrEmpty(status))
                 query = query.Where(k => k.Status.ToLower().Contains(status.ToLower()));
 
+            // Apply optional date filter (only items created on that specific day)
             if (date.HasValue)
             {
                
@@ -135,6 +147,9 @@ namespace KnowLedger_Synaptix.Services.Implementations
         }
         //user uploade titles
 
+        /// <summary>
+        /// Retrieve all unique titles for a specific user.
+        /// </summary>
         public async Task<IEnumerable<string>> GetUserTitlesAsync(Guid userId)
         {
             return await _context.KnowledgeItems

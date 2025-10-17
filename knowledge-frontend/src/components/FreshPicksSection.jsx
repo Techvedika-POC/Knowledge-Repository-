@@ -1,19 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import KnowledgeCardsDisplay from "./KnowledgeCardsDisplay";
 import PreviewModal from "./PreviewModal";
 import axios from "axios";
 import api from "../api";
 
-export default function FreshPicksSection({
-  freshPicks,
-  handleLike,
-  handleFavourite,
-  handleComment,
-  userId: propUserId, 
-}) {
-  // Get userId from localStorage if not passed as prop
-  const userId = propUserId || localStorage.getItem("userId");
-
+export default function FreshPicksSection({ freshPicks, userId }) {
   const [selectedItem, setSelectedItem] = useState(null);
   const [engagement, setEngagement] = useState({
     likedItems: [],
@@ -52,7 +43,7 @@ export default function FreshPicksSection({
 
   const handleLikeClick = async (item) => {
     if (!userId) {
-      console.warn("Cannot like — user not logged in.");
+      console.warn("Cannot like � user not logged in.");
       return;
     }
 
@@ -79,7 +70,7 @@ export default function FreshPicksSection({
 
   const handleFavouriteClick = async (item) => {
     if (!userId) {
-      console.warn("Cannot favourite — user not logged in.");
+      console.warn("Cannot favourite � user not logged in.");
       return;
     }
 
@@ -106,7 +97,7 @@ export default function FreshPicksSection({
 
   const handleCommentClick = async (itemId, commentText) => {
     if (!userId) {
-      console.warn("Cannot comment — user not logged in.");
+      console.warn("Cannot comment � user not logged in.");
       return;
     }
     if (!commentText.trim()) return;

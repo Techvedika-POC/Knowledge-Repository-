@@ -39,8 +39,12 @@ builder.Services.AddScoped<IActivityLogService, ActivityLogService>();
 // ==========================
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
 
+// Named HttpClient for Qdrant vector database
+builder.Services.AddHttpClient("QdrantClient", client =>
 builder.Services.AddCors(options =>
 {
+    client.BaseAddress = new Uri("http://localhost:6333/"); // Qdrant HTTP endpoint
+    client.Timeout = TimeSpan.FromMinutes(2);
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy.WithOrigins(allowedOrigins ?? new[]

@@ -1,12 +1,17 @@
 ﻿using KnowLedger_Synaptix.Dtos;
 using KnowLedger_Synaptix.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
 namespace KnowLedger_Synaptix.Controllers
 {
+    /// <summary>
+    /// Handles approval and rejection of knowledge items by authorized approvers.
+    /// </summary>
     [Route("api/approver")]
     [ApiController]
+    [Authorize] // Only authenticated users (approvers) can access these endpoints
     public class ApproverController : ControllerBase
     {
         private readonly IApproverService _approverService;
@@ -20,6 +25,7 @@ namespace KnowLedger_Synaptix.Controllers
         [HttpGet("pending")]
         public async Task<IActionResult> GetPendingItems()
         {
+            // Fetch all knowledge items currently waiting for approval
             var items = await _approverService.GetPendingKnowledgeItemsAsync();
             return Ok(items);
         }
@@ -30,6 +36,10 @@ namespace KnowLedger_Synaptix.Controllers
         {
             var approverId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)
                              ?? throw new Exception("UserId not found"));
+
+            // Validate and parse approver ID
+            if (!Guid.TryParse(approverIdClaim, out var approverId))
+                return BadRequest("Invalid user ID format.");
 
             var result = await _approverService.ApproveKnowledgeItemAsync(itemId, approverId);
             if (!result) return BadRequest("Item cannot be approved.");

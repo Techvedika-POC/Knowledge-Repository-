@@ -5,6 +5,6 @@
         public string TopicName { get; set; }
         public int RecentItemCount { get; set; }
         public string[] ExampleContributors { get; set; }
-        public int EngagementScore { get; set; } // total engagement for ranking
+        public int EngagementScore { get; set; } 
     }
 }

@@ -43,6 +43,10 @@ public partial class KnowledgeItem
 
     public string Metadata { get; set; }
 
+    public string KnowledgeItem1 { get; set; }
+
+    public List<float> Embedding { get; set; }
+
     public virtual ICollection<ActivityLog> ActivityLogs { get; set; } = new List<ActivityLog>();
 
     public virtual ICollection<Attachment> Attachments { get; set; } = new List<Attachment>();
