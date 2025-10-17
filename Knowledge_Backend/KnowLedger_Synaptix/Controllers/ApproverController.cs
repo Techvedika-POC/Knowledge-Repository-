@@ -30,21 +30,25 @@ namespace KnowLedger_Synaptix.Controllers
             return Ok(items);
         }
 
-        // POST: api/approver/approve/{itemId}
         [HttpPost("approve/{itemId}")]
         public async Task<IActionResult> ApproveItem(Guid itemId)
         {
-            var approverId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)
-                             ?? throw new Exception("UserId not found"));
+            // Get the approver ID from the logged-in user's claims
+            var approverIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(approverIdClaim))
+                return Unauthorized("User ID not found in token.");
 
-            // Validate and parse approver ID
             if (!Guid.TryParse(approverIdClaim, out var approverId))
                 return BadRequest("Invalid user ID format.");
 
             var result = await _approverService.ApproveKnowledgeItemAsync(itemId, approverId);
-            if (!result) return BadRequest("Item cannot be approved.");
+
+            if (!result)
+                return BadRequest("Item cannot be approved.");
+
             return Ok("Item approved successfully.");
         }
+
         [HttpGet("pending/paged")]
         public async Task<IActionResult> GetPendingPaged([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {

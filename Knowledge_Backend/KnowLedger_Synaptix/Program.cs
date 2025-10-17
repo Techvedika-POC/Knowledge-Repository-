@@ -1,9 +1,11 @@
-using KnowLedger_Synaptix.Models;
+﻿using KnowLedger_Synaptix.Models;
 using KnowLedger_Synaptix.Services;
 using KnowLedger_Synaptix.Services.Implementations;
 using KnowLedger_Synaptix.Services.Interfaces;
-using Microsoft.EntityFrameworkCore;
+using KnowledgeSynaptix.Services.Implementations;
+using KnowledgeSynaptix.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -33,18 +35,17 @@ builder.Services.AddScoped<IDaySpotlightService, DaySpotlightService>();
 builder.Services.AddScoped<IEngagementService, EngagementService>();
 builder.Services.AddScoped<IApproverService, ApproverService>();
 builder.Services.AddScoped<IActivityLogService, ActivityLogService>();
+builder.Services.AddScoped<IEmbeddingService, EmbeddingService>();
+builder.Services.AddScoped<IFileEmbeddingService, FileEmbeddingService>();
+builder.Services.AddScoped<IQdrantService, QdrantService>();
 
 // ==========================
-// CORS Configuration
+// CORS Configuration ✅ FIXED
 // ==========================
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
 
-// Named HttpClient for Qdrant vector database
-builder.Services.AddHttpClient("QdrantClient", client =>
 builder.Services.AddCors(options =>
 {
-    client.BaseAddress = new Uri("http://localhost:6333/"); // Qdrant HTTP endpoint
-    client.Timeout = TimeSpan.FromMinutes(2);
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy.WithOrigins(allowedOrigins ?? new[]
@@ -56,6 +57,15 @@ builder.Services.AddCors(options =>
         .AllowAnyMethod()
         .AllowCredentials();
     });
+});
+
+// ==========================
+// Named HttpClient for Qdrant
+// ==========================
+builder.Services.AddHttpClient("QdrantClient", client =>
+{
+    client.BaseAddress = new Uri("http://localhost:6333/");
+    client.Timeout = TimeSpan.FromMinutes(2);
 });
 
 // ==========================
@@ -124,7 +134,10 @@ app.UseStaticFiles(new StaticFileOptions
 });
 
 app.UseRouting();
+
+// ✅ Use CORS before authentication
 app.UseCors("AllowFrontend");
+
 app.UseAuthentication();
 app.UseAuthorization();
 

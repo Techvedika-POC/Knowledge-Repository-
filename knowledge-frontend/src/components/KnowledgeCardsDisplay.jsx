@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import api from "../api";
-import { User } from "lucide-react";
 import EngagementButtons from "./EngagementButtons";
 import { FileText, Tag, User, Type } from "lucide-react";
 
-export default function KnowledgeCardsDisplay({ items = [], title, onPreview, userId }) {
+export default function KnowledgeCardsDisplay({ items = [], title, onPreview, userId,onReset }) {
   const [showAll, setShowAll] = useState(false);
   const [engagementData, setEngagementData] = useState({});
   const [loading, setLoading] = useState(false);
@@ -132,7 +131,7 @@ export default function KnowledgeCardsDisplay({ items = [], title, onPreview, us
                <div className="flex items-center gap-2 mb-4">
   <User className={`w-5 h-5 text-${themeColor}-500`} />
   <span className="px-2 py-1 text-xs font-medium text-${themeColor}-800 rounded-full hover:bg-blue-100 transition cursor-pointer">
-    {item.ownerName || "Unknown Contributor"}
+     {item.ownerName || item.SubmittedBy || "Unknown Contributor"}
   </span>
 </div>
 
@@ -186,3 +185,4 @@ export default function KnowledgeCardsDisplay({ items = [], title, onPreview, us
     </div>
   );
 }
+

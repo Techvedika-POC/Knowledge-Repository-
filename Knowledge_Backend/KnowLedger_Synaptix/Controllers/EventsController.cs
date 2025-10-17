@@ -18,10 +18,12 @@ namespace KnowLedger_Synaptix.Controllers
         }
 
         [HttpGet]
+        public async Task<ActionResult<List<Event>>> GetAllEvents()
         {
             var events = await _eventService.GetAllEventsAsync();
             return Ok(events);
         }
+
         // GET: api/events/type/{eventType}
         [HttpGet("type/{eventType}")]
         public async Task<ActionResult<List<Event>>> GetEventsByType(string eventType)

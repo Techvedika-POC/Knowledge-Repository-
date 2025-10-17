@@ -351,7 +351,6 @@ public partial class Knowledge_Repository_dbContext : DbContext
             entity.Property(e => e.CreatedOn)
                 .HasDefaultValueSql("now()")
                 .HasColumnName("created_on");
-            entity.Property(e => e.EngagementType).HasMaxLength(50);
             entity.Property(e => e.ItemId).HasColumnName("item_id");
             entity.Property(e => e.Points)
                 .HasDefaultValue(0)
@@ -501,7 +500,9 @@ public partial class Knowledge_Repository_dbContext : DbContext
             entity.Property(e => e.Status)
                 .HasDefaultValueSql("'Draft'::knowledge_status_enum")
                 .HasColumnName("status");
-            entity.Property(e => e.Title).HasColumnName("title");
+            entity.Property(e => e.Title)
+                .IsRequired()
+                .HasColumnName("title");
             entity.Property(e => e.UpdatedBy).HasColumnName("updated_by");
             entity.Property(e => e.UpdatedOn).HasColumnName("updated_on");
             entity.Property(e => e.Version)

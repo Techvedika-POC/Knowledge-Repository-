@@ -25,7 +25,7 @@ export default function MyContributions() {
   const [titleList, setTitleList] = useState([]);
 
   const [pageNumber, setPageNumber] = useState(1);
-  const [pageSize] = useState(10); // items per page
+  const [pageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
 
   const searchTypes = ["Title", "Domain", "Category", "Status", "Date"];
@@ -33,6 +33,7 @@ export default function MyContributions() {
   useEffect(() => {
     fetchContributions();
     fetchFilterOptions();
+  }, [pageNumber]);
 
   const fetchContributions = async (filters = {}) => {
     const token = localStorage.getItem("jwtToken");
@@ -46,14 +47,11 @@ export default function MyContributions() {
       const cleanFilters = Object.fromEntries(
         Object.entries(filters).filter(([_, v]) => v != null && v !== "")
       );
-      const params = new URLSearchParams(cleanFilters).toString();
-      let url = "/Contributions/my";
-      if (params) url = `/Contributions/my/filter?${params}`;
 
       const params = new URLSearchParams({
         pageNumber,
         pageSize,
-        ...cleanFilters
+        ...cleanFilters,
       }).toString();
 
       const url = `/Contributions/my/paged?${params}`;
@@ -62,8 +60,10 @@ export default function MyContributions() {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      const data = response.data;
+      const { items, totalPages, total, approved, rejected, pending } = response.data;
 
+      setContributions(items || []);
+      setTotalPages(totalPages || 1);
 
       setMetrics({
         knowledgeItems: total,
@@ -71,7 +71,6 @@ export default function MyContributions() {
         rejected,
         pendingReviews: pending,
       });
-
     } catch (err) {
       console.error("Fetch contributions error:", err.response?.data || err);
       setError(err.response?.data?.title || "Failed to fetch contributions");
@@ -87,7 +86,6 @@ export default function MyContributions() {
         api.get("/Contributions/my/categories"),
         api.get("/Contributions/my/titles"),
       ]);
-
       setDomainList(domainsRes.data || []);
       setCategoryList(categoriesRes.data || []);
       setTitleList(titlesRes.data || []);
@@ -98,7 +96,8 @@ export default function MyContributions() {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    setPageNumber(1); // reset to first page
+    setPageNumber(1);
+
     const filters = {};
     if (keyword.trim()) {
       switch (searchType) {
@@ -145,14 +144,11 @@ export default function MyContributions() {
     <div className="bg-gray-50 min-h-screen font-sans m-0 p-4">
       {/* HEADER */}
       <div className="mb-2">
-        <h1
-          className="text-2xl font-bold text-indigo-700 mt-0"
-          style={{ fontFamily: "Calibri, sans-serif" }}
-        >
+        <h1 className="text-2xl font-bold text-indigo-700 mt-0">
           My Contributions
         </h1>
         <p className="text-sm font-bold text-gray-800 px-2 py-1 rounded mt-1 border border-gray-200 bg-white">
-          View and filter your uploaded knowledge Articles.
+          View and filter your uploaded knowledge articles.
         </p>
       </div>
 
@@ -173,20 +169,66 @@ export default function MyContributions() {
           ))}
         </select>
 
-        {/* keyword input/select based on type */}
         {searchType === "Domain" ? (
+          <select
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            className="border rounded px-2 py-1 bg-white text-sm"
+          >
             <option value="">Select Domain</option>
+            {domainList.map((d) => (
+              <option key={d} value={d}>
+                {d}
+              </option>
+            ))}
           </select>
         ) : searchType === "Category" ? (
+          <select
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            className="border rounded px-2 py-1 bg-white text-sm"
+          >
             <option value="">Select Category</option>
+            {categoryList.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
           </select>
         ) : searchType === "Title" ? (
+          <select
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            className="border rounded px-2 py-1 bg-white text-sm"
+          >
             <option value="">Select Title</option>
+            {titleList.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
           </select>
         ) : searchType === "Date" ? (
+          <input
+            type="date"
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            className="border rounded px-2 py-1 bg-white text-sm"
+          />
         ) : (
+          <input
+            type="text"
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            placeholder={`Enter ${searchType}`}
+            className="border rounded px-2 py-1 bg-white text-sm"
+          />
         )}
 
+        <button
+          type="submit"
+          className="flex items-center gap-1 px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+        >
           <Search size={16} /> Search
         </button>
       </form>
@@ -220,25 +262,24 @@ export default function MyContributions() {
           </thead>
           <tbody>
             {contributions.map((c) => (
-              <tr key={c.itemId} className="border-t hover:bg-gray-50 relative">
+              <tr key={c.itemId} className="border-t hover:bg-gray-50">
                 <td
-                  className="px-2 py-1 cursor-pointer relative"
-                  onMouseEnter={(e) =>
-                  }
-                  onMouseMove={(e) =>
-                  }
-                  onMouseLeave={() =>
-                  }
+                  className="px-2 py-1 cursor-pointer"
+                  onMouseEnter={() => setHoveredItem(c)}
+                  onMouseLeave={() => setHoveredItem(null)}
                 >
                   {c.title}
                 </td>
                 <td className="px-2 py-1">{c.category}</td>
-                <td className="px-2 py-1">{new Date(c.date).toLocaleDateString()}</td>
                 <td className="px-2 py-1">
-                    {c.status}
-                  </span>
+                  {new Date(c.date).toLocaleDateString()}
                 </td>
+                <td className="px-2 py-1">{c.status}</td>
                 <td className="px-2 py-1">
+                  <button
+                    className="text-indigo-600 hover:underline"
+                    onClick={() => openModal(c)}
+                  >
                     Preview
                   </button>
                 </td>
@@ -249,32 +290,50 @@ export default function MyContributions() {
 
         {/* PAGINATION */}
         <div className="flex justify-end items-center gap-2 mt-2">
-          <button onClick={handlePrevPage} disabled={pageNumber === 1} className="flex items-center px-2 py-1 border rounded hover:bg-gray-100 disabled:opacity-50">
+          <button
+            onClick={handlePrevPage}
+            disabled={pageNumber === 1}
+            className="flex items-center px-2 py-1 border rounded hover:bg-gray-100 disabled:opacity-50"
+          >
             <ChevronLeft size={16} /> Prev
           </button>
-          <span>Page {pageNumber} of {totalPages}</span>
-          <button onClick={handleNextPage} disabled={pageNumber === totalPages} className="flex items-center px-2 py-1 border rounded hover:bg-gray-100 disabled:opacity-50">
+          <span>
+            Page {pageNumber} of {totalPages}
+          </span>
+          <button
+            onClick={handleNextPage}
+            disabled={pageNumber === totalPages}
+            className="flex items-center px-2 py-1 border rounded hover:bg-gray-100 disabled:opacity-50"
+          >
             Next <ChevronRight size={16} />
           </button>
         </div>
       </div>
 
       {/* TOOLTIP */}
-{hoveredItem && hoveredItem.visible && (
-    <h3 className="font-semibold text-indigo-700">{hoveredItem.title}</h3>
-    <p className="mt-1 text-gray-700">{hoveredItem.description}</p>
-  </div>
-)}
-
+      {hoveredItem && (
+        <div className="fixed bottom-16 left-1/2 transform -translate-x-1/2 bg-white border border-gray-300 shadow-lg rounded p-3 text-sm z-50 w-80">
+          <h3 className="font-semibold text-indigo-700">{hoveredItem.title}</h3>
+          <p className="mt-1 text-gray-700">{hoveredItem.description}</p>
+        </div>
+      )}
 
       {/* PREVIEW MODAL */}
       {modalOpen && selectedItem && (
         <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-40 z-50">
           <div className="bg-white rounded-lg w-2/5 p-4 relative shadow-lg">
+            <button
+              className="absolute top-2 right-2 text-gray-600 hover:text-gray-900"
+              onClick={closeModal}
+            >
               <X size={20} />
             </button>
-            <h2 className="text-lg font-bold text-indigo-700">{selectedItem.title}</h2>
-            <p className="mt-2 text-sm">{selectedItem.description}</p>
+            <h2 className="text-lg font-bold text-indigo-700">
+              {selectedItem.title}
+            </h2>
+            <p className="mt-2 text-sm text-gray-700">
+              {selectedItem.description}
+            </p>
           </div>
         </div>
       )}

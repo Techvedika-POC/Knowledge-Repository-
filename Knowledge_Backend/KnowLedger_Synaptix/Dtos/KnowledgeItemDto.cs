@@ -1,7 +1,6 @@
-
-﻿using KnowLedger_Synaptix.Models;
-
+using KnowLedger_Synaptix.Models;
 using System;
+using System.Collections.Generic;
 
 namespace KnowLedger_Synaptix.Dtos
 {
@@ -12,6 +11,10 @@ namespace KnowLedger_Synaptix.Dtos
         public int EngagementScore { get; set; }
         public DateTimeOffset CreatedOn { get; set; }
 
+        // 👇 ADD THESE NEW PROPERTIES
+        public int Views { get; set; }       // Total number of times viewed
+        public int Likes { get; set; }       // Number of likes or upvotes
+        public int Comments { get; set; }    // Number of comments
 
         // Main title of the knowledge item
         public string Title { get; set; }
@@ -19,23 +22,20 @@ namespace KnowLedger_Synaptix.Dtos
         // Detailed description/content
         public string Description { get; set; }
 
-        // Optional field (originally KnowledgeItem1 in EF Core, can rename appropriately)
+        // Optional field (originally KnowledgeItem1 in EF Core)
         public string KnowledgeItem1 { get; set; }
 
         // Domain details
         public Guid? DomainId { get; set; }
-        // From Domain navigation
-        public string DomainName { get; set; } 
+        public string DomainName { get; set; }
 
         // Category details
         public Guid? CategoryId { get; set; }
-        // From Category navigation
-        public string CategoryName { get; set; } 
+        public string CategoryName { get; set; }
 
         // Owner details
         public Guid? OwnerId { get; set; }
-        // From Owner navigation
-        public string OwnerName { get; set; } 
+        public string OwnerName { get; set; }
 
         // Status: Pending, Approved, Rejected
         public string Status { get; set; }
@@ -46,18 +46,19 @@ namespace KnowLedger_Synaptix.Dtos
         // Visibility
         public string Visibility { get; set; }
 
-        // Is this an event-related item?
+        // Event-related
         public bool? IsEventItem { get; set; }
+
         public string ContributorName { get; set; }
 
         public Guid? CreatedBy { get; set; }
-        public string CreatedByName { get; set; } 
+        public string CreatedByName { get; set; }
 
         public DateTime? UpdatedOn { get; set; }
         public List<string> Tags { get; set; } = new List<string>();
 
         public Guid? UpdatedBy { get; set; }
-        public string UpdatedByName { get; set; } 
+        public string UpdatedByName { get; set; }
 
         // Programming info
         public string Framework { get; set; }
@@ -66,15 +67,7 @@ namespace KnowLedger_Synaptix.Dtos
         // Metadata (JSON/string)
         public string Metadata { get; set; }
 
-        public string ContributorName { get; set; }
-       
-
         public User User { get; set; }
         public string SubmittedBy { get; set; } = string.Empty;
-
-
-        public List<string>? Tags { get; set; }= new List<string>();
-
-
     }
 }

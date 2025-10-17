@@ -35,8 +35,6 @@ public partial class Attachment
 
     public long? FileSize { get; set; }
 
-
-
     public virtual User CreatedByNavigation { get; set; }
 
     public virtual KnowledgeItem Item { get; set; }
