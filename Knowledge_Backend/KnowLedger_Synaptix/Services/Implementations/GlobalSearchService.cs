@@ -9,6 +9,9 @@ using System.Threading.Tasks;
 
 namespace KnowLedger_Synaptix.Services.Implementations
 {
+    /// <summary>
+    /// Service to perform global search across knowledge items, domains, categories, attachments, and tags.
+    /// </summary>
     public class GlobalSearchService : IGlobalSearchService
     {
         private readonly Knowledge_Repository_dbContext _context;
@@ -18,30 +21,39 @@ namespace KnowLedger_Synaptix.Services.Implementations
             _context = context;
         }
 
-        public async Task<List<KnowledgeItemDto>> GlobalSearchAsync(string keyword)
+        /// <summary>
+        /// Performs a keyword-based search across multiple related entities.
+        /// </summary>
+        /// <param name="keyword">Search keyword</param>
+        /// <returns>List of GlobalSearchResultDto containing search results</returns>
+        public async Task<List<GlobalSearchResultDto>> GlobalSearchAsync(string keyword)
         {
+            // Return empty list if keyword is null or whitespace
             if (string.IsNullOrWhiteSpace(keyword))
-                return new List<KnowledgeItemDto>();
+                return new List<GlobalSearchResultDto>();
 
             keyword = keyword.ToLower();
 
-            var query = _context.KnowledgeItems
-                .Include(k => k.Owner)        // get SubmittedBy
-                .Include(k => k.Domain)
-                .Include(k => k.Category)
-                .Include(k => k.KnowledgeTags)
-                .Include(k => k.Attachments)
-                .AsQueryable();
-
-            // Filter by keyword
-            query = query.Where(k =>
-                k.Title.ToLower().Contains(keyword) ||
-                k.Description.ToLower().Contains(keyword) ||
-                k.KnowledgeTags.Any(t => t.TagName.ToLower().Contains(keyword)) ||
-                k.Attachments.Any(a => a.FileName.ToLower().Contains(keyword)) ||
-                (k.Domain != null && k.Domain.DomainName.ToLower().Contains(keyword)) ||
-                (k.Category != null && k.Category.CategoryName.ToLower().Contains(keyword))
-            );
+            // Search across KnowledgeItems, Domains, Categories, Attachments, and Tags
+            var query = from k in _context.KnowledgeItems
+                        join d in _context.Domains on k.DomainId equals d.DomainId into kd
+                        from domain in kd.DefaultIfEmpty()
+                        join c in _context.Categories on k.CategoryId equals c.CategoryId into kc
+                        from category in kc.DefaultIfEmpty()
+                        where k.Title.ToLower().Contains(keyword)
+                              || k.Description.ToLower().Contains(keyword)
+                              || _context.KnowledgeTags.Any(t => t.ItemId == k.ItemId && t.TagName.ToLower().Contains(keyword))
+                              || _context.Attachments.Any(a => a.ItemId == k.ItemId && a.FileName.ToLower().Contains(keyword))
+                              || (domain != null && domain.DomainName.ToLower().Contains(keyword))
+                              || (category != null && category.CategoryName.ToLower().Contains(keyword))
+                        select new GlobalSearchResultDto
+                        {
+                            Id = k.ItemId,
+                            Name = k.Title,
+                            // Return a snippet of description, truncate if longer than 200 characters
+                            Snippet = k.Description.Length > 200 ? k.Description.Substring(0, 200) + "..." : k.Description,
+                            CreatedOn = k.CreatedOn ?? DateTime.MinValue
+                        };
 
             var results = await query
                 .OrderByDescending(k => k.CreatedOn)
@@ -67,7 +79,8 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 })
                 .ToListAsync();
 
-            return results;
+            // Order by creation date descending
+            return results.OrderByDescending(r => r.CreatedOn).ToList();
         }
     }
 }

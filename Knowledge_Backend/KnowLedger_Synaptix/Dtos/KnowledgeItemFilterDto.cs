@@ -21,6 +21,9 @@ namespace KnowLedger_Synaptix.Dtos
         // Category name (e.g., Machine Learning, C#)
         public string CategoryName { get; set; } = string.Empty;
 
+        // Detailed description/content
+        public string Description { get; set; } = string.Empty;
+
         // Name of the user who submitted the item
         public string SubmittedBy { get; set; } = string.Empty;
 

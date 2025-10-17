@@ -6,6 +6,6 @@ namespace KnowLedger_Synaptix.Services.Interfaces
 {
     public interface ITrendingService
     {
-        Task<List<TrendingDto>> GetTrendingAsync(int top = 5);
+        Task<List<KnowledgeItemDto>> GetTrendingAsync(int top = 5);
     }
 }

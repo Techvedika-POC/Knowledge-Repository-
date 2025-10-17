@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import api from "../api"; 
 import { useNavigate } from "react-router-dom";
+const API_BASE_URL = process.env.REACT_APP_API_URL;
 
 
 export default function Login() {
@@ -40,7 +41,7 @@ console.log("Storing userId:", userId);
       }
 
       alert("Login successful!");
-      navigate("/app");
+      navigate("/app/home"); // redirect to home
     } catch (err) {
       console.error("Login failed", err);
       alert(err.response?.data?.message || "Invalid email or password.");

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { FaLightbulb } from "react-icons/fa";
+export const API_BASE_URL = process.env.REACT_APP_API_URL;
 import { useLocation } from "react-router-dom";
 import api from "../api";
 
@@ -92,36 +93,38 @@ export default function UploadKnowledgeItem() {
 
   const handleTabChange = (tab) => setActiveTab(tab);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const token = localStorage.getItem("jwtToken");
-    if (!token) {
-      alert("You must be logged in to upload a knowledge item.");
-      return;
-    }
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  const token = localStorage.getItem("jwtToken");
+  if (!token) {
+    alert("You must be logged in to upload a knowledge item.");
+    return;
+  }
 
-    try {
-      const formData = new FormData();
+  try {
+    const formData = new FormData();
 
-      // Basic Info
-      formData.append("Title", form.name);
-      formData.append("DomainId", form.domainId);
-      formData.append("CategoryId", form.categoryId);
-      formData.append("Description", form.description);
+    // Basic Info
+    formData.append("Title", form.name);
+    formData.append("DomainId", form.domainId);
+    formData.append("CategoryId", form.categoryId);
+    formData.append("Description", form.description);
 
+    // Languages: handle string or array safely
       // Languages:
-      const languageList = Array.isArray(form.languages)
-        ? form.languages
-        : (form.languages || "").split(",").map((l) => l.trim()).filter(Boolean);
+    const languageList = Array.isArray(form.languages)
+      ? form.languages
+      : (form.languages || "").split(",").map((l) => l.trim()).filter(Boolean);
 
-      languageList.forEach((lang) => formData.append("Language", lang));
+    languageList.forEach((lang) => formData.append("Language", lang));
 
+    // Frameworks: handle string or array safely
       // Frameworks
-      const frameworkList = Array.isArray(frameworks)
-        ? frameworks
-        : (frameworks || "").split(",").map((f) => f.trim()).filter(Boolean);
+    const frameworkList = Array.isArray(frameworks)
+      ? frameworks
+      : (frameworks || "").split(",").map((f) => f.trim()).filter(Boolean);
 
-      frameworkList.forEach((fw) => formData.append("Framework", fw));
+    frameworkList.forEach((fw) => formData.append("Framework", fw));
 
       const tagInput = document.getElementById("tagInput").value.trim();
       const allTags = [...form.tags];
@@ -129,25 +132,25 @@ export default function UploadKnowledgeItem() {
 
       allTags.forEach((tag) => formData.append("Tags", tag));
 
-      (files || []).forEach((file) => formData.append("Files", file));
+    (files || []).forEach((file) => formData.append("Files", file));
 
 
-      // Event-specific fields
-      if (form.isEventItem) {
-        formData.append("IsEventItem", true);
-        formData.append("EventId", form.eventId);
-        formData.append("TeamName", form.teamName);
+    // Event-specific fields
+    if (form.isEventItem) {
+      formData.append("IsEventItem", true);
+      formData.append("EventId", form.eventId);
+      formData.append("TeamName", form.teamName);
 
-        let emails = (form.teamMemberEmails || "")
-          .split(",")
-          .map((e) => e.trim())
-          .filter(Boolean);
+      let emails = (form.teamMemberEmails || "")
+        .split(",")
+        .map((e) => e.trim())
+        .filter(Boolean);
 
-        const userEmail = localStorage.getItem("userEmail");
-        if (userEmail && !emails.includes(userEmail)) emails.push(userEmail);
+      const userEmail = localStorage.getItem("userEmail");
+      if (userEmail && !emails.includes(userEmail)) emails.push(userEmail);
 
-        emails.forEach((email) => formData.append("TeamMemberEmails", email));
-      }
+      emails.forEach((email) => formData.append("TeamMemberEmails", email));
+    }
       console.log("FormData entries:");
       for (let pair of formData.entries()) {
         console.log(pair[0], ":", pair[1]);
@@ -164,18 +167,18 @@ export default function UploadKnowledgeItem() {
         }
       );
 
-      alert("Knowledge item uploaded successfully!");
-      console.log("Upload response:", response.data);
-    } catch (err) {
-      if (err.response) {
-        console.error("Error response:", err.response.data);
-        alert(`Upload failed: ${JSON.stringify(err.response.data)}`);
-      } else {
-        console.error("Error:", err.message);
-        alert(`Upload failed: ${err.message}`);
-      }
+    alert("Knowledge item uploaded successfully!");
+    console.log("Upload response:", response.data);
+  } catch (err) {
+    if (err.response) {
+      console.error("Error response:", err.response.data);
+      alert(`Upload failed: ${JSON.stringify(err.response.data)}`);
+    } else {
+      console.error("Error:", err.message);
+      alert(`Upload failed: ${err.message}`);
     }
-  };
+  }
+};
   return (
     <div className="max-w-[1000px] mx-auto mt-5 p-6 bg-white rounded-[12px] shadow-[0_6px_12px_rgba(0,0,0,0.05)] font-inter text-[#1f2937]">
       <div className="flex flex-wrap justify-between items-center mb-4 relative">
@@ -284,42 +287,43 @@ export default function UploadKnowledgeItem() {
           )}
         </section>
 
+      
+{/* Languages Section */}
 
-        {/* Languages Section */}
+<section className="bg-[#f9fafb] p-4 rounded-[8px] mb-6">
+  <h3 className="text-[16px] font-semibold mb-2 text-[#111827]">
+    Languages (comma-separated)
+  </h3>
+  <input
+    type="text"
+    name="languages"
+    placeholder="e.g. C#, Python, Java"
+    value={form.languages}
+    onChange={(e) =>
+      setForm((prev) => ({
+        ...prev,
+        languages: e.target.value,
+      }))
+    }
+    className="w-[96%] px-2 py-2 border border-[#d1d5db] rounded-[8px]"
+  />
+</section>
 
-        <section className="bg-[#f9fafb] p-4 rounded-[8px] mb-6">
-          <h3 className="text-[16px] font-semibold mb-2 text-[#111827]">
-            Languages (comma-separated)
-          </h3>
-          <input
-            type="text"
-            name="languages"
-            placeholder="e.g. C#, Python, Java"
-            value={form.languages}
-            onChange={(e) =>
-              setForm((prev) => ({
-                ...prev,
-                languages: e.target.value,
-              }))
-            }
-            className="w-[96%] px-2 py-2 border border-[#d1d5db] rounded-[8px]"
-          />
-        </section>
+{/* Frameworks Section */}
+<section className="bg-[#f9fafb] p-4 rounded-[8px] mb-6">
+  <h3 className="text-[16px] font-semibold mb-2 text-[#111827]">
+    Frameworks (comma-separated)
+  </h3>
+  <input
+    type="text"
+    name="frameworks"
+    placeholder="e.g. React, .NET, Spring Boot"
+    value={frameworks}
+    onChange={(e) => setFrameworks(e.target.value)}
+    className="w-[96%] px-2 py-2 border border-[#d1d5db] rounded-[8px]"
+  />
+</section>
 
-        {/* Frameworks Section */}
-        <section className="bg-[#f9fafb] p-4 rounded-[8px] mb-6">
-          <h3 className="text-[16px] font-semibold mb-2 text-[#111827]">
-            Frameworks (comma-separated)
-          </h3>
-          <input
-            type="text"
-            name="frameworks"
-            placeholder="e.g. React, .NET, Spring Boot"
-            value={frameworks}
-            onChange={(e) => setFrameworks(e.target.value)}
-            className="w-[96%] px-2 py-2 border border-[#d1d5db] rounded-[8px]"
-          />
-        </section>
         {/* Tags Section */}
         <section className="bg-[#f9fafb] p-4 rounded-[8px] mb-6">
           <h3 className="text-[16px] font-semibold mb-2 text-[#111827]">
@@ -379,6 +383,7 @@ export default function UploadKnowledgeItem() {
             </button>
           </div>
         </section>
+
         {/* Description Section */}
         <section className="bg-[#f9fafb] p-4 rounded-[8px] mb-6">
           <h3 className="text-[16px] font-semibold mb-4 text-[#111827]">
@@ -406,7 +411,7 @@ export default function UploadKnowledgeItem() {
                 type="button"
                 key={tab}
                 className={`px-2 py-1 rounded-[15px] ${activeTab === tab ? "bg-[#e4a931] text-[#0c0c0c]" : "bg-[#fef3c7]"
-                  }`}
+                }`}
                 onClick={() => handleTabChange(tab)}
               >
                 {tab}
