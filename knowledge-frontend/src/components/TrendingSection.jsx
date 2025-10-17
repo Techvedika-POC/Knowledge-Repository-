@@ -12,7 +12,6 @@ export default function TrendingSection({ trending = [] }) {
   const [userId, setUserId] = useState(null);
   const [mappedTrending, setMappedTrending] = useState([]);
 
-
   // Load userId from localStorage on mount
   useEffect(() => {
     const storedUserId = localStorage.getItem("userId");
@@ -21,12 +20,29 @@ export default function TrendingSection({ trending = [] }) {
 
   // Normalize contributor/owner name
   useEffect(() => {
-    const mapped = trending.map(item => ({
+    const mapped = trending.map((item) => ({
       ...item,
       ownerName: item.ownerName || item.contributorName || "Unknown Contributor",
     }));
     setMappedTrending(mapped);
   }, [trending]);
+
+  // ✅ Define missing handlers (even if just placeholders)
+  const handleLikeClick = (item) => {
+    console.log("Liked item:", item);
+  };
+
+  const handleFavouriteClick = (item) => {
+    console.log("Favourited item:", item);
+  };
+
+  const handleCommentClick = (item, commentText) => {
+    console.log("Commented:", commentText, "on", item);
+  };
+
+  const handleReset = () => {
+    console.log("Reset clicked");
+  };
 
   return (
     <>
@@ -39,8 +55,7 @@ export default function TrendingSection({ trending = [] }) {
         onFavourite={handleFavouriteClick}
         onComment={handleCommentClick}
         engagement={engagement}
-          onReset={handleReset}
-     
+        onReset={handleReset}
       />
 
       {selectedItem && (

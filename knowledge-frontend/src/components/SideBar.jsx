@@ -45,6 +45,8 @@ export default function Sidebar() {
             Innovate • Collaborate • Build
           </p>
         </div>
+
+        {/* Primary Menu */}
         <div>
           <p className="text-[11px] font-medium uppercase tracking-[0.5px] text-[#94a3b8] mb-2">
             Primary
@@ -59,8 +61,8 @@ export default function Sidebar() {
             <MenuItem
               icon={<Upload size={18} />}
               label="Upload"
-              active={location.pathname === "/app/upload"}
-              onClick={() => navigate("/app/upload")}
+              active={location.pathname === "/app/upload-knowledge"}
+              onClick={() => navigate("/app/upload-knowledge")}
             />
             <MenuItem
               icon={<Bot size={18} />}
@@ -75,7 +77,6 @@ export default function Sidebar() {
               onClick={() => navigate("/app/contributions")}
             />
 
-            {/* Admin Dashboard – only if user has admin role */}
             {roles.includes("Admin") && (
               <MenuItem
                 icon={<Star size={18} />}
@@ -85,7 +86,6 @@ export default function Sidebar() {
               />
             )}
 
-            {/* Approver Dashboard – only if user has approver role */}
             {roles.includes("Approver") && (
               <MenuItem
                 icon={<Star size={18} />}
@@ -96,7 +96,8 @@ export default function Sidebar() {
             )}
           </nav>
         </div>
-        {/* Secondary */}
+
+        {/* Secondary Menu */}
         <div className="mt-6">
           <p className="text-[11px] font-medium uppercase tracking-[0.5px] text-[#94a3b8] mb-2">
             Secondary
@@ -121,7 +122,7 @@ export default function Sidebar() {
       {/* Quick Actions */}
       <div className="flex flex-col gap-2 mt-4 mb-3">
         <button
-          onClick={() => navigate("/app/upload")}
+          onClick={() => navigate("/app/upload-knowledge")}
           className="w-[90%] mx-auto px-2 py-2 rounded-[8px] text-[13px] font-medium bg-[#06b6d4] hover:bg-[#0891b2] text-white transition-all"
         >
           New Upload
@@ -143,9 +144,7 @@ export default function Sidebar() {
           />
           <div className="flex flex-col text-left">
             <span className="text-sm font-medium text-white">{user.name}</span>
-            <span className="text-xs text-gray-300">
-              {user.email || "Free"}
-            </span>
+            <span className="text-xs text-gray-300">{user.email || "Free"}</span>
           </div>
         </button>
         {menuOpen && (
@@ -169,8 +168,11 @@ function MenuItem({ icon, label, active, onClick }) {
   return (
     <div
       onClick={onClick}
-      className={`flex items-center gap-3 px-3 py-2 rounded-[8px] text-[14px] cursor-pointer transition-all ${active ? "bg-[#15314d] text-[#22d3ee]" : "text-[#f1f5f9] hover:bg-white/10"
-        }`}
+      className={`flex items-center gap-3 px-3 py-2 rounded-[8px] text-[14px] cursor-pointer transition-all ${
+        active
+          ? "bg-[#15314d] text-[#22d3ee]"
+          : "text-[#f1f5f9] hover:bg-white/10"
+      }`}
     >
       {icon}
       <span>{label}</span>

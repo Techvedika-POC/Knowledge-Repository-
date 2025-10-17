@@ -1,7 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react"; // ✅ added useEffect
 import KnowledgeCardsDisplay from "./KnowledgeCardsDisplay";
 import PreviewModal from "./PreviewModal";
-import axios from "axios";
 import api from "../api";
 
 export default function FreshPicksSection({ freshPicks, userId }) {
@@ -10,9 +9,9 @@ export default function FreshPicksSection({ freshPicks, userId }) {
     likedItems: [],
     favouritedItems: [],
   });
-  const [showFreshPicks, setShowFreshPicks] = useState(true); 
+  const [showFreshPicks, setShowFreshPicks] = useState(true);
 
-  // Fetch user engagements on mount
+  // ✅ Fetch user engagements on mount
   useEffect(() => {
     if (!userId) return;
 
@@ -35,15 +34,16 @@ export default function FreshPicksSection({ freshPicks, userId }) {
     fetchUserEngagements();
   }, [userId]);
 
-
+  // ✅ Update local engagement state
   const updateEngagement = (newEngagement) => {
     setEngagement(newEngagement);
     localStorage.setItem("engagement", JSON.stringify(newEngagement));
   };
 
+  // ✅ Like handler
   const handleLikeClick = async (item) => {
     if (!userId) {
-      console.warn("Cannot like � user not logged in.");
+      console.warn("Cannot like — user not logged in.");
       return;
     }
 
@@ -61,16 +61,16 @@ export default function FreshPicksSection({ freshPicks, userId }) {
       } else {
         await api.post(`/engagement/like/${itemId}?userId=${userId}`);
       }
-      handleLike(item);
     } catch (error) {
       console.error("Failed to update like:", error);
-      updateEngagement(engagement); 
+      updateEngagement(engagement); // revert UI
     }
   };
 
+  // ✅ Favourite handler
   const handleFavouriteClick = async (item) => {
     if (!userId) {
-      console.warn("Cannot favourite � user not logged in.");
+      console.warn("Cannot favourite — user not logged in.");
       return;
     }
 
@@ -88,16 +88,16 @@ export default function FreshPicksSection({ freshPicks, userId }) {
       } else {
         await api.post(`/engagement/favourite/${itemId}?userId=${userId}`);
       }
-      handleFavourite(item);
     } catch (error) {
       console.error("Failed to update favourite:", error);
       updateEngagement(engagement); // revert UI
     }
   };
 
+  // ✅ Comment handler
   const handleCommentClick = async (itemId, commentText) => {
     if (!userId) {
-      console.warn("Cannot comment � user not logged in.");
+      console.warn("Cannot comment — user not logged in.");
       return;
     }
     if (!commentText.trim()) return;
@@ -108,12 +108,13 @@ export default function FreshPicksSection({ freshPicks, userId }) {
         { commentText: commentText.trim() },
         { headers: { "Content-Type": "application/json" } }
       );
-      handleComment(itemId, commentText);
     } catch (error) {
       console.error("Failed to post comment:", error);
     }
   };
-     const handleReset = () => {
+
+  // ✅ Reset handler
+  const handleReset = () => {
     setShowFreshPicks(false);
     setSelectedItem(null);
   };
@@ -129,7 +130,7 @@ export default function FreshPicksSection({ freshPicks, userId }) {
         onFavourite={handleFavouriteClick}
         onComment={handleCommentClick}
         engagement={engagement}
-         onReset={handleReset}
+        onReset={handleReset}
       />
 
       {selectedItem && (
@@ -145,3 +146,5 @@ export default function FreshPicksSection({ freshPicks, userId }) {
     </>
   );
 }
+
+ 

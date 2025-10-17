@@ -128,7 +128,6 @@ namespace KnowLedger_Synaptix.Services.Implementations
                     ItemId = Guid.NewGuid(),
                     Title = dto.Title,
                     Description = dto.Description,
-                    KnowledgeItem1 = dto.Description ?? "",  
                     DomainId = dto.DomainId,
                     CategoryId = dto.CategoryId,
                     OwnerId = userId,
@@ -204,10 +203,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                                 UpdatedOn = DateTime.UtcNow,
                                 UpdatedBy = userId
                             };
-
                             _context.Attachments.Add(attachment);
-                }
-
                             await _context.SaveChangesAsync();
 
                             // Generate embeddings for text-based files
@@ -254,50 +250,6 @@ namespace KnowLedger_Synaptix.Services.Implementations
                         CreatedBy = userId,
                         UpdatedOn = DateTime.UtcNow,
                         UpdatedBy = userId
-                    }).ToList();
-                _context.KnowledgeTags.AddRange(tagsList);
-
-                // Event-related 
-                if (dto.IsEventItem && dto.EventId.HasValue)
-                
-                {
-                    var existingEvent = await _context.Events.FindAsync(dto.EventId.Value)
-                        ?? throw new Exception($"Event with Id {dto.EventId.Value} does not exist.");
-
-                    var teamId = Guid.NewGuid();
-                    var team = new Team
-                    {
-                        TeamId = teamId,
-                        EventId = dto.EventId.Value,
-                        TeamName = dto.TeamName ?? $"{dto.Title}_Team",
-                        CreatedBy = userId,
-                        CreatedOn = DateTime.UtcNow
-                    };
-                    _context.Teams.Add(team);
-
-                    var uploader = await _context.Users.FindAsync(userId)
-                        ?? throw new Exception("Uploader not found in Users table.");
-
-                    // Add team members
-                    var emails = dto.TeamMemberEmails?
-                        .SelectMany(e => e.Split(',', StringSplitOptions.RemoveEmptyEntries))
-                        .Select(e => e.Trim())
-                        .Where(e => !string.IsNullOrEmpty(e) && e != uploader.Email)
-                        .Distinct()
-                        .ToList() ?? new List<string>();
-
-                    var teamMembers = new List<TeamMember>();
-                    foreach (var email in emails)
-                    {
-                        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
-                        if (user != null)
-                        {
-                            teamMembers.Add(new TeamMember
-                            {
-                                TeamMemberId = Guid.NewGuid(),
-                                TeamId = teamId,
-                                UserId = user.UserId,
-                                JoinedOn = DateTime.UtcNow
                     });
                 }
                 await _context.SaveChangesAsync();
@@ -333,7 +285,6 @@ namespace KnowLedger_Synaptix.Services.Implementations
                     _logger.LogWarning(ex, "Embedding generation failed for knowledge item {ItemId}", knowledgeItem.ItemId);
                 }
 
-                // Save everything in one transaction**
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
@@ -342,8 +293,6 @@ namespace KnowLedger_Synaptix.Services.Implementations
             catch
             {
                 await transaction.RollbackAsync();
-                // Log exception
-                Console.WriteLine(ex);
                 throw;
             }
         }
@@ -358,7 +307,6 @@ namespace KnowLedger_Synaptix.Services.Implementations
         /// </summary>
         public async Task<IEnumerable<KnowledgeItemFilterDto>> GetKnowledgeItemSummariesAsync(string sortOrder = "desc", DateTime? filterDate = null)
         {
-            // Convert filterDate to UTC if it exists
             DateTime? utcFilterDate = filterDate?.Date.ToUniversalTime();
             var query = _context.KnowledgeItems.Include(k => k.Domain).Include(k => k.Category).AsQueryable();
 
@@ -376,13 +324,12 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 {
                     Title = k.Title,
                     DomainName = k.Domain.DomainName,
+
                     CategoryName = k.Category.CategoryName,
                     Description = k.Description,
                     CreatedOn = k.CreatedOn ?? DateTime.MinValue
                 })
                 .ToListAsync();
-
-            return result;
         }
 
         /// <summary>
@@ -397,15 +344,13 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 .Select(k => new KnowledgeItemFilterDto
                 {
                     Title = k.Title,
+
                     DomainName = k.Domain.DomainName,
                     CategoryName = k.Category.CategoryName,
                     Description = k.Description,
-                    SubmittedBy = k.Owner != null ? k.Owner.Name : "Unknown", // get owner name
                     CreatedOn = k.CreatedOn ?? DateTime.MinValue
                 })
                 .ToListAsync();
-
-            return result;
         }
 
         /// <summary>
@@ -423,12 +368,9 @@ namespace KnowLedger_Synaptix.Services.Implementations
                     DomainName = k.Domain.DomainName,
                     CategoryName = k.Category.CategoryName,
                     Description = k.Description,
-                    SubmittedBy = k.Owner != null ? k.Owner.Name : "Unknown", // get owner name
                     CreatedOn = k.CreatedOn ?? DateTime.MinValue
                 })
                 .ToListAsync();
-
-            return result;
         }
 
         /// <summary>
@@ -439,14 +381,11 @@ namespace KnowLedger_Synaptix.Services.Implementations
             return await _context.KnowledgeItems
                 .Include(k => k.Domain)
                 .Include(k => k.Category)
-                 .Include(k => k.Owner)
                 .OrderByDescending(k => k.CreatedOn)
                 .Select(k => new KnowledgeItemFilterDto
                 {
                     Title = k.Title,
                     Description = k.Description,
-                    
-                    SubmittedBy = k.Owner != null ? k.Owner.Name : "Unknown", // get owner name
                     DomainName = k.Domain.DomainName,
                     CategoryName = k.Category.CategoryName,
                     CreatedOn = k.CreatedOn ?? DateTime.MinValue

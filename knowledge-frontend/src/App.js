@@ -13,40 +13,37 @@ import MyContributions from "./components/MyContributions";
 import AdminDashboard from "./components/AdminDashboard";
 import ApproverDashboard from "./components/ApproverDashboard";
 
-// Event Pages (placeholders, replace with real components)
+// Event Pages (replace placeholders with real ones)
 import IdeathonPage from "./components/IdeathonPage";
 import HackathonPage from "./components/HackathonPage";
 import CodingChallengePage from "./components/CodingChallengePage";
 import KnowledgeQuestPage from "./components/KnowledgeQuestPage";
-import ApproverDashboard from "./components/ApproverDashboard";
 
+// ===============================
 // Protected App Shell
+// ===============================
 function AppShell() {
   console.log("REACT_APP_API_URL at App:", process.env.REACT_APP_API_URL);
+
   return (
-    
     <div className="flex h-screen w-screen overflow-hidden">
       {/* Sidebar */}
       <Sidebar />
-      <main className="flex-1 p-5 overflow-y-auto bg-[#f9fafe]">
 
-      {/* Main content */}
-      {/* <main className="flex-1 p-5 overflow-y-auto bg-[#f9fafe]"> */}
-      <main class="flex-1 overflow-y-auto bg-[#f9fafe] p-0 pt-0 pl-0">
-
+      {/* Main Content */}
+      <main className="flex-1 overflow-y-auto bg-[#f9fafe] p-5">
         <Routes>
           {/* Default MainContent */}
           <Route path="home" element={<MainContent />} />
 
-          {/* Quick Event Pages */}
+          {/* Event Pages */}
           <Route path="events/ideathon" element={<IdeathonPage />} />
-          <Route path="/upload-knowledge" element={<UploadKnowledgeItem />} />
           <Route path="events/hackathon" element={<HackathonPage />} />
           <Route path="events/coding-challenge" element={<CodingChallengePage />} />
           <Route path="events/knowledge-quest" element={<KnowledgeQuestPage />} />
 
-          {/* Other Pages */}
-          <Route path="upload" element={<UploadKnowledgeItem />} />
+          {/* Upload & Contributions */}
+          <Route path="upload-knowledge" element={<UploadKnowledgeItem />} />
           <Route path="contributions" element={<MyContributions />} />
 
           {/* Admin Dashboard */}
@@ -60,7 +57,7 @@ function AppShell() {
           />
 
           {/* Approver Dashboard */}
-           <Route
+          <Route
             path="approver"
             element={
               <ProtectedRoute requireApprover={true}>
@@ -69,7 +66,7 @@ function AppShell() {
             }
           />
 
-          {/* Redirect unknown /app routes to /app/home */}
+          {/* Default redirect for unknown /app routes */}
           <Route path="*" element={<Navigate to="home" replace />} />
         </Routes>
       </main>
@@ -77,7 +74,9 @@ function AppShell() {
   );
 }
 
+// ===============================
 // Main App Component
+// ===============================
 export default function App() {
   return (
     <Router>

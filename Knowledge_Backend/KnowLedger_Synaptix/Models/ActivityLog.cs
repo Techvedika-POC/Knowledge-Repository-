@@ -21,8 +21,6 @@ public partial class ActivityLog
 
     public DateTime? CreatedOn { get; set; }
 
-    public string Action { get; set; }
-
     public virtual Event Event { get; set; }
 
     public virtual KnowledgeItem Item { get; set; }
