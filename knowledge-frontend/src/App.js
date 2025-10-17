@@ -18,13 +18,17 @@ import IdeathonPage from "./components/IdeathonPage";
 import HackathonPage from "./components/HackathonPage";
 import CodingChallengePage from "./components/CodingChallengePage";
 import KnowledgeQuestPage from "./components/KnowledgeQuestPage";
+import ApproverDashboard from "./components/ApproverDashboard";
 
 // Protected App Shell
 function AppShell() {
+  console.log("REACT_APP_API_URL at App:", process.env.REACT_APP_API_URL);
   return (
+    
     <div className="flex h-screen w-screen overflow-hidden">
       {/* Sidebar */}
       <Sidebar />
+      <main className="flex-1 p-5 overflow-y-auto bg-[#f9fafe]">
 
       {/* Main content */}
       {/* <main className="flex-1 p-5 overflow-y-auto bg-[#f9fafe]"> */}
@@ -56,7 +60,7 @@ function AppShell() {
           />
 
           {/* Approver Dashboard */}
-          <Route
+           <Route
             path="approver"
             element={
               <ProtectedRoute requireApprover={true}>

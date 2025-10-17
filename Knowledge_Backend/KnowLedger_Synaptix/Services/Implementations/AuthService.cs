@@ -7,7 +7,6 @@ using KnowLedger_Synaptix.Models;
 using KnowLedger_Synaptix.Services.Interfaces;
 
 using Microsoft.EntityFrameworkCore;
-
 using Microsoft.IdentityModel.Tokens;
 
 using System;
@@ -25,7 +24,6 @@ using System.Text;
 namespace KnowLedger_Synaptix.Services.Implementations
 
 {
-
     public class AuthService : IAuthService
 
     {
@@ -33,38 +31,37 @@ namespace KnowLedger_Synaptix.Services.Implementations
         private readonly Knowledge_Repository_dbContext _context;
 
         private readonly IConfiguration _configuration;
-
-        public AuthService(Knowledge_Repository_dbContext context, IConfiguration configuration)
+        private readonly ILogger<AuthService> _logger;
 
         {
 
             _context = context;
 
             _configuration = configuration;
-
         }
         //Registration
         public async Task<bool> RegisterAsync(RegisterDto dto, Guid? createdBy = null)
 
+        /// <summary>
+        /// Registers a new user, hashes the password, assigns the default role, 
+        /// and sets audit fields. Optionally allows creation by an admin.
+        /// </summary>
+        /// <param name="dto">Registration details</param>
+        /// <param name="createdBy">Optional admin user who creates this account</param>
+        /// <returns>True if registration succeeds, false if email already exists</returns>
+        public async Task<bool> RegisterAsync(RegisterDto dto, Guid? createdBy = null)
         {
 
-            // 1. Check if email already exists
-
+            // Check if a user with the same email already exists
             if (await _context.Users.AnyAsync(u => u.Email.ToLower() == dto.Email.ToLower()))
-
                 return false;
 
-            // 2. Find the department
-
+            // Retrieve department by name (optional)
             var department = await _context.Departments
 
                 .FirstOrDefaultAsync(d => d.DepartmentName.ToLower() == dto.DepartmentName.ToLower());
 
-            // 3. Hash password
-
             var hashedPassword = BCrypt.Net.BCrypt.HashPassword(dto.Password);
-
-            // 4. Create User
 
             var user = new User
 
@@ -90,7 +87,6 @@ namespace KnowLedger_Synaptix.Services.Implementations
 
             await _context.SaveChangesAsync();
 
-
             if (createdBy == null)
 
             {
@@ -105,8 +101,6 @@ namespace KnowLedger_Synaptix.Services.Implementations
 
             }
 
-            // 6. Assign default role "Contributor"
-
             var contributorRole = await _context.Roles
                 .FirstOrDefaultAsync(r => EF.Functions.ILike(r.RoleName, "contributor"));
 
@@ -115,7 +109,6 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 throw new InvalidOperationException("Default role 'Contributor' not found in Roles table.");
             }
 
-            var userRole = new UserRole
             {
                 UserId = user.UserId,
                 RoleId = contributorRole.RoleId,
@@ -123,20 +116,21 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 UpdatedOn = DateTime.UtcNow,
                 CreatedBy = createdBy ?? user.UserId,
                 UpdatedBy = createdBy ?? user.UserId
-            };
 
             _context.UserRoles.Add(userRole);
 
 
             await _context.SaveChangesAsync();
 
+            _logger.LogInformation("User registered successfully: {Email}", dto.Email);
             return true;
         }
-        //login
         public async Task<AuthResponseDto?> LoginAsync(LoginDto dto)
 
         {
+            _logger.LogInformation("Login attempt for user: {Email}", dto.Email);
 
+            // Retrieve user and roles by email
             var user = await _context.Users
 
                 .Include(u => u.UserRoleUsers)
@@ -145,19 +139,12 @@ namespace KnowLedger_Synaptix.Services.Implementations
 
                 .FirstOrDefaultAsync(u => u.Email.ToLower() == dto.Email.ToLower());
 
-            if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
-
                 return null;
-
-            // Collect role names (already strings in DB)
-            var roles = user.UserRoleUsers
-                .Select(ur => ur.Role.RoleName)
+            }
 
 
-                .ToList();
 
-            // Read JWT secret safely
-
+            // Prepare JWT token
             var secretKey = _configuration["JwtSettings:SecretKey"];
 
             if (string.IsNullOrEmpty(secretKey))
@@ -166,6 +153,8 @@ namespace KnowLedger_Synaptix.Services.Implementations
 
             var key = Encoding.UTF8.GetBytes(secretKey);
 
+            // Prepare claims including user roles
+            var roles = user.UserRoleUsers.Select(ur => ur.Role.RoleName).ToList();
             var claims = new List<Claim>
 
             {
@@ -178,10 +167,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
 
             };
 
-            foreach (var role in roles)
-
-                claims.Add(new Claim(ClaimTypes.Role, role));
-
+            // Create token descriptor
             var tokenDescriptor = new SecurityTokenDescriptor
 
             {
@@ -198,17 +184,19 @@ namespace KnowLedger_Synaptix.Services.Implementations
 
             };
 
+            // Generate JWT token
             var tokenHandler = new JwtSecurityTokenHandler();
 
             var token = tokenHandler.CreateToken(tokenDescriptor);
 
+            // Return authentication response
             return new AuthResponseDto
             {
                 Token = tokenHandler.WriteToken(token),
                 Name = user.Name,
                 Email = user.Email,
                 Roles = roles,
-                UserId = user.UserId 
+                UserId = user.UserId
             };
 
 

@@ -25,7 +25,7 @@ export default function HackathonPage() {
     fetchEvents();
   }, []);
 
-  //  Handle submit idea click — pass eventId to upload page
+  //  Handle submit idea click � pass eventId to upload page
   const handleSubmitIdea = (eventId) => {
   navigate("/app/upload-knowledge", { state: { eventId } });
 };
@@ -33,14 +33,15 @@ export default function HackathonPage() {
   return (
     <div className="bg-gray-50 font-sans">
       {/* Hero Section */}
-      <section
-        className="relative bg-cover bg-center h-screen"
-        style={{
+    <section
+  className="relative bg-cover bg-center h-screen"
+  style={{
           backgroundImage:
             "url('https://images.unsplash.com/photo-1518770660439-4636190af475')",
-        }}
-      >
-        <div className="absolute inset-0 bg-black opacity-50"></div>
+  }}
+>
+
+       <div className="absolute inset-0 bg-black opacity-50"></div>
         <div className="relative z-10 flex items-center justify-center h-full text-center text-white px-4">
           <div>
             <h1 className="text-5xl md:text-6xl font-bold mb-4">Hackathon 2025</h1>
@@ -118,7 +119,7 @@ export default function HackathonPage() {
                 </div>
               </div>
             ))}
-          </div>
+        </div>
         )}
       </section>
 

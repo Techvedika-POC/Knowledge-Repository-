@@ -3,205 +3,171 @@ import axios from "axios";
 import api from "../api";
 import { User } from "lucide-react";
 import EngagementButtons from "./EngagementButtons";
+import { FileText, Tag, User, Type } from "lucide-react";
 
-export default function KnowledgeCardsDisplay({
-    items = [],
-    title,
-    onPreview,
-    userId,
-     onReset
-}) {
-    const [showAll, setShowAll] = useState(false);
-    const [engagementData, setEngagementData] = useState({});
-    const [loading, setLoading] = useState(false);
+export default function KnowledgeCardsDisplay({ items = [], title, onPreview, userId }) {
+  const [showAll, setShowAll] = useState(false);
+  const [engagementData, setEngagementData] = useState({});
+  const [loading, setLoading] = useState(false);
 
-    const themeColor = "indigo"; // Main theme
-    const cardHighlightColor = "blue"; // Highlight color for top bar
+  const themeColor = "indigo"; 
+  const cardHighlightColor = "blue"; 
 
-    const fetchEngagementData = async () => {
-        if (!userId) return;
-        setLoading(true);
-        const data = {};
-        try {
-            await Promise.all(
-                items.map(async (item) => {
-                    const id = item.itemId || item.id;
-                    if (!id) return;
-                    const res = await api.get(
-                        `/Engagement/summary/${id}?userId=${userId}`
-                    );
-                    data[id] = res.data;
-                })
-            );
-            setEngagementData(data);
-        } catch (err) {
-            console.error("Error fetching engagement data", err);
-        }
-        setLoading(false);
-    };
+  // Fetch engagement summary for all items
+  const fetchEngagementData = async () => {
+    if (!userId) return;
+    setLoading(true);
+    const data = {};
+    try {
+      await Promise.all(
+        items.map(async (item) => {
+          const id = item.itemId || item.id;
+          if (!id) return;
+          const res = await axios.get(`/api/Engagement/summary/${id}?userId=${userId}`);
+          data[id] = res.data;
+        })
+      );
+      setEngagementData(data);
+    } catch (err) {
+      console.error("Error fetching engagement data", err);
+    }
+    setLoading(false);
+  };
 
-    useEffect(() => {
-        if (items.length) fetchEngagementData();
-    }, [items, userId]);
+  useEffect(() => {
+    if (items.length) fetchEngagementData();
+  }, [items, userId]);
 
-    const handleLike = async (item) => {
-        const id = item.itemId || item.id;
-        if (!id) return;
-        const isLiked = engagementData[id]?.userEngagementTypes?.includes("Like");
-        try {
-            if (isLiked) {
-                await api.delete(`/Engagement/like/${id}`, {
-                    params: { userId }
-                });
-            } else {
-                await api.post(`/Engagement/like/${id}`, null, {
-                    params: { userId }
-                });
-            }
-            fetchEngagementData();
-        } catch (err) {
-            console.error("Error liking/unliking item", err);
-        }
-    };
+  // Engagement handlers (fully internal)
+  const handleLike = async (item) => {
+    const id = item.itemId || item.id;
+    if (!id) return;
+    const isLiked = engagementData[id]?.userEngagementTypes?.includes("Like");
+    try {
+      if (isLiked) {
+        await axios.delete(`/api/Engagement/like/${id}`, { params: { userId } });
+      } else {
+        await axios.post(`/api/Engagement/like/${id}`, null, { params: { userId } });
+      }
+      fetchEngagementData();
+    } catch (err) {
+      console.error("Error liking/unliking item", err);
+    }
+  };
 
-    const handleFavourite = async (item) => {
-        const id = item.itemId || item.id;
-        if (!id) return;
-        const isFav = engagementData[id]?.userEngagementTypes?.includes("Favourite");
-        try {
-            if (isFav) {
-                await api.delete(`/Engagement/favourite/${id}`, {
-                    params: { userId }
-                });
-            } else {
-                await api.post(`/Engagement/favourite/${id}`, null, {
-                    params: { userId }
-                });
-            }
-            fetchEngagementData();
-        } catch (err) {
-            console.error("Error favouriting/unfavouriting item", err);
-        }
-    };
+  const handleFavourite = async (item) => {
+    const id = item.itemId || item.id;
+    if (!id) return;
+    const isFav = engagementData[id]?.userEngagementTypes?.includes("Favourite");
+    try {
+      if (isFav) {
+        await axios.delete(`/api/Engagement/favourite/${id}`, { params: { userId } });
+      } else {
+        await axios.post(`/api/Engagement/favourite/${id}`, null, { params: { userId } });
+      }
+      fetchEngagementData();
+    } catch (err) {
+      console.error("Error favouriting/unfavouriting item", err);
+    }
+  };
 
-    const handleComment = async (item, commentText) => {
-        const id = item.itemId || item.id;
-        if (!id) return;
-        try {
-            await api.post(
-                `/Engagement/comment/${id}`,
-                { CommentText: commentText },
-                { params: { userId } }
-            );
-            fetchEngagementData();
-        } catch (error) {
-            console.error("Error adding comment", error);
-        }
-    };
+  const handleComment = async (item, commentText) => {
+    const id = item.itemId || item.id;
+    if (!id) return;
+    try {
+      await axios.post(`/api/Engagement/comment/${id}`, { CommentText: commentText }, { params: { userId } });
+      fetchEngagementData();
+    } catch (error) {
+      console.error("Error adding comment", error);
+    }
+  };
 
-    return (
-        <div className="relative pb-16 p-6 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-3xl shadow-lg">
-            {/* Section Title */}
+  return (
+    <div className="pb-16 p-6">
+      {loading && <p className="text-center text-gray-500">Loading engagements...</p>}
 
-            {loading && (
-                <p className="text-center text-gray-500">Loading engagements...</p>
-            )}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {items.slice(0, showAll ? items.length : 3).map((item, idx) => {
+          const id = item.itemId || item.id;
+          const data = engagementData[id] || {};
 
-            {/* Cards Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                {items.slice(0, showAll ? items.length : 3).map((item, idx) => {
-                    const id = item.itemId || item.id;
-                    const data = engagementData[id] || {};
+          return (
+            <div key={id || idx} className="bg-white rounded-2xl shadow-md border border-gray-200 hover:shadow-lg transition flex flex-col">
+              <div className={`h-2 w-full rounded-t-2xl bg-${cardHighlightColor}-100`}></div>
 
-                    return (
-                        <div
-                            key={id || idx}
-                            className={`bg-white rounded-2xl shadow-md border border-gray-200 hover:shadow-lg transition flex flex-col`}
-                        >
-                            {/* Top Highlight Bar */}
-                            <div className={`h-2 w-full rounded-t-2xl bg-${cardHighlightColor}-200`}></div>
-
-                            <div className="p-6 flex flex-col flex-grow">
-                                {/* Combined Title & Description Section */}
-                                <div className="mb-4 p-4 rounded bg-gray-100">
-                                    <div className="flex flex-col gap-3">
-                                        {/* Title */}
-                                        <div className="flex items-center justify-between">
-                                            <span className={`font-semibold text-sm text-${themeColor}-600`}>
-                                                📌 Title:
-                                            </span>
-                                            <span className="font-medium text-gray-900">{item.title}</span>
-                                        </div>
+              <div className="p-6 flex flex-col flex-grow">
+                <div className="mb-4 p-4 rounded bg-gray-50 flex flex-col gap-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Type className="w-4 h-4 text-purple-500" />
+                      <span className="font-semibold text-sm text-gray-600">Title:</span>
+                    </div>
+                    <span className="font-medium text-gray-900">{item.title}</span>
+                  </div>
 
                                         {/* Description */}
-                                        <div className="flex items-center justify-between">
-                                            <span className={`font-semibold text-sm text-${themeColor}-600`}>
-                                                📝 Description:
-                                            </span>
-                                            <span className="text-gray-700 text-sm line-clamp-3">{item.description}</span>
-                                        </div>
-                                    </div>
-                                </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-indigo-500" />
+                      <span className="font-semibold text-sm text-gray-600">Description:</span>
+                    </div>
+                    <span className="text-gray-700 text-sm line-clamp-3">
+                      {item.description || "No description available."}
+                    </span>
+                  </div>
+                </div>
 
                                 {/* Tags */}
-                                {item.tags?.length > 0 && (
-                                    <div className="flex flex-wrap gap-2 mb-4">
-                                        {item.tags.map((tag, tIdx) => (
-                                            <span
-                                                key={tIdx}
-                                                className={`px-2 py-1 text-xs rounded-full bg-${themeColor}-100 text-${themeColor}-800 font-medium`}
-                                            >
-                                                🏷️ {tag}
-                                            </span>
-                                        ))}
-                                    </div>
-                                )}
+                {item.tags?.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {item.tags.map((tag, tIdx) => (
+                      <span key={tIdx} className={`px-2 py-1 text-xs rounded-full bg-${themeColor}-100 text-${themeColor}-800 font-medium flex items-center gap-1`}>
+                        <Tag className="w-3 h-3" /> {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
 
                                 {/* Contributor */}
-                                <div className="flex items-center gap-2 mb-4">
-                                    <User className={`w-5 h-5 text-${themeColor}-500`} />
-                                    <span
-                                        className={`px-2 py-1 text-xs font-medium text-${themeColor}-800 bg-${themeColor}-100 rounded-full`}
-                                    >
-                                        {item.submittedBy || item.OwnerName}
-                                    </span>
-                                </div>
+               <div className="flex items-center gap-2 mb-4">
+  <User className={`w-5 h-5 text-${themeColor}-500`} />
+  <span className="px-2 py-1 text-xs font-medium text-${themeColor}-800 rounded-full hover:bg-blue-100 transition cursor-pointer">
+    {item.ownerName || "Unknown Contributor"}
+  </span>
+</div>
 
 
-                                {/* Horizontal Divider before buttons */}
-                                <div className="border-t border-gray-300 my-4"></div>
+                <div className="border-t border-gray-300 mb-1"></div>
 
-                                {/* Engagement Buttons */}
-                                <div className="mt-auto">
-                                    <EngagementButtons
-                                        item={item}
-                                        onPreview={onPreview}
-                                        onLike={handleLike}
-                                        onFavourite={handleFavourite}
-                                        onComment={handleComment}
-                                        isLiked={data.userEngagementTypes?.includes("Like")}
-                                        isFav={data.userEngagementTypes?.includes("Favourite")}
-                                        likeCount={data.likesCount || 0}
-                                        comments={data.comments || []}
-                                        themeColor={themeColor}
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    );
-                })}
+                <div className="mt-auto flex justify-center">
+                  <EngagementButtons
+                    item={item}
+                    onPreview={onPreview}
+                    onLike={handleLike}
+                    onFavourite={handleFavourite}
+                    onComment={handleComment}
+                    isLiked={data.userEngagementTypes?.includes("Like")}
+                    isFav={data.userEngagementTypes?.includes("Favourite")}
+                    likeCount={data.likesCount || 0}
+                    comments={data.comments || []}
+                    themeColor={themeColor}
+                  />
+                </div>
+              </div>
             </div>
+          );
+        })}
+      </div>
 
           {/* View More & Reset Buttons */}
-{items.length > 3 && (
-  <div className="flex justify-center mt-8 gap-4">
-    {/* View More / Less Button */}
-    <button
-      onClick={() => setShowAll(!showAll)}
-      className={`px-6 py-2 text-sm font-medium text-black bg-blue-300 rounded-full shadow hover:bg-${themeColor}-600 transition`}
-    >
-      {showAll ? "View Less" : "View More"}
-    </button>
+      {items.length > 3 && (
+        <div className="flex justify-center mt-8">
+          <button
+            onClick={() => setShowAll(!showAll)}
+            className={`px-6 py-2 text-sm font-medium text-black bg-blue-300 rounded-full shadow hover:bg-${themeColor}-600 transition`}
+          >
+            {showAll ? "View Less" : "View More"}
+          </button>
 
     {/* Reset Button */}
     <button
@@ -214,9 +180,9 @@ export default function KnowledgeCardsDisplay({
     >
       Reset
     </button>
-  </div>
-)}
-
         </div>
-    );
+      )}
+
+    </div>
+  );
 }

@@ -83,47 +83,47 @@ export default function ApproverPage() {
           </div>
         ) : (
           <>
-            <div className="bg-white rounded-lg shadow overflow-x-auto border border-gray-200">
-              <table className="min-w-full text-sm">
-                <thead className="bg-indigo-100 text-indigo-800">
-                  <tr>
-                    <th className="py-3 px-4 font-medium">Title</th>
-                    <th className="py-3 px-4 font-medium">Submitted By</th>
-                    <th className="py-3 px-4 font-medium">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {items.map((item) => (
+          <div className="bg-white rounded-lg shadow overflow-x-auto border border-gray-200">
+            <table className="min-w-full text-sm">
+              <thead className="bg-indigo-100 text-indigo-800">
+                <tr>
+                  <th className="py-3 px-4 font-medium">Title</th>
+                  <th className="py-3 px-4 font-medium">Submitted By</th>
+                  <th className="py-3 px-4 font-medium">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {items.map((item) => (
                     <tr key={item.itemId} className="hover:bg-indigo-50 transition-all">
                       <td className="py-3 px-4 font-medium text-gray-800">{item.title}</td>
                       <td className="py-3 px-4 text-gray-700">{item.createdByName}</td>
-                      <td className="py-3 px-4 flex gap-2 flex-wrap">
-                        <button
-                          onClick={() => handleAction(item.itemId, "approve")}
-                          disabled={actionLoading === item.itemId}
-                          className="flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-green-100 text-green-800 hover:bg-green-200 transition"
-                        >
-                          <Check size={14} /> Approve
-                        </button>
-                        <button
-                          onClick={() => handleAction(item.itemId, "reject")}
-                          disabled={actionLoading === item.itemId}
-                          className="flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-rose-100 text-rose-800 hover:bg-rose-200 transition"
-                        >
-                          <X size={14} /> Reject
-                        </button>
-                        <button
-                          onClick={() => setPreviewItem(item)}
-                          className="flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-indigo-200 text-indigo-800 hover:bg-indigo-300 transition"
-                        >
-                          <Eye size={14} /> Preview
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                    <td className="py-3 px-4 flex gap-2 flex-wrap">
+                      <button
+                        onClick={() => handleAction(item.itemId, "approve")}
+                        disabled={actionLoading === item.itemId}
+                        className="flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-green-100 text-green-800 hover:bg-green-200 transition"
+                      >
+                        <Check size={14} /> Approve
+                      </button>
+                      <button
+                        onClick={() => handleAction(item.itemId, "reject")}
+                        disabled={actionLoading === item.itemId}
+                        className="flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-rose-100 text-rose-800 hover:bg-rose-200 transition"
+                      >
+                        <X size={14} /> Reject
+                      </button>
+                      <button
+                        onClick={() => setPreviewItem(item)}
+                        className="flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-indigo-200 text-indigo-800 hover:bg-indigo-300 transition"
+                      >
+                        <Eye size={14} /> Preview
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
             {/* Pagination */}
             <div className="flex justify-end items-center gap-2 mt-3">
