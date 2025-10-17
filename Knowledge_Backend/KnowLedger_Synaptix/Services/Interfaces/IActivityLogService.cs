@@ -57,6 +57,8 @@ namespace KnowLedger_Synaptix.Services.Interfaces
         /// </summary>
         Task<IEnumerable<ActivityLogDto>> GetUserContributionsThisMonthAsync(Guid userId);
 
-        
+        Task<IEnumerable<string>> GetUserCategoriesAsync(Guid userId);
+
+        Task<IEnumerable<string>> GetUserTitlesAsync(Guid userId);
     }
 }

@@ -3,11 +3,17 @@ using KnowLedger_Synaptix.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace KnowLedger_Synaptix.Controllers
 {
+    /// <summary>
+    /// Controller for managing user contributions — handles fetching,
+    /// filtering, and retrieving contribution-related data for the logged-in user.
+    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     [Authorize] 
@@ -48,14 +54,20 @@ namespace KnowLedger_Synaptix.Controllers
 
             return Ok(item);
         }
+
+        /// <summary>
+        /// Retrieves contributions for the logged-in user with optional filters
+        /// such as domain, category, title, status, and date.
+        /// </summary>
         [HttpGet("my/filter")]
         public async Task<IActionResult> GetMyContributionsFiltered(
-    [FromQuery] string domain = null,
-    [FromQuery] string category = null,
-    [FromQuery] string title = null,
-    [FromQuery] string status = null,
-    [FromQuery] string date = null)
+            [FromQuery] string domain = null,
+            [FromQuery] string category = null,
+            [FromQuery] string title = null,
+            [FromQuery] string status = null,
+            [FromQuery] string date = null)
         {
+            // Parse optional date filter
             DateTime? parsedDate = null;
             if (!string.IsNullOrWhiteSpace(date) && DateTime.TryParse(date, out var dt))
                 parsedDate = dt;

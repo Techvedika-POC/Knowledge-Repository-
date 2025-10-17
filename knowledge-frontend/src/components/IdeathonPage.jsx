@@ -23,7 +23,7 @@ export default function IdeathonPage() {
       } finally {
         setLoading(false);
       }
-    };
+  };
     fetchEvent();
   }, []);
 
@@ -48,6 +48,21 @@ export default function IdeathonPage() {
     { phase: "Winner Announcement", date: "Oct 25" },
   ];
 
+  const challenges = [
+    {
+      title: "AI for Carbon Footprint Reduction",
+      desc: "Develop an idea using AI to optimize energy usage and reduce emissions.",
+    },
+    {
+      title: "Circular Economy Tech",
+      desc: "Propose technology-driven models to promote waste reuse and recycling.",
+    },
+    {
+      title: "Smart Agriculture with AIoT",
+      desc: "Leverage sensors and machine learning to support sustainable farming.",
+    },
+  ];
+
   return (
     <motion.div
       className="p-8 bg-gradient-to-br from-blue-50 to-white rounded-3xl shadow-xl"
@@ -66,6 +81,20 @@ export default function IdeathonPage() {
           the board. Winning ideas move into project development and get
           published as knowledge items!
         </p>
+        <div className="flex flex-wrap gap-4 mt-4 text-gray-600">
+          <span className="flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-blue-500" />
+            <strong>Start:</strong> {eventDetails.startDate}
+          </span>
+          <span className="flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-red-500" />
+            <strong>End:</strong> {eventDetails.endDate}
+          </span>
+          <span className="flex items-center gap-2">
+            <Users className="w-5 h-5 text-green-500" />
+            <strong>Owners:</strong> {eventDetails.owners.join(", ")}
+          </span>
+        </div>
       </div>
 
       {/* Theme Section */}
@@ -120,7 +149,7 @@ export default function IdeathonPage() {
         <button
           onClick={() => handleSubmitIdea(event.eventId)} // ✅ Correctly passes eventId
           className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-full font-semibold text-lg"
-        >
+            >
           Submit Your Idea
         </button>
       </div>

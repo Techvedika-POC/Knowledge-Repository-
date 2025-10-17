@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace KnowLedger_Synaptix.Controllers
 {
+    // Handles event-related endpoints, like retrieving all events.
     [Route("api/[controller]")]
     [ApiController]
     public class EventsController : ControllerBase
@@ -17,7 +18,6 @@ namespace KnowLedger_Synaptix.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<Event>>> GetAllEvents()
         {
             var events = await _eventService.GetAllEventsAsync();
             return Ok(events);

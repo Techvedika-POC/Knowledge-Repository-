@@ -24,8 +24,8 @@ namespace KnowLedger_Synaptix.Services.Interfaces
         /// </summary>
 
         Task<IEnumerable<KnowledgeItemFilterDto>> GetKnowledgeItemSummariesAsync(
-            string sortOrder = "desc",
-            DateTime? filterDate = null
+      string sortOrder = "desc",
+      DateTime? filterDate = null
         );
 
         /// <summary>

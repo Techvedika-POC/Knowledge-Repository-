@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
- 
+
 const features = [
   {
     title: "Knowledge Capture",
@@ -25,23 +25,23 @@ const features = [
     image: "/assets/ai_assistant.png",
   },
 ];
- 
+
 export default function LandingPage() {
   const navigate = useNavigate();
   const [index, setIndex] = useState(0);
- 
+
   useEffect(() => {
     const interval = setInterval(() => {
       setIndex((prev) => (prev === features.length - 1 ? 0 : prev + 1));
     }, 6000);
     return () => clearInterval(interval);
   }, []);
- 
+
   const prevSlide = () =>
     setIndex((i) => (i === 0 ? features.length - 1 : i - 1));
   const nextSlide = () =>
     setIndex((i) => (i === features.length - 1 ? 0 : i + 1));
- 
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white">
       {/* Header */}
@@ -62,7 +62,7 @@ export default function LandingPage() {
           </button>
         </div>
       </header>
- 
+
       {/* Hero + Carousel */}
       <section className="flex flex-col md:flex-row h-screen w-full">
         {/* Left: Hero Message */}
@@ -89,7 +89,7 @@ export default function LandingPage() {
             </button>
           </div>
         </div>
- 
+
         {/* Right: Carousel */}
         <div className="flex-1 md:flex-[2] relative flex items-center justify-center overflow-hidden">
           {features.map((feature, i) => (
@@ -132,7 +132,7 @@ export default function LandingPage() {
               </div>
             </div>
           ))}
- 
+
           {/* Carousel Controls */}
           <button
             onClick={prevSlide}
@@ -148,7 +148,7 @@ export default function LandingPage() {
           </button>
         </div>
       </section>
- 
+
       {/* Footer */}
       <footer className="mt-auto py-6 text-center text-gray-500 text-sm">
         © {new Date().getFullYear()} KnowLedger. All rights reserved.
