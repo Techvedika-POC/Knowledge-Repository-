@@ -39,9 +39,7 @@ builder.Services.AddScoped<IEmbeddingService, EmbeddingService>();
 builder.Services.AddScoped<IFileEmbeddingService, FileEmbeddingService>();
 builder.Services.AddScoped<IQdrantService, QdrantService>();
 
-// ==========================
-// CORS Configuration ✅ FIXED
-// ==========================
+// CORS Configuration 
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
 
 builder.Services.AddCors(options =>
@@ -103,7 +101,7 @@ builder.Services.AddAuthentication(options =>
 // Authorization & Swagger
 // ==========================
 builder.Services.AddAuthorization();
-builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddEndpointsApiExplorer();///it will collect all the metadaa about the endpoints in controllers
 builder.Services.AddSwaggerGen();
 
 // ==========================
