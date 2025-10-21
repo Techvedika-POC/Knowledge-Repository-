@@ -9,9 +9,6 @@ using System.Threading.Tasks;
 
 namespace KnowLedger_Synaptix.Services.Implementations
 {
-    /// <summary>
-    /// Service to perform global search across knowledge items, domains, categories, attachments, and tags.
-    /// </summary>
     public class GlobalSearchService : IGlobalSearchService
     {
         private readonly Knowledge_Repository_dbContext _context;
@@ -21,45 +18,53 @@ namespace KnowLedger_Synaptix.Services.Implementations
             _context = context;
         }
 
-        /// <summary>
-        /// Performs a keyword-based search across multiple related entities.
-        /// </summary>
-        /// <param name="keyword">Search keyword</param>
-        /// <returns>List of GlobalSearchResultDto containing search results</returns>
-        public async Task<List<GlobalSearchResultDto>> GlobalSearchAsync(string keyword)
+        public async Task<List<KnowledgeItemFilterDto>> GlobalSearchAsync(string keyword)
         {
-            // Return empty list if keyword is null or whitespace
             if (string.IsNullOrWhiteSpace(keyword))
-                return new List<GlobalSearchResultDto>();
+                return new List<KnowledgeItemFilterDto>();
 
             keyword = keyword.ToLower();
 
-            // Search across KnowledgeItems, Domains, Categories, Attachments, and Tags
-            var query = from k in _context.KnowledgeItems
-                        join d in _context.Domains on k.DomainId equals d.DomainId into kd
-                        from domain in kd.DefaultIfEmpty()
-                        join c in _context.Categories on k.CategoryId equals c.CategoryId into kc
-                        from category in kc.DefaultIfEmpty()
-                        where k.Title.ToLower().Contains(keyword)
-                              || k.Description.ToLower().Contains(keyword)
-                              || _context.KnowledgeTags.Any(t => t.ItemId == k.ItemId && t.TagName.ToLower().Contains(keyword))
-                              || _context.Attachments.Any(a => a.ItemId == k.ItemId && a.FileName.ToLower().Contains(keyword))
-                              || (domain != null && domain.DomainName.ToLower().Contains(keyword))
-                              || (category != null && category.CategoryName.ToLower().Contains(keyword))
-                        select new GlobalSearchResultDto
-                        {
-                            Id = k.ItemId,
-                            Name = k.Title,
-                            // Return a snippet of description, truncate if longer than 200 characters
-                            Snippet = k.Description.Length > 200 ? k.Description.Substring(0, 200) + "..." : k.Description,
-                            CreatedOn = k.CreatedOn ?? DateTime.MinValue
-                        };
+            var query = _context.KnowledgeItems
+                .Include(k => k.Domain)
+                .Include(k => k.Category)
+                .Include(k => k.Owner)
+                .Where(k =>
+                    k.Title.ToLower().Contains(keyword) ||
+                    k.Description.ToLower().Contains(keyword) ||
+                    (k.Domain != null && k.Domain.DomainName.ToLower().Contains(keyword)) ||
+                    (k.Category != null && k.Category.CategoryName.ToLower().Contains(keyword)) ||
+                    _context.KnowledgeTags.Any(t => t.ItemId == k.ItemId && t.TagName.ToLower().Contains(keyword)) ||
+                    _context.Attachments.Any(a => a.ItemId == k.ItemId && a.FileName.ToLower().Contains(keyword))
+                )
+                .Select(k => new KnowledgeItemFilterDto
+                {
+                    ItemId = k.ItemId,
+                    Title = k.Title,
+                    Description = k.Description.Length > 200 ? k.Description.Substring(0, 200) + "..." : k.Description,
+                    DomainName = k.Domain != null ? k.Domain.DomainName : "Unknown Domain",
+                    CategoryName = k.Category != null ? k.Category.CategoryName : "Unknown Category",
+                    SubmittedBy = k.Owner != null ? k.Owner.Name : "Unknown",
+                    Status = k.Status ?? string.Empty,
+                    CreatedOn = k.CreatedOn ?? DateTime.MinValue,
+                    User = k.Owner,
+                    Tags = _context.KnowledgeTags
+                        .Where(t => t.ItemId == k.ItemId)
+                        .Select(t => t.TagName)
+                        .ToList()
+                });
 
-            // Execute query and remove duplicates
-            var results = await query.Distinct().ToListAsync();
+            var results = await query
+                .OrderByDescending(k => k.CreatedOn)
+                .ToListAsync(); // ✅ Removed .Distinct()
 
-            // Order by creation date descending
-            return results.OrderByDescending(r => r.CreatedOn).ToList();
+            // ✅ Perform distinct in-memory safely
+            var distinctResults = results
+                .GroupBy(k => k.ItemId)
+                .Select(g => g.First())
+                .ToList();
+
+            return distinctResults;
         }
     }
 }

@@ -331,64 +331,73 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 })
                 .ToListAsync();
         }
-
-        /// <summary>
-        /// Retrieves knowledge items for a specific domain.
-        /// </summary>
         public async Task<IEnumerable<KnowledgeItemFilterDto>> GetKnowledgeItemsByDomainAsync(Guid domainId)
         {
             return await _context.KnowledgeItems
                 .Include(k => k.Domain)
                 .Include(k => k.Category)
+                .Include(k => k.Owner) // ensure owner is included if you have an Owner relation
                 .Where(k => k.DomainId == domainId)
                 .Select(k => new KnowledgeItemFilterDto
                 {
+                    ItemId = k.ItemId,
                     Title = k.Title,
-
+                    Description = k.Description,
                     DomainName = k.Domain.DomainName,
                     CategoryName = k.Category.CategoryName,
-                    Description = k.Description,
-                    CreatedOn = k.CreatedOn ?? DateTime.MinValue
+                    SubmittedBy = k.Owner != null ? k.Owner.Name : "Unknown", // ✅ changed from OwnerName → SubmittedBy
+                    Status = k.Status ?? string.Empty,
+                    CreatedOn = k.CreatedOn ?? DateTime.MinValue,
+                    Tags = new List<string>() // or map your tags if you have a Tag relation
                 })
                 .ToListAsync();
         }
 
-        /// <summary>
-        /// Retrieves knowledge items for a specific category.
-        /// </summary>
         public async Task<IEnumerable<KnowledgeItemFilterDto>> GetKnowledgeItemsByCategoryAsync(Guid categoryId)
         {
             return await _context.KnowledgeItems
                 .Include(k => k.Domain)
                 .Include(k => k.Category)
+                .Include(k => k.Owner)
                 .Where(k => k.CategoryId == categoryId)
                 .Select(k => new KnowledgeItemFilterDto
                 {
+                    ItemId = k.ItemId,
                     Title = k.Title,
+                    Description = k.Description,
                     DomainName = k.Domain.DomainName,
                     CategoryName = k.Category.CategoryName,
-                    Description = k.Description,
-                    CreatedOn = k.CreatedOn ?? DateTime.MinValue
+                    SubmittedBy = k.Owner != null ? k.Owner.Name : "Unknown",
+                    Status = k.Status ?? string.Empty,
+                    CreatedOn = k.CreatedOn ?? DateTime.MinValue,
+                    Tags = new List<string>()
                 })
                 .ToListAsync();
         }
 
+
         /// <summary>
-        /// Retrieves all knowledge items, sorted by creation date descending.
+        /// Retrieves all knowledge items, sorted by creation date (newest first),
+        /// including domain, category, and submitter details.
         /// </summary>
         public async Task<IEnumerable<KnowledgeItemFilterDto>> GetAllKnowledgeItemsAsync()
         {
             return await _context.KnowledgeItems
                 .Include(k => k.Domain)
                 .Include(k => k.Category)
+                .Include(k => k.Owner) // ✅ include Owner for SubmittedBy
                 .OrderByDescending(k => k.CreatedOn)
                 .Select(k => new KnowledgeItemFilterDto
                 {
+                    ItemId = k.ItemId, // ✅ ensure ItemId is available for EngagementService
                     Title = k.Title,
                     Description = k.Description,
-                    DomainName = k.Domain.DomainName,
-                    CategoryName = k.Category.CategoryName,
-                    CreatedOn = k.CreatedOn ?? DateTime.MinValue
+                    DomainName = k.Domain != null ? k.Domain.DomainName : "Unknown Domain",
+                    CategoryName = k.Category != null ? k.Category.CategoryName : "Unknown Category",
+                    SubmittedBy = k.Owner != null ? k.Owner.Name : "Unknown", // ✅ same field as other methods
+                    Status = k.Status ?? string.Empty,
+                    CreatedOn = k.CreatedOn ?? DateTime.MinValue,
+                    Tags = new List<string>() // or map your tags if you have Tag relations
                 })
                 .ToListAsync();
         }
