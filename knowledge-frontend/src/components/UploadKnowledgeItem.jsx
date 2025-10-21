@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import axios from "axios";
 import { FaLightbulb } from "react-icons/fa";
 import api from "../api";
-
+import toast from "react-hot-toast";
 
 export default function UploadKnowledgeItem() {
   const [frameworks, setFrameworks] = useState([
@@ -172,10 +172,10 @@ const handleSubmit = async (e) => {
   } catch (err) {
     if (err.response) {
       console.error("Error response:", err.response.data);
-      alert(`Upload failed: ${JSON.stringify(err.response.data)}`);
+      toast.success(`Upload failed: ${JSON.stringify(err.response.data)}`);
     } else {
       console.error("Error:", err.message);
-      alert(`Upload failed: ${err.message}`);
+      toast.error(`Upload failed: ${err.message}`);
     }
   }
 };

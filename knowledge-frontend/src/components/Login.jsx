@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import api from "../api"; 
 import { useNavigate } from "react-router-dom";
-
+import toast  from "react-hot-toast";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -39,11 +39,11 @@ console.log("Storing userId:", userId);
         console.warn("userId missing from login response");
       }
 
-      alert("Login successful!");
+      toast.success("Login successful!");
       navigate("/app/home"); // redirect to home
     } catch (err) {
       console.error("Login failed", err);
-      alert(err.response?.data?.message || "Invalid email or password.");
+      toast.error(err.response?.data?.message || "Invalid email or password.");
     } finally {
       setLoading(false);
     }

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import api from "../api";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -18,11 +19,11 @@ export default function Signup() {
     e.preventDefault();
     try {
       await api.post(`/auth/register`, form);
-      alert("Account created successfully! Please login.");
+         toast.success("🎉 Account created successfully! Please login.");
       navigate("/login");
     } catch (err) {
       console.error("Signup failed", err);
-      alert("Signup failed. Try again.");
+         toast.error("❌ Signup failed. Try again.");
     }
   };
   return (
