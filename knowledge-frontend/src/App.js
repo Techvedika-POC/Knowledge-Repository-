@@ -1,5 +1,6 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 
 // Components
 import Sidebar from "./components/SideBar";
@@ -13,7 +14,7 @@ import MyContributions from "./components/MyContributions";
 import AdminDashboard from "./components/AdminDashboard";
 import ApproverDashboard from "./components/ApproverDashboard";
 
-// Event Pages (replace placeholders with real ones)
+// Event Pages
 import IdeathonPage from "./components/IdeathonPage";
 import HackathonPage from "./components/HackathonPage";
 import CodingChallengePage from "./components/CodingChallengePage";
@@ -80,6 +81,9 @@ function AppShell() {
 export default function App() {
   return (
     <Router>
+      {/* ✅ Toaster is added globally here */}
+      <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
+
       <Routes>
         {/* Public Pages */}
         <Route path="/" element={<LandingPage />} />
