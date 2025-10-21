@@ -324,7 +324,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 {
                     Title = k.Title,
                     DomainName = k.Domain.DomainName,
-
+                    ItemId = k.ItemId,
                     CategoryName = k.Category.CategoryName,
                     Description = k.Description,
                     CreatedOn = k.CreatedOn ?? DateTime.MinValue
@@ -340,14 +340,18 @@ namespace KnowLedger_Synaptix.Services.Implementations
             return await _context.KnowledgeItems
                 .Include(k => k.Domain)
                 .Include(k => k.Category)
+                    .Include(k => k.Owner)
                 .Where(k => k.DomainId == domainId)
                 .Select(k => new KnowledgeItemFilterDto
                 {
                     Title = k.Title,
-
+                    ItemId = k.ItemId,
                     DomainName = k.Domain.DomainName,
                     CategoryName = k.Category.CategoryName,
                     Description = k.Description,
+                    SubmittedBy = k.Owner != null
+                ? (k.Owner.Name ?? k.Owner.Email ?? "Unknown")
+                : "Unknown",
                     CreatedOn = k.CreatedOn ?? DateTime.MinValue
                 })
                 .ToListAsync();
@@ -361,13 +365,18 @@ namespace KnowLedger_Synaptix.Services.Implementations
             return await _context.KnowledgeItems
                 .Include(k => k.Domain)
                 .Include(k => k.Category)
+                .Include(k => k.Owner)
                 .Where(k => k.CategoryId == categoryId)
                 .Select(k => new KnowledgeItemFilterDto
                 {
                     Title = k.Title,
+                    ItemId = k.ItemId,
                     DomainName = k.Domain.DomainName,
                     CategoryName = k.Category.CategoryName,
                     Description = k.Description,
+                    SubmittedBy = k.Owner != null
+                ? (k.Owner.Name ?? k.Owner.Email ?? "Unknown")
+                : "Unknown",
                     CreatedOn = k.CreatedOn ?? DateTime.MinValue
                 })
                 .ToListAsync();
@@ -381,13 +390,18 @@ namespace KnowLedger_Synaptix.Services.Implementations
             return await _context.KnowledgeItems
                 .Include(k => k.Domain)
                 .Include(k => k.Category)
+                .Include(k => k.Owner)
                 .OrderByDescending(k => k.CreatedOn)
                 .Select(k => new KnowledgeItemFilterDto
                 {
                     Title = k.Title,
+                    ItemId = k.ItemId,
                     Description = k.Description,
                     DomainName = k.Domain.DomainName,
                     CategoryName = k.Category.CategoryName,
+                    SubmittedBy = k.Owner != null
+                ? (k.Owner.Name ?? k.Owner.Email ?? "Unknown")
+                : "Unknown",
                     CreatedOn = k.CreatedOn ?? DateTime.MinValue
                 })
                 .ToListAsync();
