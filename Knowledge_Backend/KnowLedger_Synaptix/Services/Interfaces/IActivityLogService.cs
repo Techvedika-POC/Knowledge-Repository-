@@ -56,9 +56,5 @@ namespace KnowLedger_Synaptix.Services.Interfaces
         /// Retrieves contributions of a user with pagination and optional filtering.
         /// </summary>
         Task<IEnumerable<ActivityLogDto>> GetUserContributionsThisMonthAsync(Guid userId);
-
-        Task<IEnumerable<string>> GetUserCategoriesAsync(Guid userId);
-
-        Task<IEnumerable<string>> GetUserTitlesAsync(Guid userId);
     }
 }

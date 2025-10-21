@@ -6,9 +6,6 @@ using System.Security.Claims;
 
 namespace KnowLedger_Synaptix.Controllers
 {
-    /// <summary>
-    /// Handles approval and rejection of knowledge items by authorized approvers.
-    /// </summary>
     [Route("api/approver")]
     [ApiController]
     [Authorize] // Only authenticated users (approvers) can access these endpoints
@@ -25,7 +22,6 @@ namespace KnowLedger_Synaptix.Controllers
         [HttpGet("pending")]
         public async Task<IActionResult> GetPendingItems()
         {
-            // Fetch all knowledge items currently waiting for approval
             var items = await _approverService.GetPendingKnowledgeItemsAsync();
             return Ok(items);
         }
@@ -34,22 +30,28 @@ namespace KnowLedger_Synaptix.Controllers
         [HttpPost("approve/{itemId}")]
         public async Task<IActionResult> ApproveItem(Guid itemId)
         {
-            var approverId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)
-                             ?? throw new Exception("UserId not found"));
+            // Extract approver ID from JWT claim
+            var approverIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            // Validate and parse approver ID
+            if (string.IsNullOrEmpty(approverIdClaim))
+                return Unauthorized("User ID not found in claims.");
+
             if (!Guid.TryParse(approverIdClaim, out var approverId))
                 return BadRequest("Invalid user ID format.");
 
             var result = await _approverService.ApproveKnowledgeItemAsync(itemId, approverId);
-            if (!result) return BadRequest("Item cannot be approved.");
+
+            if (!result)
+                return BadRequest("Item cannot be approved.");
+
             return Ok("Item approved successfully.");
         }
+
+        // GET: api/approver/pending/paged
         [HttpGet("pending/paged")]
         public async Task<IActionResult> GetPendingPaged([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
             var (items, totalCount) = await _approverService.GetPendingKnowledgeItemsAsync(pageNumber, pageSize);
-
             int totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
 
             return Ok(new
@@ -62,18 +64,23 @@ namespace KnowLedger_Synaptix.Controllers
             });
         }
 
-
-
         // POST: api/approver/reject/{itemId}
         [HttpPost("reject/{itemId}")]
         public async Task<IActionResult> RejectItem(Guid itemId)
         {
-            // Get logged-in user id (approver) from JWT or claims
-            var approverId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)
-                              ?? throw new Exception("UserId not found"));
+            var approverIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrEmpty(approverIdClaim))
+                return Unauthorized("User ID not found in claims.");
+
+            if (!Guid.TryParse(approverIdClaim, out var approverId))
+                return BadRequest("Invalid user ID format.");
 
             var result = await _approverService.RejectKnowledgeItemAsync(itemId, approverId);
-            if (!result) return BadRequest("Item cannot be rejected.");
+
+            if (!result)
+                return BadRequest("Item cannot be rejected.");
+
             return Ok("Item rejected successfully.");
         }
     }

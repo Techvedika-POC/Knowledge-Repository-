@@ -43,7 +43,7 @@ public partial class KnowledgeItem
 
     public string Metadata { get; set; }
 
-    public string KnowledgeItem1 { get; set; }
+
 
     public List<float> Embedding { get; set; }
 

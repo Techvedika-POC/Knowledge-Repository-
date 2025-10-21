@@ -134,43 +134,44 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 })
                 .ToListAsync();
         }
-    public async Task<List<LeaderboardDto>> GetTopLikedItemsAsync(int top = 5)
-    {
-        var topItems = await _context.Engagements
-         .Where(e => e.EngagementType == "Like")
-         .GroupBy(e => e.ItemId)
-         .Select(g => new
-         {
-             ItemId = g.Key,
-             LikesCount = g.Count()
-         })
-         .OrderByDescending(x => x.LikesCount)
-         .Take(top)
-         .ToListAsync();
+        public async Task<List<LeaderboardDto>> GetTopLikedItemsAsync(int top = 5)
+        {
+            var topItems = await _context.Engagements
+             .Where(e => e.EngagementType == "Like")
+             .GroupBy(e => e.ItemId)
+             .Select(g => new
+             {
+                 ItemId = g.Key,
+                 LikesCount = g.Count()
+             })
+             .OrderByDescending(x => x.LikesCount)
+             .Take(top)
+             .ToListAsync();
 
-        // Load KnowledgeItems into memory first
-        var knowledgeItems = await _context.KnowledgeItems
-            .Where(k => topItems.Select(t => t.ItemId).Contains(k.ItemId))
-            .Include(k => k.Owner)
-            .ToListAsync(); // <-- now it's in memory
+            // Load KnowledgeItems into memory first
+            var knowledgeItems = await _context.KnowledgeItems
+                .Where(k => topItems.Select(t => t.ItemId).Contains(k.ItemId))
+                .Include(k => k.Owner)
+                .ToListAsync(); // <-- now it's in memory
 
-        var leaderboard = knowledgeItems
-            .Select(k => new LeaderboardDto
-            {
-                ItemId = k.ItemId,
-                ItemTitle = k.Title,
-                ItemDescription = k.Description.Length > 100
-                    ? k.Description.Substring(0, 100) + "..."
-                    : k.Description,
-                UserId = k.OwnerId ?? Guid.Empty,
-                UserName = k.Owner != null ? k.Owner.Name : "Unknown",
-                LikesCount = topItems.FirstOrDefault(t => t.ItemId == k.ItemId)?.LikesCount ?? 0
-            })
-            .OrderByDescending(l => l.LikesCount)
-            .ToList();
+            var leaderboard = knowledgeItems
+                .Select(k => new LeaderboardDto
+                {
+                    ItemId = k.ItemId,
+                    ItemTitle = k.Title,
+                    ItemDescription = k.Description.Length > 100
+                        ? k.Description.Substring(0, 100) + "..."
+                        : k.Description,
+                    UserId = k.OwnerId ?? Guid.Empty,
+                    UserName = k.Owner != null ? k.Owner.Name : "Unknown",
+                    LikesCount = topItems.FirstOrDefault(t => t.ItemId == k.ItemId)?.LikesCount ?? 0
+                })
+                .OrderByDescending(l => l.LikesCount)
+                .ToList();
 
-        return leaderboard;
+            return leaderboard;
+
+        }
 
     }
-
 }
