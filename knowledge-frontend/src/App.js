@@ -14,7 +14,7 @@ import MyContributions from "./components/MyContributions";
 import AdminDashboard from "./components/AdminDashboard";
 import ApproverDashboard from "./components/ApproverDashboard";
 import Recents from "./components/Recents";
-
+import FavouritesPage from "./components/FavouritesPage";
 // Event Pages
 import IdeathonPage from "./components/IdeathonPage";
 import HackathonPage from "./components/HackathonPage";
@@ -47,6 +47,7 @@ function AppShell() {
           <Route path="upload-knowledge" element={<UploadKnowledgeItem />} />
           <Route path="contributions" element={<MyContributions />} />
           <Route path="recents"element={<Recents/>}/>
+          <Route path="favorites"element={<FavouritesPage/>}/>
           {/* Admin Dashboard */}
           <Route
             path="admin"

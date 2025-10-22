@@ -157,5 +157,12 @@ namespace KnowLedger_Synaptix.Controllers
             var contributions = await _activityLogService.GetUserContributionsThisMonthAsync(userId);
             return Ok(contributions);
         }
+        [HttpGet("my/favourites")]
+        public async Task<IActionResult> GetMyFavourites()
+        {
+            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            var items = await _activityLogService.GetUserFavouritesAsync(userId);
+            return Ok(items);
+        }
     }
 }
