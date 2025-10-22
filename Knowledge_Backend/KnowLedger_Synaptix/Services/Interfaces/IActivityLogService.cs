@@ -62,5 +62,7 @@ namespace KnowLedger_Synaptix.Services.Interfaces
         /// Retrieves contributions made by a user in the current month.
         /// </summary>
         Task<IEnumerable<ActivityLogDto>> GetUserContributionsThisMonthAsync(Guid userId);
+
+        Task<IEnumerable<KnowledgeItemDto>> GetUserFavouritesAsync(Guid userId);
     }
 }
