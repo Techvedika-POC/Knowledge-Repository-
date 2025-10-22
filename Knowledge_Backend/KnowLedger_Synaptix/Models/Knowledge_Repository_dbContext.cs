@@ -66,7 +66,7 @@ public partial class Knowledge_Repository_dbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder
-            .HasPostgresEnum("activity_action_enum", new[] { "Upload", "Approve", "Reject", "Comment", "Like", "Event Created" })
+            .HasPostgresEnum("activity_action_enum", new[] { "Upload", "Approve", "Reject", "Comment", "Like", "Event Created", "UploadKnowledgeItem" })
             .HasPostgresEnum("announcement_priority_enum", new[] { "Urgent", "Reminder", "Info" })
             .HasPostgresEnum("engagement_action_enum", new[] { "View", "Like", "Comment", "Share" })
             .HasPostgresEnum("event_type_enum", new[] { "Ideathon", "Hackathon", "Coding Challenge", "Knowledge Quest" })
@@ -95,7 +95,6 @@ public partial class Knowledge_Repository_dbContext : DbContext
             entity.Property(e => e.ActivityId)
                 .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("activity_id");
-            entity.Property(e => e.Action).HasColumnName("action");
             entity.Property(e => e.CreatedOn)
                 .HasDefaultValueSql("now()")
                 .HasColumnName("created_on");
@@ -367,7 +366,6 @@ public partial class Knowledge_Repository_dbContext : DbContext
 
             entity.HasOne(d => d.Item).WithMany(p => p.Engagements)
                 .HasForeignKey(d => d.ItemId)
-                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("engagements_item_id_fkey");
 
             entity.HasOne(d => d.UpdatedByNavigation).WithMany(p => p.EngagementUpdatedByNavigations)
@@ -507,9 +505,6 @@ public partial class Knowledge_Repository_dbContext : DbContext
             entity.Property(e => e.Version)
                 .HasDefaultValue(1)
                 .HasColumnName("version");
-            entity.Property(e => e.Visibility)
-                .HasDefaultValueSql("'Public'::visibility_enum")
-                .HasColumnName("visibility");
 
             entity.HasOne(d => d.Category).WithMany(p => p.KnowledgeItems)
                 .HasForeignKey(d => d.CategoryId)

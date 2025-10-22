@@ -116,13 +116,11 @@ namespace KnowLedger_Synaptix.Services.Implementations
             if (string.IsNullOrWhiteSpace(dto.Title) || dto.DomainId == Guid.Empty || dto.CategoryId == Guid.Empty)
                 throw new ArgumentException("Title, Domain, and Category are required.");
 
-            const int ExpectedEmbeddingSize = 384; // Ensure embedding dimension matches Qdrant collection
-
             using var transaction = await _context.Database.BeginTransactionAsync();
 
             try
             {
-                // ----------------- 1️⃣ Create Knowledge Item -----------------
+                //  Create Knowledge Item
                 var knowledgeItem = new KnowledgeItem
                 {
                     ItemId = Guid.NewGuid(),
@@ -143,7 +141,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 };
                 _context.KnowledgeItems.Add(knowledgeItem);
 
-                // ----------------- 2️⃣ Create Initial Version -----------------
+                //  Create Initial Version
                 var version = new KnowledgeVersion
                 {
                     VersionId = Guid.NewGuid(),
@@ -156,7 +154,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 _context.KnowledgeVersions.Add(version);
                 await _context.SaveChangesAsync();
 
-                // ----------------- 3️⃣ Handle Attachments & Embeddings -----------------
+                //  Handle Attachments
                 var uploadsRoot = Path.Combine(_env.WebRootPath ?? Path.Combine(AppContext.BaseDirectory, "wwwroot"), "uploads");
                 Directory.CreateDirectory(uploadsRoot);
 
@@ -164,80 +162,34 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 {
                     foreach (var file in dto.Attachments)
                     {
-                        try
+                        if (file.FileData?.Length > 0)
                         {
-                            if (file.FileData == null || file.FileData.Length == 0)
-                            {
-                                _logger.LogWarning("Attachment {FileName} has no data. Only metadata will be saved.", file.FileName);
-                            }
+                            var uniqueFileName = $"{Guid.NewGuid()}_{Path.GetFileName(file.FileName)}";
+                            var diskPath = Path.Combine(uploadsRoot, uniqueFileName);
+                            await File.WriteAllBytesAsync(diskPath, file.FileData);
 
-                            const long MaxBytes = 100 * 1024 * 1024; // 100 MB limit
-                            if (file.FileSize > MaxBytes)
-                            {
-                                _logger.LogWarning("Attachment {FileName} exceeds max allowed size.", file.FileName);
-                                continue;
-                            }
-
-                            string? diskPath = null;
-                            if (file.FileData?.Length > 0)
-                            {
-                                var safeName = Path.GetFileName(file.FileName);
-                                var uniqueFileName = $"{Guid.NewGuid()}_{safeName}";
-                                diskPath = Path.Combine(uploadsRoot, uniqueFileName);
-                                await File.WriteAllBytesAsync(diskPath, file.FileData);
-                            }
-
-                            // Save attachment metadata
-                            var attachment = new Attachment
+                            _context.Attachments.Add(new Attachment
                             {
                                 AttachmentId = Guid.NewGuid(),
                                 ItemId = knowledgeItem.ItemId,
                                 VersionId = version.VersionId,
                                 FileName = file.FileName,
-                                FilePath = diskPath != null ? $"/uploads/{Path.GetFileName(diskPath)}" : null,
+                                FilePath = $"/uploads/{uniqueFileName}",
                                 MimeType = file.MimeType,
                                 FileSize = file.FileSize,
                                 FileData = null,
+                                FileType = Path.GetExtension(file.FileName)?.ToLower() ?? "unknown",
                                 CreatedOn = DateTime.UtcNow,
                                 CreatedBy = userId,
                                 UpdatedOn = DateTime.UtcNow,
                                 UpdatedBy = userId
-                            };
-                            _context.Attachments.Add(attachment);
-                            await _context.SaveChangesAsync();
-
-                            // Generate embeddings for text-based files
-                            if (diskPath != null && !file.MimeType.StartsWith("audio") && !file.MimeType.StartsWith("video"))
-                            {
-                                var fileEmbedding = await _fileEmbeddingService.GenerateEmbeddingAsync(diskPath, file.MimeType);
-
-                                if (fileEmbedding == null || fileEmbedding.Count != ExpectedEmbeddingSize)
-                                {
-                                    _logger.LogWarning(
-                                        "Attachment embedding for {FileName} is invalid length: {Length}",
-                                        file.FileName,
-                                        fileEmbedding?.Count ?? 0
-                                    );
-                                }
-                                else
-                                {
-                                    await _qdrantService.SaveToQdrantAsync(
-                                        attachment.AttachmentId.ToString(),
-                                        fileEmbedding.ToArray(),
-                                        file.FileName,
-                                        knowledgeItem.Title
-                                    );
-                                }
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError(ex, "Failed to process attachment {FileName}", file.FileName);
+                            });
                         }
                     }
+                    await _context.SaveChangesAsync();
                 }
 
-                // ----------------- 4️⃣ Add Tags -----------------
+                //  Add Tags
                 foreach (var tag in dto.Tags ?? new List<string>())
                 {
                     _context.KnowledgeTags.Add(new KnowledgeTag
@@ -254,36 +206,68 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 }
                 await _context.SaveChangesAsync();
 
-                // ----------------- 5️⃣ Generate Knowledge Item Text Embedding -----------------
-                try
+                //  Handle Event & Team (if applicable)
+                if (dto.IsEventItem && dto.EventId.HasValue)
                 {
-                    var textEmbedding = await _embeddingService.GetEmbeddingAsync(knowledgeItem.Description ?? knowledgeItem.Title ?? "");
-
-                    if (textEmbedding == null)
+                    // Create Team
+                    var team = new Team
                     {
-                        _logger.LogError("No embedding returned for knowledge item {ItemId}", knowledgeItem.ItemId);
-                        throw new InvalidOperationException("Failed to generate embedding.");
+                        TeamId = Guid.NewGuid(),
+                        EventId = dto.EventId,
+                        TeamName = dto.TeamName ?? "Default Team",
+                        CreatedBy = userId,
+                        CreatedOn = DateTime.UtcNow
+                    };
+                    _context.Teams.Add(team);
+                    await _context.SaveChangesAsync();
+
+                    // Add Team Members
+                    if (dto.TeamMemberEmails != null)
+                    {
+                        foreach (var email in dto.TeamMemberEmails)
+                        {
+                            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+                            if (user != null)
+                            {
+                                _context.TeamMembers.Add(new TeamMember
+                                {
+                                    TeamMemberId = Guid.NewGuid(),
+                                    TeamId = team.TeamId,
+                                    UserId = user.UserId,
+                                    JoinedOn = DateTime.UtcNow
+                                });
+                            }
+                        }
+                        await _context.SaveChangesAsync();
                     }
 
-                    if (textEmbedding.Length != ExpectedEmbeddingSize)
+                    // Create EventKnowledgeItem
+                    var eventKnowledgeItem = new EventKnowledgeItem
                     {
-                        _logger.LogError("Embedding has invalid dimension {Dim} for item {ItemId}", textEmbedding.Length, knowledgeItem.ItemId);
-                        throw new InvalidOperationException($"Embedding must be {ExpectedEmbeddingSize}-dimensional.");
-                    }
-
-                    knowledgeItem.Embedding = textEmbedding.ToList();
-
-                    await _qdrantService.SaveToQdrantAsync(
-                        knowledgeItem.ItemId.ToString(),
-                        knowledgeItem.Embedding.ToArray(),
-                        knowledgeItem.Title,
-                        knowledgeItem.Description ?? ""
-                    );
+                        EventItemId = Guid.NewGuid(),
+                        EventId = dto.EventId,
+                        ItemId = knowledgeItem.ItemId,
+                        TeamId = team.TeamId,
+                        CreatedBy = userId,
+                        CreatedOn = DateTime.UtcNow,
+                        UpdatedBy = userId,
+                        UpdatedOn = DateTime.UtcNow
+                    };
+                    _context.EventKnowledgeItems.Add(eventKnowledgeItem);
+                    await _context.SaveChangesAsync();
                 }
-                catch (Exception ex)
+
+                //  Create Activity Log for Upload (Action as string)
+                _context.ActivityLogs.Add(new ActivityLog
                 {
-                    _logger.LogWarning(ex, "Embedding generation failed for knowledge item {ItemId}", knowledgeItem.ItemId);
-                }
+                    ActivityId = Guid.NewGuid(),
+                    UserId = userId,
+                    ItemId = knowledgeItem.ItemId,
+                    EventId = dto.IsEventItem ? dto.EventId : null,
+                    Action = "Upload", 
+                    Details = $"Knowledge item '{knowledgeItem.Title}' uploaded successfully.",
+                    CreatedOn = DateTime.UtcNow
+                });
 
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
@@ -336,7 +320,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
             return await _context.KnowledgeItems
                 .Include(k => k.Domain)
                 .Include(k => k.Category)
-                .Include(k => k.Owner) // ensure owner is included if you have an Owner relation
+                .Include(k => k.Owner) 
                 .Where(k => k.DomainId == domainId)
                 .Select(k => new KnowledgeItemFilterDto
                 {
@@ -345,10 +329,10 @@ namespace KnowLedger_Synaptix.Services.Implementations
                     Description = k.Description,
                     DomainName = k.Domain.DomainName,
                     CategoryName = k.Category.CategoryName,
-                    SubmittedBy = k.Owner != null ? k.Owner.Name : "Unknown", // ✅ changed from OwnerName → SubmittedBy
+                    SubmittedBy = k.Owner != null ? k.Owner.Name : "Unknown", 
                     Status = k.Status ?? string.Empty,
                     CreatedOn = k.CreatedOn ?? DateTime.MinValue,
-                    Tags = new List<string>() // or map your tags if you have a Tag relation
+                    Tags = new List<string>() 
                 })
                 .ToListAsync();
         }
@@ -385,19 +369,19 @@ namespace KnowLedger_Synaptix.Services.Implementations
             return await _context.KnowledgeItems
                 .Include(k => k.Domain)
                 .Include(k => k.Category)
-                .Include(k => k.Owner) // ✅ include Owner for SubmittedBy
+                .Include(k => k.Owner) 
                 .OrderByDescending(k => k.CreatedOn)
                 .Select(k => new KnowledgeItemFilterDto
                 {
-                    ItemId = k.ItemId, // ✅ ensure ItemId is available for EngagementService
+                    ItemId = k.ItemId, 
                     Title = k.Title,
                     Description = k.Description,
                     DomainName = k.Domain != null ? k.Domain.DomainName : "Unknown Domain",
                     CategoryName = k.Category != null ? k.Category.CategoryName : "Unknown Category",
-                    SubmittedBy = k.Owner != null ? k.Owner.Name : "Unknown", // ✅ same field as other methods
+                    SubmittedBy = k.Owner != null ? k.Owner.Name : "Unknown", 
                     Status = k.Status ?? string.Empty,
                     CreatedOn = k.CreatedOn ?? DateTime.MinValue,
-                    Tags = new List<string>() // or map your tags if you have Tag relations
+                    Tags = new List<string>() 
                 })
                 .ToListAsync();
         }
