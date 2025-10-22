@@ -145,5 +145,6 @@ namespace KnowLedger_Synaptix.Services.Implementations
 
             return leaderboard;
         }
+
     }
 }

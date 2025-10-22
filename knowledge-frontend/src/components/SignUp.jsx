@@ -1,8 +1,7 @@
 import React, { useState } from "react";
-import axios from "axios";
-import api from "../api";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import api from "../api";
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -12,20 +11,51 @@ export default function Signup() {
     password: "",
     DepartmentName: "",
   });
+  const [errors, setErrors] = useState({});
+
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
+
+  // ✅ Validation function
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!form.name.trim()) newErrors.name = "Full name is required";
+    if (!form.email) newErrors.email = "Email is required";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
+      newErrors.email = "Invalid email format";
+
+    if (!form.password) newErrors.password = "Password is required";
+    else if (form.password.length < 6)
+      newErrors.password = "Password must be at least 6 characters";
+
+    if (!form.DepartmentName.trim())
+      newErrors.DepartmentName = "Department is required";
+    else if (!/^[A-Za-z\s]+$/.test(form.DepartmentName))
+      newErrors.DepartmentName = "Department name must contain only letters";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0; // ✅ Return true if valid
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validateForm()) {
+      toast.error("Please fix the highlighted errors.");
+      return;
+    }
+
     try {
       await api.post(`/auth/register`, form);
-         toast.success("🎉 Account created successfully! Please login.");
+      toast.success("🎉 Account created successfully! Please login.");
       navigate("/login");
     } catch (err) {
       console.error("Signup failed", err);
-         toast.error("❌ Signup failed. Try again.");
+      toast.error("❌ Signup failed. Try again.");
     }
   };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="max-w-md w-full bg-white p-8 rounded-xl shadow-md">
@@ -34,7 +64,7 @@ export default function Signup() {
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Name */}
+          {/* Full Name */}
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Full Name
@@ -44,11 +74,16 @@ export default function Signup() {
               name="name"
               value={form.name}
               onChange={handleChange}
-              required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-600 focus:border-blue-600 sm:text-sm p-2 border"
+              className={`mt-1 block w-full rounded-md border ${
+                errors.name ? "border-red-500" : "border-gray-300"
+              } shadow-sm focus:ring-blue-600 focus:border-blue-600 sm:text-sm p-2`}
               placeholder="Jane Doe"
             />
+            {errors.name && (
+              <p className="text-red-500 text-xs mt-1">{errors.name}</p>
+            )}
           </div>
+
           {/* Email */}
           <div>
             <label className="block text-sm font-medium text-gray-700">
@@ -59,11 +94,16 @@ export default function Signup() {
               name="email"
               value={form.email}
               onChange={handleChange}
-              required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-600 focus:border-blue-600 sm:text-sm p-2 border"
+              className={`mt-1 block w-full rounded-md border ${
+                errors.email ? "border-red-500" : "border-gray-300"
+              } shadow-sm focus:ring-blue-600 focus:border-blue-600 sm:text-sm p-2`}
               placeholder="you@example.com"
             />
+            {errors.email && (
+              <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+            )}
           </div>
+
           {/* Password */}
           <div>
             <label className="block text-sm font-medium text-gray-700">
@@ -74,11 +114,16 @@ export default function Signup() {
               name="password"
               value={form.password}
               onChange={handleChange}
-              required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-600 focus:border-blue-600 sm:text-sm p-2 border"
+              className={`mt-1 block w-full rounded-md border ${
+                errors.password ? "border-red-500" : "border-gray-300"
+              } shadow-sm focus:ring-blue-600 focus:border-blue-600 sm:text-sm p-2`}
               placeholder="••••••••"
             />
+            {errors.password && (
+              <p className="text-red-500 text-xs mt-1">{errors.password}</p>
+            )}
           </div>
+
           {/* Department */}
           <div>
             <label className="block text-sm font-medium text-gray-700">
@@ -86,14 +131,21 @@ export default function Signup() {
             </label>
             <input
               type="text"
-              name="DepartmentName" 
+              name="DepartmentName"
               value={form.DepartmentName}
               onChange={handleChange}
-              required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-600 focus:border-blue-600 sm:text-sm p-2 border"
+              className={`mt-1 block w-full rounded-md border ${
+                errors.DepartmentName ? "border-red-500" : "border-gray-300"
+              } shadow-sm focus:ring-blue-600 focus:border-blue-600 sm:text-sm p-2`}
               placeholder="Enter your department"
             />
+            {errors.DepartmentName && (
+              <p className="text-red-500 text-xs mt-1">
+                {errors.DepartmentName}
+              </p>
+            )}
           </div>
+
           <button
             type="submit"
             className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 font-medium"

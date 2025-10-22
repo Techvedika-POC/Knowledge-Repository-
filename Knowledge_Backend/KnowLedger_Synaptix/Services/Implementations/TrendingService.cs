@@ -24,36 +24,40 @@ namespace KnowLedger_Synaptix.Services.Implementations
         /// <summary>
         /// Gets top trending knowledge items, ranked by engagement score.
         /// </summary>
+        /// <param name="top">Number of items to return (default 5)</param>
         /// <returns>List of KnowledgeItemDto representing trending items</returns>
         public async Task<List<KnowledgeItemDto>> GetTrendingAsync(int top = 5)
         {
-            // Load all knowledge items including related owner, tags, and engagements
             var items = await _context.KnowledgeItems
+                .Include(k => k.Domain)
+                .Include(k => k.Category)
                 .Include(k => k.Owner)
-                .Include(k => k.Engagements)
                 .Include(k => k.KnowledgeTags)
+                .Include(k => k.Engagements)
+                .OrderByDescending(k => k.CreatedOn) // optional: latest first
                 .ToListAsync();
 
-            // Map each item to DTO and compute engagement score
-            var trending = items
+            return items
                 .Select(k => new KnowledgeItemDto
                 {
                     ItemId = k.ItemId,
                     Title = k.Title,
                     Description = k.Description,
-                Views = k.Engagements.Count,
-                Likes = k.Engagements.Count(e => e.Points.HasValue && e.Points > 0),
-                Comments = k.Engagements.Count(e => !string.IsNullOrEmpty(e.CommentText)),
-                    ContributorName = k.Owner?.Name ?? "Unknown",
-                    EngagementScore = k.Engagements.Count, // Total likes, favorites, etc.
+                    DomainId = k.DomainId,
+                    DomainName = k.Domain?.DomainName,
+                    CategoryId = k.CategoryId,
+                    CategoryName = k.Category?.CategoryName,
+                    Language = k.Language,       // JSON string from DB
+                    Framework = k.Framework,
+                    OwnerId = k.OwnerId,
+                    OwnerName = k.Owner?.Name ?? "Unknown",
                     CreatedOn = k.CreatedOn ?? DateTime.MinValue,
-                    Tags = k.KnowledgeTags.Select(t => t.TagName).ToList()
+                    Tags = k.KnowledgeTags.Select(t => t.TagName).ToList(),
+                    EngagementScore = k.Engagements.Count
                 })
-                .OrderByDescending(k => k.EngagementScore) // Rank by engagement
-                .Take(top) // Only return the top N items
+                .OrderByDescending(k => k.EngagementScore) // rank by engagement
+                .Take(top)
                 .ToList();
-
-            return trending;
         }
     }
 }

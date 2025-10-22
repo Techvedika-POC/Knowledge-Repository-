@@ -13,6 +13,7 @@ import LandingPage from "./components/LandingPage";
 import MyContributions from "./components/MyContributions";
 import AdminDashboard from "./components/AdminDashboard";
 import ApproverDashboard from "./components/ApproverDashboard";
+import Recents from "./components/Recents";
 
 // Event Pages
 import IdeathonPage from "./components/IdeathonPage";
@@ -24,7 +25,6 @@ import KnowledgeQuestPage from "./components/KnowledgeQuestPage";
 // Protected App Shell
 // ===============================
 function AppShell() {
-  console.log("REACT_APP_API_URL at App:", process.env.REACT_APP_API_URL);
 
   return (
     <div className="flex h-screen w-screen overflow-hidden">
@@ -46,7 +46,7 @@ function AppShell() {
           {/* Upload & Contributions */}
           <Route path="upload-knowledge" element={<UploadKnowledgeItem />} />
           <Route path="contributions" element={<MyContributions />} />
-
+          <Route path="recents"element={<Recents/>}/>
           {/* Admin Dashboard */}
           <Route
             path="admin"
