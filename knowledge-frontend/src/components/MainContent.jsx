@@ -11,6 +11,7 @@ import DaySpotlightSection from "./DaySpotlightSection";
 import QuickEvents from "./QuickEvents";
 import AppHighlights from "./AppHighlights";
 
+
 const MainContent = () => {
   const [activeTab, setActiveTab] = useState("Leaderboard");
   const [showLeaderboard, setShowLeaderboard] = useState(false);
@@ -241,84 +242,84 @@ const MainContent = () => {
       </div>
 
       {/* Leaderboard / Recent Activity / Announcements */}
-      <div className="bg-white rounded-2xl p-6 shadow-md mt-4">
+   <div className="bg-white rounded-2xl p-4 shadow-md mt-4">
+  {/* Tabs */}
+  <div className="flex justify-center mb-4 flex-wrap gap-3">
+    {[
+      { key: "Leaderboard", label: "Leaderboard", color: "bg-blue-100 text-blue-800 hover:bg-blue-200" },
+      { key: "Recent Activity", label: "Recent Activity", color: "bg-green-100 text-green-800 hover:bg-green-200" },
+      { key: "Announcements", label: "Announcements", color: "bg-pink-100 text-pink-800 hover:bg-pink-200" },
+    ].map((tab) => (
+      <button
+        key={tab.key}
+        onClick={() => setActiveTab(tab.key)}
+        className={`px-3 py-1 rounded-full font-semibold text-sm transition-all ${activeTab === tab.key ? "bg-indigo-600 text-white shadow-md" : tab.color}`}
+      >
+        {tab.label}
+      </button>
+    ))}
+  </div>
 
-        {/* Tabs */}
-        <div className="flex justify-center mb-6 flex-wrap gap-4">
-          {[
-            { key: "Leaderboard", label: "Leaderboard", color: "bg-blue-100 text-blue-800 hover:bg-blue-200" },
-            { key: "Recent Activity", label: "Recent Activity", color: "bg-green-100 text-green-800 hover:bg-green-200" },
-            { key: "Announcements", label: "Announcements", color: "bg-pink-100 text-pink-800 hover:bg-pink-200" },
-          ].map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`px-5 py-2 rounded-full font-semibold text-lg transition-all ${activeTab === tab.key ? "bg-indigo-600 text-white shadow-md" : tab.color}`}
-            >
-              {tab.label}
-            </button>
-          ))}
+  {/* Tab Content */}
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
+    {/* Leaderboard */}
+    {activeTab === "Leaderboard" &&
+      (loadingLeaderboard ? (
+        <p className="text-xs">Loading leaderboard...</p>
+      ) : errorLeaderboard ? (
+        <p className="text-red-500 text-xs">{errorLeaderboard}</p>
+      ) : (showLeaderboard ? leaderboardData : leaderboardData.slice(0, 3)).map((item, index) => (
+        <div key={index} className="rounded-2xl p-3 shadow-sm bg-gray-50 hover:shadow-md transition-all flex flex-col gap-1 border border-gray-100">
+          <span className={`font-semibold px-2 py-1 rounded-full text-[10px] w-max ${leaderboardNumberColors[index] || "bg-gray-200 text-gray-800"}`}>
+            #{index + 1}
+          </span>
+          <h4 className="text-base font-bold text-gray-900">{item.userName}</h4>
+          <p className="text-xs text-black font-medium">{item.itemTitle}</p>
         </div>
+      )))}
 
-        {/* Tab Content */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-          {/* Leaderboard */}
-          {activeTab === "Leaderboard" &&
-            (loadingLeaderboard ? (
-              <p>Loading leaderboard...</p>
-            ) : errorLeaderboard ? (
-              <p className="text-red-500">{errorLeaderboard}</p>
-            ) : (showLeaderboard ? leaderboardData : leaderboardData.slice(0, 3)).map((item, index) => (
-              <div key={index} className="rounded-2xl p-5 shadow-sm bg-gray-50 hover:shadow-md transition-all flex flex-col gap-3 border border-gray-100">
-                <span className={`font-semibold px-3 py-1 rounded-full text-sm w-max ${leaderboardNumberColors[index] || "bg-gray-200 text-gray-800"}`}>
-                  #{index + 1}
-                </span>
-                <h4 className="text-2xl font-bold text-gray-900">{item.userName}</h4>
-                <p className="text-md text-black font-medium">{item.itemTitle}</p>
-              </div>
-            )))}
-
-          {/* Recent Activity */}
-          {activeTab === "Recent Activity" &&
-            (showActivity ? userContributions : userContributions.slice(0, 3)).map((activity, idx) => (
-              <div key={idx} className="rounded-2xl p-5 shadow-sm bg-gray-50 hover:shadow-md transition-all flex flex-col gap-2 border border-gray-100">
-                <h5 className="text-2xl font-semibold text-blue-800">{activity.title}</h5>
-                <p className="text-md text-gray-700">{activity.description.length > 100 ? activity.description.substring(0, 100) + "..." : activity.description}</p>
-              </div>
-            ))}
-
-          {/* Announcements */}
-          {activeTab === "Announcements" && ideathonEvent && (
-            <div className="rounded-2xl p-5 shadow-sm bg-gray-50 hover:shadow-md transition-all flex flex-col gap-2 border border-gray-100">
-              <span className="font-semibold px-3 py-1 rounded-full text-sm w-max bg-pink-200 text-pink-900">Ideathon</span>
-              <h5 className="text-2xl font-semibold text-pink-800">{ideathonEvent.name}</h5>
-              <p className="text-md text-gray-700">{ideathonEvent.description.length > 100 ? ideathonEvent.description.substring(0, 100) + "..." : ideathonEvent.description}</p>
-            </div>
-          )}
+    {/* Recent Activity */}
+    {activeTab === "Recent Activity" &&
+      (showActivity ? userContributions : userContributions.slice(0, 3)).map((activity, idx) => (
+        <div key={idx} className="rounded-2xl p-3 shadow-sm bg-gray-50 hover:shadow-md transition-all flex flex-col gap-1 border border-gray-100">
+          <h5 className="text-base font-semibold text-blue-800">{activity.title}</h5>
+          <p className="text-xs text-gray-700">{activity.description.length > 100 ? activity.description.substring(0, 100) + "..." : activity.description}</p>
         </div>
+      ))}
 
-        {/* View More Buttons */}
-        <div className="flex justify-center mt-2 gap-4 flex-wrap">
-          {activeTab === "Leaderboard" && (
-            <button onClick={() => setShowLeaderboard(!showLeaderboard)} className="px-5 py-2 text-sm font-semibold text-gray-800 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors">
-              {showLeaderboard ? "View Less" : "View More"}
-            </button>
-          )}
-          {activeTab === "Recent Activity" && (
-            <button onClick={() => setShowActivity(!showActivity)} className="px-5 py-2 text-sm font-semibold text-gray-800 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors">
-              {showActivity ? "View Less" : "View More"}
-            </button>
-          )}
-          {activeTab === "Announcements" && (
-            <button onClick={() => setShowAnnouncements(!showAnnouncements)} className="px-5 py-2 text-sm font-semibold text-gray-800 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors">
-              {showAnnouncements ? "View Less" : "View More"}
-            </button>
-          )}
-        </div>
-
+    {/* Announcements */}
+    {activeTab === "Announcements" && ideathonEvent && (
+      <div className="rounded-2xl p-3 shadow-sm bg-gray-50 hover:shadow-md transition-all flex flex-col gap-1 border border-gray-100">
+        <span className="font-semibold px-2 py-1 rounded-full text-[10px] w-max bg-pink-200 text-pink-900">Ideathon</span>
+        <h5 className="text-base font-semibold text-pink-800">{ideathonEvent.name}</h5>
+        <p className="text-xs text-gray-700">{ideathonEvent.description.length > 100 ? ideathonEvent.description.substring(0, 100) + "..." : ideathonEvent.description}</p>
       </div>
+    )}
+  </div>
+
+  {/* View More Buttons */}
+  <div className="flex justify-center mt-2 gap-3 flex-wrap">
+    {activeTab === "Leaderboard" && (
+      <button onClick={() => setShowLeaderboard(!showLeaderboard)} className="px-4 py-1 text-xs font-semibold text-gray-800 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors">
+        {showLeaderboard ? "View Less" : "View More"}
+      </button>
+    )}
+    {activeTab === "Recent Activity" && (
+      <button onClick={() => setShowActivity(!showActivity)} className="px-4 py-1 text-xs font-semibold text-gray-800 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors">
+        {showActivity ? "View Less" : "View More"}
+      </button>
+    )}
+    {activeTab === "Announcements" && (
+      <button onClick={() => setShowAnnouncements(!showAnnouncements)} className="px-4 py-1 text-xs font-semibold text-gray-800 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors">
+        {showAnnouncements ? "View Less" : "View More"}
+      </button>
+    )}
+  </div>
+</div>
+
     </div>
   );
 };
 
 export default MainContent;
+

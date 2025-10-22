@@ -19,7 +19,7 @@ const QuickEvents = ({ navigate }) => {
           <button
             key={index}
             onClick={() => navigate(event.path)}
-            className="flex items-center gap-2 px-6 py-3 rounded-full text-[18px] font-medium text-[#1E293B] shadow-sm hover:shadow-md hover:bg-[#F1F5F9] transition"
+            className="flex items-center gap-2 px-6 py-3 rounded-full text-[15px] font-medium text-[#1E293B] shadow-sm hover:shadow-md hover:bg-[#F1F5F9] transition"
             style={{ backgroundColor: "#ffffff" }}
           >
             {event.icon}

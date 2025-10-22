@@ -116,7 +116,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
             if (string.IsNullOrWhiteSpace(dto.Title) || dto.DomainId == Guid.Empty || dto.CategoryId == Guid.Empty)
                 throw new ArgumentException("Title, Domain, and Category are required.");
 
-            const int ExpectedEmbeddingSize = 384; // Ensure embedding dimension matches Qdrant collection
+            const int ExpectedEmbeddingSize = 384; // Qdrant embedding dimension
 
             using var transaction = await _context.Database.BeginTransactionAsync();
 
@@ -156,7 +156,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 _context.KnowledgeVersions.Add(version);
                 await _context.SaveChangesAsync();
 
-                // ----------------- 3️⃣ Handle Attachments & Embeddings -----------------
+                // ----------------- 3️⃣ Handle Attachments -----------------
                 var uploadsRoot = Path.Combine(_env.WebRootPath ?? Path.Combine(AppContext.BaseDirectory, "wwwroot"), "uploads");
                 Directory.CreateDirectory(uploadsRoot);
 
@@ -164,75 +164,44 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 {
                     foreach (var file in dto.Attachments)
                     {
-                        try
+                        string? diskPath = null;
+                        if (file.FileData?.Length > 0)
                         {
-                            if (file.FileData == null || file.FileData.Length == 0)
-                            {
-                                _logger.LogWarning("Attachment {FileName} has no data. Only metadata will be saved.", file.FileName);
-                            }
-
-                            const long MaxBytes = 100 * 1024 * 1024; // 100 MB limit
-                            if (file.FileSize > MaxBytes)
-                            {
-                                _logger.LogWarning("Attachment {FileName} exceeds max allowed size.", file.FileName);
-                                continue;
-                            }
-
-                            string? diskPath = null;
-                            if (file.FileData?.Length > 0)
-                            {
-                                var safeName = Path.GetFileName(file.FileName);
-                                var uniqueFileName = $"{Guid.NewGuid()}_{safeName}";
-                                diskPath = Path.Combine(uploadsRoot, uniqueFileName);
-                                await File.WriteAllBytesAsync(diskPath, file.FileData);
-                            }
-
-                            // Save attachment metadata
-                            var attachment = new Attachment
-                            {
-                                AttachmentId = Guid.NewGuid(),
-                                ItemId = knowledgeItem.ItemId,
-                                VersionId = version.VersionId,
-                                FileName = file.FileName,
-                                FilePath = diskPath != null ? $"/uploads/{Path.GetFileName(diskPath)}" : null,
-                                MimeType = file.MimeType,
-                                FileSize = file.FileSize,
-                                FileData = null,
-                                CreatedOn = DateTime.UtcNow,
-                                CreatedBy = userId,
-                                UpdatedOn = DateTime.UtcNow,
-                                UpdatedBy = userId
-                            };
-                            _context.Attachments.Add(attachment);
-                            await _context.SaveChangesAsync();
-
-                            // Generate embeddings for text-based files
-                            if (diskPath != null && !file.MimeType.StartsWith("audio") && !file.MimeType.StartsWith("video"))
-                            {
-                                var fileEmbedding = await _fileEmbeddingService.GenerateEmbeddingAsync(diskPath, file.MimeType);
-
-                                if (fileEmbedding == null || fileEmbedding.Count != ExpectedEmbeddingSize)
-                                {
-                                    _logger.LogWarning(
-                                        "Attachment embedding for {FileName} is invalid length: {Length}",
-                                        file.FileName,
-                                        fileEmbedding?.Count ?? 0
-                                    );
-                                }
-                                else
-                                {
-                                    await _qdrantService.SaveToQdrantAsync(
-                                        attachment.AttachmentId.ToString(),
-                                        fileEmbedding.ToArray(),
-                                        file.FileName,
-                                        knowledgeItem.Title
-                                    );
-                                }
-                            }
+                            var uniqueFileName = $"{Guid.NewGuid()}_{Path.GetFileName(file.FileName)}";
+                            diskPath = Path.Combine(uploadsRoot, uniqueFileName);
+                            await File.WriteAllBytesAsync(diskPath, file.FileData);
                         }
-                        catch (Exception ex)
+
+                        var attachment = new Attachment
                         {
-                            _logger.LogError(ex, "Failed to process attachment {FileName}", file.FileName);
+                            AttachmentId = Guid.NewGuid(),
+                            ItemId = knowledgeItem.ItemId,
+                            VersionId = version.VersionId,
+                            FileName = file.FileName,
+                            FilePath = diskPath != null ? $"/uploads/{Path.GetFileName(diskPath)}" : null,
+                            MimeType = file.MimeType,
+                            FileSize = file.FileSize,
+                            CreatedOn = DateTime.UtcNow,
+                            CreatedBy = userId,
+                            UpdatedOn = DateTime.UtcNow,
+                            UpdatedBy = userId
+                        };
+                        _context.Attachments.Add(attachment);
+                        await _context.SaveChangesAsync();
+
+                        // Generate embedding if text-based
+                        if (diskPath != null && !file.MimeType.StartsWith("audio") && !file.MimeType.StartsWith("video"))
+                        {
+                            var fileEmbedding = await _fileEmbeddingService.GenerateEmbeddingAsync(diskPath, file.MimeType);
+                            if (fileEmbedding?.Count == ExpectedEmbeddingSize)
+                            {
+                                await _qdrantService.SaveToQdrantAsync(
+                                    attachment.AttachmentId.ToString(),
+                                    fileEmbedding.ToArray(),
+                                    file.FileName,
+                                    knowledgeItem.Title
+                                );
+                            }
                         }
                     }
                 }
@@ -254,40 +223,101 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 }
                 await _context.SaveChangesAsync();
 
-                // ----------------- 5️⃣ Generate Knowledge Item Text Embedding -----------------
+                // ----------------- 5️⃣ Generate Knowledge Item Embedding -----------------
                 try
                 {
                     var textEmbedding = await _embeddingService.GetEmbeddingAsync(knowledgeItem.Description ?? knowledgeItem.Title ?? "");
-
-                    if (textEmbedding == null)
+                    if (textEmbedding?.Length == ExpectedEmbeddingSize)
                     {
-                        _logger.LogError("No embedding returned for knowledge item {ItemId}", knowledgeItem.ItemId);
-                        throw new InvalidOperationException("Failed to generate embedding.");
+                        knowledgeItem.Embedding = textEmbedding.ToList();
+                        await _qdrantService.SaveToQdrantAsync(
+                            knowledgeItem.ItemId.ToString(),
+                            knowledgeItem.Embedding.ToArray(),
+                            knowledgeItem.Title,
+                            knowledgeItem.Description ?? ""
+                        );
                     }
-
-                    if (textEmbedding.Length != ExpectedEmbeddingSize)
-                    {
-                        _logger.LogError("Embedding has invalid dimension {Dim} for item {ItemId}", textEmbedding.Length, knowledgeItem.ItemId);
-                        throw new InvalidOperationException($"Embedding must be {ExpectedEmbeddingSize}-dimensional.");
-                    }
-
-                    knowledgeItem.Embedding = textEmbedding.ToList();
-
-                    await _qdrantService.SaveToQdrantAsync(
-                        knowledgeItem.ItemId.ToString(),
-                        knowledgeItem.Embedding.ToArray(),
-                        knowledgeItem.Title,
-                        knowledgeItem.Description ?? ""
-                    );
                 }
-                catch (Exception ex)
+                catch
                 {
-                    _logger.LogWarning(ex, "Embedding generation failed for knowledge item {ItemId}", knowledgeItem.ItemId);
+                    _logger.LogWarning("Failed to generate embedding for KnowledgeItem {ItemId}", knowledgeItem.ItemId);
+                }
+                // 6️⃣ Create Activity Log for Upload (Action as string)
+                _context.ActivityLogs.Add(new ActivityLog
+                {
+                    ActivityId = Guid.NewGuid(),
+                    UserId = userId,
+                    ItemId = knowledgeItem.ItemId,
+                    EventId = dto.IsEventItem ? dto.EventId : null,
+                    Action = "Upload", // must match DB enum value
+                    Details = $"Knowledge item '{knowledgeItem.Title}' uploaded successfully.",
+                    CreatedOn = DateTime.UtcNow
+                });
+                // ----------------- 6️⃣ Handle Event-specific Logic -----------------
+                if (dto.IsEventItem && dto.EventId.HasValue)
+                {
+                    var existingEvent = await _context.Events.FindAsync(dto.EventId.Value)
+                        ?? throw new Exception($"Event {dto.EventId.Value} does not exist.");
+                    var owner = await _context.Users.FindAsync(userId)
+                        ?? throw new Exception($"User {userId} does not exist.");
+
+                    var teamId = Guid.NewGuid();
+                    var team = new Team
+                    {
+                        TeamId = teamId,
+                        EventId = dto.EventId.Value,
+                        TeamName = dto.TeamName ?? $"{dto.Title}_Team",
+                        CreatedBy = userId,
+                        CreatedOn = DateTime.UtcNow
+                    };
+                    _context.Teams.Add(team);
+                    await _context.SaveChangesAsync();
+
+                    // Team Members
+                    var emails = dto.TeamMemberEmails?
+                        .SelectMany(e => e.Split(',', StringSplitOptions.RemoveEmptyEntries))
+                        .Select(e => e.Trim())
+                        .Where(e => !string.IsNullOrEmpty(e))
+                        .Distinct()
+                        .ToList() ?? new List<string>();
+
+                    var users = await _context.Users.Where(u => emails.Contains(u.Email)).ToListAsync();
+                    var teamMembers = users.Select(u => new TeamMember
+                    {
+                        TeamMemberId = Guid.NewGuid(),
+                        TeamId = teamId,
+                        UserId = u.UserId,
+                        JoinedOn = DateTime.UtcNow
+                    }).ToList();
+
+                    if (!teamMembers.Any())
+                    {
+                        teamMembers.Add(new TeamMember
+                        {
+                            TeamMemberId = Guid.NewGuid(),
+                            TeamId = teamId,
+                            UserId = userId,
+                            JoinedOn = DateTime.UtcNow
+                        });
+                    }
+                    _context.TeamMembers.AddRange(teamMembers);
+                    await _context.SaveChangesAsync();
+
+                    // Link KnowledgeItem to Event
+                    _context.EventKnowledgeItems.Add(new EventKnowledgeItem
+                    {
+                        EventItemId = Guid.NewGuid(),
+                        EventId = dto.EventId.Value,
+                        ItemId = knowledgeItem.ItemId,
+                        TeamId = teamId,
+                        CreatedOn = DateTime.UtcNow,
+                        CreatedBy = userId,
+                        UpdatedOn = DateTime.UtcNow
+                    });
+                    await _context.SaveChangesAsync();
                 }
 
-                await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
-
                 return knowledgeItem;
             }
             catch
@@ -296,6 +326,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 throw;
             }
         }
+
 
         #endregion
 

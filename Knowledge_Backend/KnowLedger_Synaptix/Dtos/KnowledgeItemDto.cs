@@ -10,6 +10,9 @@ namespace KnowLedger_Synaptix.Dtos
         public Guid ItemId { get; set; }
         public int EngagementScore { get; set; }
         public DateTimeOffset CreatedOn { get; set; }
+        public string Language { get; set; } = "[]";   // JSON string
+        public string Framework { get; set; } = "[]";  // JSON string
+
 
         // 👇 ADD THESE NEW PROPERTIES
         public int Views { get; set; }       // Total number of times viewed
@@ -61,8 +64,7 @@ namespace KnowLedger_Synaptix.Dtos
         public string UpdatedByName { get; set; }
 
         // Programming info
-        public string Framework { get; set; }
-        public string Language { get; set; }
+      
 
         // Metadata (JSON/string)
         public string Metadata { get; set; }
