@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import axios from "axios";
 import { FaLightbulb } from "react-icons/fa";
-export const API_BASE_URL = process.env.REACT_APP_API_URL;
-import { useLocation } from "react-router-dom";
-
+import api from "../api";
+import toast from "react-hot-toast";
 
 export default function UploadKnowledgeItem() {
   const [frameworks, setFrameworks] = useState([
@@ -53,24 +53,24 @@ export default function UploadKnowledgeItem() {
   }, [eventId]);
 
   useEffect(() => {
-    axios
-      .get(`${API_BASE_URL}/domains`)
+    api.
+      get(`/domains`)
       .then((res) => setDomains(res.data))
       .catch((err) => console.error(err));
   }, []);
 
   useEffect(() => {
     if (form.domainId) {
-      axios
-        .get(`${API_BASE_URL}/domains/${form.domainId}/categories`)
+      api
+        .get(`/domains/${form.domainId}/categories`)
         .then((res) => setCategories(res.data))
         .catch((err) => console.error(err));
     }
   }, [form.domainId]);
 
   useEffect(() => {
-    axios
-      .get(`${API_BASE_URL}/events`)
+    api
+      .get(`/events`)
       .then((res) => setEvents(res.data))
       .catch((err) => console.error(err));
   }, []);
@@ -155,27 +155,27 @@ const handleSubmit = async (e) => {
       for (let pair of formData.entries()) {
         console.log(pair[0], ":", pair[1]);
       }
-    // Submit the form
-    const response = await axios.post(
-      `${API_BASE_URL}/knowledgeitem/upload`,
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+      // Submit the form
+      const response = await api.post(
+        `/knowledgeitem/upload`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
     alert("Knowledge item uploaded successfully!");
     console.log("Upload response:", response.data);
   } catch (err) {
     if (err.response) {
       console.error("Error response:", err.response.data);
-      alert(`Upload failed: ${JSON.stringify(err.response.data)}`);
+      toast.success(`Upload failed: ${JSON.stringify(err.response.data)}`);
     } else {
       console.error("Error:", err.message);
-      alert(`Upload failed: ${err.message}`);
+      toast.error(`Upload failed: ${err.message}`);
     }
   }
 };

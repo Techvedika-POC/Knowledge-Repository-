@@ -28,20 +28,10 @@ namespace KnowLedger_Synaptix.Services.Interfaces
       DateTime? filterDate = null
         );
 
-        /// <summary>
-        /// Retrieves all knowledge items that belong to a specific domain.
-        /// </summary>
-        Task<IEnumerable<KnowledgeItemFilterDto>> GetKnowledgeItemsByDomainAsync(Guid domainId);
+        Task<List<KnowledgeItemDto>> GetAllKnowledgeItemsAsync();
+        Task<List<KnowledgeItemDto>> GetKnowledgeItemsByDomainAsync(Guid domainId);
+        Task<List<KnowledgeItemDto>> GetKnowledgeItemsByCategoryAsync(Guid categoryId);
 
-        /// <summary>
-        /// Retrieves all knowledge items that belong to a specific category.
-        /// </summary>
-        Task<IEnumerable<KnowledgeItemFilterDto>> GetKnowledgeItemsByCategoryAsync(Guid categoryId);
-
-        /// <summary>
-        /// Retrieves all knowledge items available in the system.
-        /// </summary>
-        Task<IEnumerable<KnowledgeItemFilterDto>> GetAllKnowledgeItemsAsync();
 
     }
 }

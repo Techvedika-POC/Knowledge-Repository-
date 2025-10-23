@@ -488,7 +488,7 @@ public partial class Knowledge_Repository_dbContext : DbContext
             entity.Property(e => e.IsEventItem)
                 .HasDefaultValue(false)
                 .HasColumnName("is_event_item");
-            entity.Property(e => e.KnowledgeItem1).HasColumnName("knowledge_item");
+            entity.Property(e => e.KnowledgeText).HasColumnName("knowledge_text");
             entity.Property(e => e.Language)
                 .HasColumnType("jsonb")
                 .HasColumnName("language");

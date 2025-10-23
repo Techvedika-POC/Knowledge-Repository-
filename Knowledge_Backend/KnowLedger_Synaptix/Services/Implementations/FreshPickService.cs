@@ -49,6 +49,8 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 DomainName = k.Domain?.DomainName,
                 CategoryId = k.CategoryId,
                 CategoryName = k.Category?.CategoryName,
+                Language = k.Language,       // JSON string from DB
+                Framework = k.Framework,
                 OwnerId = k.OwnerId,
                 OwnerName = k.Owner?.Name ?? "Unknown",
                 CreatedOn = k.CreatedOn ?? DateTime.MinValue,

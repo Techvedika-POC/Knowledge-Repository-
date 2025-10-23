@@ -1,4 +1,4 @@
-using KnowLedger_Synaptix.Models;
+﻿using KnowLedger_Synaptix.Models;
 using KnowLedger_Synaptix.Services;
 using KnowLedger_Synaptix.Services.Implementations;
 using KnowLedger_Synaptix.Services.Interfaces;
@@ -12,11 +12,12 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ----------------- Database Context -----------------
+#region ----------------- Database Context -----------------
 builder.Services.AddDbContext<Knowledge_Repository_dbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+#endregion
 
-// ----------------- Application Services -----------------
+#region ----------------- Application Services -----------------
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IKnowledgeItemService, KnowledgeItemService>();
 builder.Services.AddScoped<IDomainService, DomainService>();
@@ -31,47 +32,56 @@ builder.Services.AddScoped<IDaySpotlightService, DaySpotlightService>();
 builder.Services.AddScoped<IEngagementService, EngagementService>();
 builder.Services.AddScoped<IApproverService, ApproverService>();
 builder.Services.AddScoped<IActivityLogService, ActivityLogService>();
+builder.Services.AddScoped<IEmbeddingService, EmbeddingService>();
 builder.Services.AddScoped<IFileEmbeddingService, FileEmbeddingService>();
 builder.Services.AddScoped<IQdrantService, QdrantService>();
+#endregion
 
-// ----------------- HTTP Client (Embedding + Qdrant) -----------------
+#region ----------------- HttpClient Services -----------------
+// For EmbeddingService (allow self-signed certs)
 builder.Services.AddHttpClient<IEmbeddingService, EmbeddingService>()
-    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
-    {
-        ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-    })
+    .ConfigurePrimaryHttpMessageHandler(() =>
+        new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+        })
     .SetHandlerLifetime(TimeSpan.FromMinutes(5))
     .ConfigureHttpClient(client => client.Timeout = TimeSpan.FromMinutes(2));
 
+// For Qdrant
 builder.Services.AddHttpClient("QdrantClient", client =>
 {
     client.BaseAddress = new Uri("http://localhost:6333/");
     client.Timeout = TimeSpan.FromMinutes(2);
 });
+#endregion
 
-// ----------------- CORS Configuration -----------------
-var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
+#region ----------------- CORS Configuration -----------------
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? new[]
+{
+    "http://localhost:3000",
+    "https://knowledge-frontend-n567.onrender.com"
+};
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins(
-            allowedOrigins ?? new[] {
-                "http://localhost:3000",
-                "https://knowledge-frontend-n567.onrender.com"
-            })
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials();
+        policy.WithOrigins(allowedOrigins)
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
     });
 });
+#endregion
 
-// ----------------- Controllers & JSON -----------------
+#region ----------------- Controllers & JSON Settings -----------------
 builder.Services.AddControllers()
     .AddNewtonsoftJson(options =>
         options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
+#endregion
 
-// ----------------- JWT Authentication -----------------
+#region ----------------- JWT Authentication -----------------
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -91,44 +101,48 @@ builder.Services.AddAuthentication(options =>
             Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:SecretKey"]))
     };
 });
-
 builder.Services.AddAuthorization();
+#endregion
 
-// ----------------- Swagger -----------------
+#region ----------------- Swagger / API Documentation -----------------
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+#endregion
 
-// ----------------- Build App -----------------
 var app = builder.Build();
 
+#region ----------------- Middleware -----------------
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-// Ensure /uploads folder exists
-var uploadsPath = Path.Combine(app.Environment.WebRootPath ?? Path.Combine(AppContext.BaseDirectory, "wwwroot"), "uploads");
-if (!Directory.Exists(uploadsPath))
-{
-    Directory.CreateDirectory(uploadsPath);
-}
-
-// Serve static files and uploads
-app.UseStaticFiles();
+app.UseStaticFiles(); // Serve wwwroot
 app.UseStaticFiles(new StaticFileOptions
 {
-    FileProvider = new PhysicalFileProvider(uploadsPath),
+    FileProvider = new PhysicalFileProvider(
+        Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads")),
     RequestPath = "/uploads"
 });
 
-// Middleware pipeline
 app.UseHttpsRedirection();
 app.UseRouting();
 app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
+#endregion
+
+#region ----------------- Ensure Uploads Directory -----------------
+var uploadsPath = Path.Combine(
+    app.Environment.WebRootPath ?? Path.Combine(AppContext.BaseDirectory, "wwwroot"),
+    "uploads");
+
+if (!Directory.Exists(uploadsPath))
+{
+    Directory.CreateDirectory(uploadsPath);
+}
+#endregion
 
 app.Run();

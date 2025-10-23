@@ -2,10 +2,6 @@
 using KnowLedger_Synaptix.Models;
 using KnowLedger_Synaptix.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace KnowLedger_Synaptix.Services.Implementations
 {
@@ -18,53 +14,50 @@ namespace KnowLedger_Synaptix.Services.Implementations
             _context = context;
         }
 
-        public async Task<List<KnowledgeItemFilterDto>> GlobalSearchAsync(string keyword)
+        public async Task<List<KnowledgeItemDto>> GlobalSearchAsync(string keyword)
         {
             if (string.IsNullOrWhiteSpace(keyword))
-                return new List<KnowledgeItemFilterDto>();
+                return new List<KnowledgeItemDto>();
 
             keyword = keyword.ToLower();
 
-            var query = _context.KnowledgeItems
+            var items = await _context.KnowledgeItems
                 .Include(k => k.Domain)
                 .Include(k => k.Category)
                 .Include(k => k.Owner)
+                .Include(k => k.KnowledgeTags)
+                .Include(k => k.Engagements)
                 .Where(k =>
                     k.Title.ToLower().Contains(keyword) ||
                     k.Description.ToLower().Contains(keyword) ||
                     (k.Domain != null && k.Domain.DomainName.ToLower().Contains(keyword)) ||
                     (k.Category != null && k.Category.CategoryName.ToLower().Contains(keyword)) ||
-                    _context.KnowledgeTags.Any(t => t.ItemId == k.ItemId && t.TagName.ToLower().Contains(keyword)) ||
+                    k.KnowledgeTags.Any(t => t.TagName.ToLower().Contains(keyword)) ||
                     _context.Attachments.Any(a => a.ItemId == k.ItemId && a.FileName.ToLower().Contains(keyword))
                 )
-                .Select(k => new KnowledgeItemFilterDto
-                {
-                    ItemId = k.ItemId,
-                    Title = k.Title,
-                    Description = k.Description.Length > 200 ? k.Description.Substring(0, 200) + "..." : k.Description,
-                    DomainName = k.Domain != null ? k.Domain.DomainName : "Unknown Domain",
-                    CategoryName = k.Category != null ? k.Category.CategoryName : "Unknown Category",
-                    SubmittedBy = k.Owner != null ? k.Owner.Name : "Unknown",
-                    Status = k.Status ?? string.Empty,
-                    CreatedOn = k.CreatedOn ?? DateTime.MinValue,
-                    User = k.Owner,
-                    Tags = _context.KnowledgeTags
-                        .Where(t => t.ItemId == k.ItemId)
-                        .Select(t => t.TagName)
-                        .ToList()
-                });
-
-            var results = await query
                 .OrderByDescending(k => k.CreatedOn)
-                .ToListAsync(); // ✅ Removed .Distinct()
+                .ToListAsync();
 
-            // ✅ Perform distinct in-memory safely
-            var distinctResults = results
-                .GroupBy(k => k.ItemId)
-                .Select(g => g.First())
-                .ToList();
-
-            return distinctResults;
+            // ✅ Map to DTO including all required fields
+            return items.Select(k => new KnowledgeItemDto
+            {
+                ItemId = k.ItemId,
+                Title = k.Title,
+                Description = k.Description?.Length > 200 ? k.Description.Substring(0, 200) + "..." : k.Description,
+                DomainId = k.DomainId,
+                DomainName = k.Domain?.DomainName ?? string.Empty,
+                CategoryId = k.CategoryId,
+                CategoryName = k.Category?.CategoryName ?? string.Empty,
+                OwnerId = k.OwnerId,
+                OwnerName = k.Owner?.Name ?? "Unknown",
+                CreatedOn = k.CreatedOn ?? DateTime.MinValue,
+                Framework = k.Framework,       // JSON string (parsed in frontend)
+                Language = k.Language,         // JSON string (parsed in frontend)
+                Tags = k.KnowledgeTags.Select(t => t.TagName).ToList(),
+                EngagementScore = k.Engagements.Count,
+                Status = k.Status ?? "Draft",
+                IsEventItem = k.IsEventItem ?? false
+            }).ToList();
         }
     }
 }

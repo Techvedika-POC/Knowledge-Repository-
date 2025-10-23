@@ -9,7 +9,7 @@ namespace KnowLedger_Synaptix.Services.Interfaces
     {
         /// <summary>
         /// Retrieves all contributions of a specific user.
-        /// </summary
+        /// </summary>
         Task<IEnumerable<ActivityLogDto>> GetUserContributionsAsync(Guid userId);
 
         /// <summary>
@@ -21,24 +21,29 @@ namespace KnowLedger_Synaptix.Services.Interfaces
         /// Retrieves contributions of a specific user filtered by domain, category, title, status, and/or date.
         /// </summary>
         Task<IEnumerable<ActivityLogDto>> GetUserContributionsFilteredAsync(
-         Guid userId,
-         string domain = null,
-         string category = null,
-         string title = null,
-         string status = null,
-         DateTime? date = null);
+            Guid userId,
+            string domain = null,
+            string category = null,
+            string title = null,
+            string status = null,
+            DateTime? date = null
+        );
+
         /// <summary>
         /// Retrieves distinct domains associated with a specific user's contributions.
         /// </summary>
         Task<IEnumerable<string>> GetUserDomainsAsync(Guid userId);
+
         /// <summary>
         /// Retrieves distinct categories associated with a specific user's contributions.
         /// </summary>
         Task<IEnumerable<string>> GetUserCategoriesAsync(Guid userId);
+
         /// <summary>
         /// Retrieves distinct titles of contributions made by a specific user.
         /// </summary>
         Task<IEnumerable<string>> GetUserTitlesAsync(Guid userId);
+
         /// <summary>
         /// Retrieves contributions of a user with pagination and optional filtering.
         /// </summary>
@@ -52,8 +57,9 @@ namespace KnowLedger_Synaptix.Services.Interfaces
             string status = null,
             DateTime? date = null
         );
+
         /// <summary>
-        /// Retrieves contributions of a user with pagination and optional filtering.
+        /// Retrieves contributions made by a user in the current month.
         /// </summary>
         Task<IEnumerable<ActivityLogDto>> GetUserContributionsThisMonthAsync(Guid userId);
     }

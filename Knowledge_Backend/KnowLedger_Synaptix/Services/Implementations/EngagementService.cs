@@ -5,9 +5,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace KnowLedger_Synaptix.Services.Implementations
 {
-    /// <summary>
-    /// Service to handle engagements on knowledge items such as Likes, Favourites, and Comments.
-    /// </summary>
     public class EngagementService : IEngagementService
     {
         private readonly Knowledge_Repository_dbContext _context;
@@ -17,10 +14,6 @@ namespace KnowLedger_Synaptix.Services.Implementations
             _context = context;
         }
 
-        /// <summary>
-        /// Adds an engagement (Like, Favourite, Comment) for a user on a knowledge item.
-        /// Points are automatically assigned based on the engagement type.
-        /// </summary>
         public async Task AddEngagementAsync(EngagementDto dto)
         {
             var engagement = new Engagement
@@ -44,9 +37,6 @@ namespace KnowLedger_Synaptix.Services.Implementations
             await _context.SaveChangesAsync();
         }
 
-        /// <summary>
-        /// Removes a specific engagement for a user on a knowledge item.
-        /// </summary>
         public async Task RemoveEngagementAsync(Guid itemId, Guid userId, string engagementType)
         {
             var engagement = await _context.Engagements
@@ -62,24 +52,14 @@ namespace KnowLedger_Synaptix.Services.Implementations
             }
         }
 
-        /// <summary>
-        /// Returns a detailed engagement summary for a knowledge item, including:
-        /// - Total likes
-        /// - Total favourites
-        /// - Total comments and comment details
-        /// - Engagement types of the requesting user
-        /// </summary>
         public async Task<KnowledgeItemEngagementDto> GetEngagementSummaryAsync(Guid itemId, Guid userId)
         {
-            // Count total likes
             var likesCount = await _context.Engagements
                 .CountAsync(e => e.ItemId == itemId && e.EngagementType == "Like");
 
-            // Count total favourites
             var favouritesCount = await _context.Engagements
                 .CountAsync(e => e.ItemId == itemId && e.EngagementType == "Favourite");
 
-            // Fetch all comments with user info
             var comments = (await _context.Engagements
                 .Where(e => e.ItemId == itemId && e.EngagementType == "Comment")
                 .Include(e => e.User)
@@ -89,12 +69,11 @@ namespace KnowLedger_Synaptix.Services.Implementations
                     EngagementId = e.EngagementId,
                     UserId = e.UserId,
                     UserName = e.User?.Name ?? "Unknown",
-                    CommentText = e.CommentText ?? "",
+                    CommentText = e.CommentText ?? string.Empty,
                     CreatedOn = e.CreatedOn
                 })
                 .ToList();
 
-            // Determine the engagement types of the current user
             var userEngagementTypes = await _context.Engagements
                 .Where(e => e.ItemId == itemId && e.UserId == userId)
                 .Select(e => e.EngagementType)
@@ -111,18 +90,12 @@ namespace KnowLedger_Synaptix.Services.Implementations
             };
         }
 
-        /// <summary>
-        /// Returns the total number of likes for a specific knowledge item.
-        /// </summary>
         public async Task<int> GetLikesCountAsync(Guid itemId)
         {
             return await _context.Engagements
                 .CountAsync(e => e.ItemId == itemId && e.EngagementType == "Like");
         }
 
-        /// <summary>
-        /// Returns a list of all engagements (Likes and Favourites) performed by a user.
-        /// </summary>
         public async Task<List<UserEngagementDto>> GetUserEngagementsAsync(Guid userId)
         {
             return await _context.Engagements
@@ -134,25 +107,25 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 })
                 .ToListAsync();
         }
+
         public async Task<List<LeaderboardDto>> GetTopLikedItemsAsync(int top = 5)
         {
             var topItems = await _context.Engagements
-             .Where(e => e.EngagementType == "Like")
-             .GroupBy(e => e.ItemId)
-             .Select(g => new
-             {
-                 ItemId = g.Key,
-                 LikesCount = g.Count()
-             })
-             .OrderByDescending(x => x.LikesCount)
-             .Take(top)
-             .ToListAsync();
+                .Where(e => e.EngagementType == "Like")
+                .GroupBy(e => e.ItemId)
+                .Select(g => new
+                {
+                    ItemId = g.Key,
+                    LikesCount = g.Count()
+                })
+                .OrderByDescending(x => x.LikesCount)
+                .Take(top)
+                .ToListAsync();
 
-            // Load KnowledgeItems into memory first
             var knowledgeItems = await _context.KnowledgeItems
                 .Where(k => topItems.Select(t => t.ItemId).Contains(k.ItemId))
                 .Include(k => k.Owner)
-                .ToListAsync(); // <-- now it's in memory
+                .ToListAsync();
 
             var leaderboard = knowledgeItems
                 .Select(k => new LeaderboardDto
@@ -163,15 +136,14 @@ namespace KnowLedger_Synaptix.Services.Implementations
                         ? k.Description.Substring(0, 100) + "..."
                         : k.Description,
                     UserId = k.OwnerId ?? Guid.Empty,
-                    UserName = k.Owner != null ? k.Owner.Name : "Unknown",
+
+                    UserName = k.Owner?.Name ?? "Unknown",
                     LikesCount = topItems.FirstOrDefault(t => t.ItemId == k.ItemId)?.LikesCount ?? 0
                 })
                 .OrderByDescending(l => l.LikesCount)
                 .ToList();
 
             return leaderboard;
-
         }
-
     }
 }

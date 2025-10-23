@@ -10,7 +10,7 @@ export default function IdeathonPage() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  // ✅ Fetch the Ideathon event from backend
+  //  Fetch the Ideathon event from backend
   useEffect(() => {
     const fetchEvent = async () => {
       try {
@@ -23,11 +23,11 @@ export default function IdeathonPage() {
       } finally {
         setLoading(false);
       }
-  };
+    };
     fetchEvent();
   }, []);
 
-  // ✅ Pass eventId to upload page
+  //  Pass eventId to upload page
   const handleSubmitIdea = (id) => {
     navigate("/app/upload-knowledge", { state: { eventId: id } });
   };
@@ -39,28 +39,13 @@ export default function IdeathonPage() {
   if (!event)
     return <p className="text-center text-gray-600">No Ideathon event available.</p>;
 
-  // ✅ Example timeline data (static)
+  //  Example timeline data (static)
   const timeline = [
     { phase: "Team Formation & Registration", date: "Oct 5 – Oct 10" },
     { phase: "Idea Submission Deadline", date: "Oct 15" },
     { phase: "Midway Mentor Review", date: "Oct 18" },
     { phase: "Final Presentations", date: "Oct 24" },
     { phase: "Winner Announcement", date: "Oct 25" },
-  ];
-
-  const challenges = [
-    {
-      title: "AI for Carbon Footprint Reduction",
-      desc: "Develop an idea using AI to optimize energy usage and reduce emissions.",
-    },
-    {
-      title: "Circular Economy Tech",
-      desc: "Propose technology-driven models to promote waste reuse and recycling.",
-    },
-    {
-      title: "Smart Agriculture with AIoT",
-      desc: "Leverage sensors and machine learning to support sustainable farming.",
-    },
   ];
 
   return (
@@ -81,20 +66,6 @@ export default function IdeathonPage() {
           the board. Winning ideas move into project development and get
           published as knowledge items!
         </p>
-        <div className="flex flex-wrap gap-4 mt-4 text-gray-600">
-          <span className="flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-blue-500" />
-            <strong>Start:</strong> {eventDetails.startDate}
-          </span>
-          <span className="flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-red-500" />
-            <strong>End:</strong> {eventDetails.endDate}
-          </span>
-          <span className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-green-500" />
-            <strong>Owners:</strong> {eventDetails.owners.join(", ")}
-          </span>
-        </div>
       </div>
 
       {/* Theme Section */}
@@ -126,7 +97,7 @@ export default function IdeathonPage() {
       {/* Timeline */}
       <div className="mb-10">
         <h3 className="text-2xl font-semibold text-gray-800 mb-4">
-          📅 Event Timeline
+           Event Timeline
         </h3>
         <div className="space-y-4">
           {timeline.map((item, index) => (
@@ -149,7 +120,7 @@ export default function IdeathonPage() {
         <button
           onClick={() => handleSubmitIdea(event.eventId)} // ✅ Correctly passes eventId
           className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-full font-semibold text-lg"
-            >
+        >
           Submit Your Idea
         </button>
       </div>

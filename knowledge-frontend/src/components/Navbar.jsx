@@ -4,12 +4,7 @@ import { FaSearch, FaLayerGroup, FaFolderOpen, FaFilter } from "react-icons/fa";
 import KnowledgeCardsDisplay from "./KnowledgeCardsDisplay";
 import PreviewModal from "./PreviewModal";
 
-export default function Navbar({
-  onLike,
-  onFavourite,
-  onComment,
-  engagement
-}) {
+export default function Navbar() {
   const [domains, setDomains] = useState([]);
   const [categories, setCategories] = useState([]);
   const [searchResults, setSearchResults] = useState([]);
@@ -21,27 +16,155 @@ export default function Navbar({
   const [showDomainDropdown, setShowDomainDropdown] = useState(false);
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [userId, setUserId] = useState(null);
 
-  const userId = localStorage.getItem("userId");
+  const [engagement, setEngagement] = useState({
+    likedItems: [],
+    favouritedItems: [],
+  });
+
   const domainDropdownRef = useRef(null);
   const categoryDropdownRef = useRef(null);
 
+  // Get userId on mount
+  useEffect(() => {
+    const storedUserId = localStorage.getItem("userId");
+    if (storedUserId) setUserId(storedUserId);
+  }, []);
+
+  // Fetch user's engagement when userId is available
+  useEffect(() => {
+    if (!userId) return;
+
+    const fetchUserEngagements = async () => {
+      try {
+        const res = await api.get(`/engagement/user-engagements/${userId}`);
+        const likedItems = res.data
+          .filter((e) => e.engagementType === "Like")
+          .map((e) => e.itemId);
+        const favouritedItems = res.data
+          .filter((e) => e.engagementType === "Favourite")
+          .map((e) => e.itemId);
+
+        setEngagement({ likedItems, favouritedItems });
+      } catch (error) {
+        console.error("Failed to load user engagements:", error);
+      }
+    };
+
+    fetchUserEngagements();
+  }, [userId]);
+
+  const updateEngagement = (newEngagement) => {
+    setEngagement(newEngagement);
+    localStorage.setItem("engagement", JSON.stringify(newEngagement));
+  };
+
+  // Like handler
+  const handleLikeClick = async (item) => {
+    if (!userId) return;
+
+    const itemId = item.itemId || item.id;
+    const alreadyLiked = engagement.likedItems.includes(itemId);
+    const likedItems = alreadyLiked
+      ? engagement.likedItems.filter((id) => id !== itemId)
+      : [...engagement.likedItems, itemId];
+
+    updateEngagement({ ...engagement, likedItems });
+
+    try {
+      if (alreadyLiked) {
+        await api.delete(`/engagement/like/${itemId}?userId=${userId}`);
+      } else {
+        await api.post(`/engagement/like/${itemId}?userId=${userId}`);
+      }
+
+      // Update like count locally
+      setSearchResults((prev) =>
+        prev.map((i) =>
+          i.id === itemId
+            ? { ...i, likesCount: (i.likesCount || 0) + (alreadyLiked ? -1 : 1) }
+            : i
+        )
+      );
+    } catch (error) {
+      console.error("Failed to update like:", error);
+      updateEngagement(engagement); // revert UI
+    }
+  };
+
+  // Favourite handler
+  const handleFavouriteClick = async (item) => {
+    if (!userId) return;
+
+    const itemId = item.itemId || item.id;
+    const alreadyFavourited = engagement.favouritedItems.includes(itemId);
+    const favouritedItems = alreadyFavourited
+      ? engagement.favouritedItems.filter((id) => id !== itemId)
+      : [...engagement.favouritedItems, itemId];
+
+    updateEngagement({ ...engagement, favouritedItems });
+
+    try {
+      if (alreadyFavourited) {
+        await api.delete(`/engagement/favourite/${itemId}?userId=${userId}`);
+      } else {
+        await api.post(`/engagement/favourite/${itemId}?userId=${userId}`);
+      }
+    } catch (error) {
+      console.error("Failed to update favourite:", error);
+      updateEngagement(engagement); // revert UI
+    }
+  };
+
+  // Comment handler
+  const handleCommentClick = async (item, commentText) => {
+    if (!userId || !commentText.trim()) return;
+
+    const itemId = item.itemId || item.id;
+    try {
+      const res = await api.post(
+        `/engagement/comment/${itemId}?userId=${userId}`,
+        { commentText: commentText.trim() },
+        { headers: { "Content-Type": "application/json" } }
+      );
+
+      // Update local UI immediately
+      const newComment = {
+        text: commentText.trim(),
+        userName: "You",
+        timestamp: Date.now(),
+      };
+      setSearchResults((prev) =>
+        prev.map((i) =>
+          i.id === itemId
+            ? { ...i, comments: [...(i.comments || []), newComment] }
+            : i
+        )
+      );
+    } catch (error) {
+      console.error("Failed to post comment:", error);
+    }
+  };
+
+  // Fetch filters
   useEffect(() => {
     const fetchFilters = async () => {
       try {
         const [domainRes, categoryRes] = await Promise.all([
           api.get("/Domains"),
-          api.get("/Categories")
+          api.get("/Categories"),
         ]);
-        setDomains(domainRes.data);
-        setCategories(categoryRes.data);
+        setDomains(domainRes.data || []);
+        setCategories(categoryRes.data || []);
       } catch (err) {
-        console.error("Error fetching filters", err);
+        console.error("Error fetching filters:", err);
       }
     };
     fetchFilters();
   }, []);
 
+  // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (domainDropdownRef.current && !domainDropdownRef.current.contains(event.target))
@@ -53,48 +176,46 @@ export default function Navbar({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Fetch items
   const fetchItems = async (url) => {
     setIsSearching(true);
     setError("");
     try {
       const res = await api.get(url);
-      setSearchResults(res.data || []);
-    } catch {
-      setError("Error fetching items.");
+      const items = (res.data || []).map((i) => ({
+        ...i,
+        id: i.itemId || i.id,
+      }));
+      setSearchResults(items);
+    } catch (err) {
+      console.error(err);
+      setError("Error fetching items");
     } finally {
       setIsSearching(false);
     }
   };
 
-  const handleDomainSelection = (domainId) => {
-    setSelectedDomain(domainId);
+  const handleDomainSelection = (id) => {
+    setSelectedDomain(id);
     setSelectedCategory("");
-    setKeyword("");
-    setShowDomainDropdown(false);
-    fetchItems(`/KnowledgeItem/ByDomain/${domainId}`);
+    fetchItems(`/KnowledgeItem/ByDomain/${id}`);
   };
 
-  const handleCategorySelection = (categoryId) => {
-    setSelectedCategory(categoryId);
+  const handleCategorySelection = (id) => {
+    setSelectedCategory(id);
     setSelectedDomain("");
-    setKeyword("");
-    setIsSearching(true);
-    setShowCategoryDropdown(false);
-    fetchItems(`/KnowledgeItem/ByCategory/${categoryId}`);
+    fetchItems(`/KnowledgeItem/ByCategory/${id}`);
   };
 
   const handleBrowseAll = () => {
     setSelectedDomain("");
     setSelectedCategory("");
-    setKeyword("");
     fetchItems("/KnowledgeItem/All");
   };
 
   const handleSearch = (e) => {
     e.preventDefault();
     if (!keyword.trim()) return;
-    setSelectedDomain("");
-    setSelectedCategory("");
     fetchItems(`/GlobalSearch?keyword=${encodeURIComponent(keyword)}`);
   };
 
@@ -104,169 +225,114 @@ export default function Navbar({
     setKeyword("");
     setSearchResults([]);
     setError("");
-    setShowAll(false);
+    setEngagement({ likedItems: [], favouritedItems: [] });
   };
-
-  const chunkedResults = [];
-  for (let i = 0; i < searchResults.length; i += 3) {
-    chunkedResults.push(searchResults.slice(i, i + 3));
-  }
-  const rowsToShow = showAll ? chunkedResults.length : 1;
 
   return (
     <>
-      {/* Navbar */}
-      <div className="sticky top-0 left-0 w-full bg-white shadow-md border-b z-10 px-4 py-2 mb-0">
-      
-
-          <div className="flex justify-between items-center gap-3 w-full">
-            {/* Filters */}
+      {/* Navbar Filters */}
+      <div className="sticky top-0 bg-white shadow-md border-b z-10 px-4 py-2 mb-0">
+        <div className="flex justify-between items-center gap-3">
           <div className="flex gap-4 items-center">
             {/* Domain */}
-              <div className="relative" ref={domainDropdownRef}>
-                <button
-                  onClick={() => setShowDomainDropdown(!showDomainDropdown)}
-                className={`px-5 py-2 rounded-full text-base font-medium flex items-center gap-2 transition ${
-                  selectedDomain ? "bg-cyan-700 text-white" : "bg-cyan-100 text-cyan-700 hover:bg-cyan-200"
-                  }`}
-                >
-                  <FaLayerGroup /> Domain
-                </button>
-                {showDomainDropdown && (
-                <div className="absolute top-full left-0 mt-1 bg-white shadow-lg rounded-lg p-2 z-50 w-56 max-h-56 overflow-auto border border-gray-200 text-base">
-                    {domains.map((d) => (
-                      <button
-                        key={d.domainId}
-                      className={`w-full text-left px-3 py-2 rounded ${
-                        selectedDomain === d.domainId ? "bg-cyan-700 text-white" : "hover:bg-gray-100"
-                        }`}
-                        onClick={() => handleDomainSelection(d.domainId)}
-                      >
-                        {d.domainName}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-            {/* Category */}
-              <div className="relative" ref={categoryDropdownRef}>
-                <button
-                  onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-                className={`px-5 py-2 rounded-full text-base font-medium flex items-center gap-2 transition ${
-                  selectedCategory ? "bg-blue-700 text-white" : "bg-blue-100 text-blue-700 hover:bg-blue-200"
-                  }`}
-                >
-                  <FaFolderOpen /> Category
-                </button>
-                {showCategoryDropdown && (
-                <div className="absolute top-full left-0 mt-1 bg-white shadow-lg rounded-lg p-2 z-50 w-56 max-h-56 overflow-auto border border-gray-200 text-base">
-                    {categories.map((c) => (
-                      <button
-                        key={c.categoryId}
-                      className={`w-full text-left px-3 py-2 rounded ${
-                        selectedCategory === c.categoryId ? "bg-blue-700 text-white" : "hover:bg-gray-100"
-                        }`}
-                        onClick={() => handleCategorySelection(c.categoryId)}
-                      >
-                        {c.categoryName}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Browse All */}
+            <div className="relative" ref={domainDropdownRef}>
               <button
-              className="px-5 py-2 rounded-full bg-indigo-700 text-white text-base font-medium flex items-center gap-2 hover:bg-indigo-800 transition"
-                onClick={handleBrowseAll}
+                onClick={() => setShowDomainDropdown(!showDomainDropdown)}
+                className={`px-5 py-2 rounded-full flex items-center gap-2 ${
+                  selectedDomain ? "bg-cyan-700 text-white" : "bg-cyan-100 text-cyan-700"
+                }`}
               >
-                <FaFilter /> Browse All
+                <FaLayerGroup /> Domain
               </button>
+              {showDomainDropdown && (
+                <div className="absolute top-full left-0 mt-1 bg-white shadow-lg rounded-lg p-2 z-50 w-56">
+                  {domains.map((d) => (
+                    <button
+                      key={d.domainId}
+                      onClick={() => handleDomainSelection(d.domainId)}
+                      className="w-full text-left px-3 py-2 hover:bg-gray-100"
+                    >
+                      {d.domainName}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
-          {/* Search */}
-          <form onSubmit={handleSearch} className="relative flex-none w-full sm:w-80 ml-4">
-            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-lg" />
-              <input
-                type="text"
-                placeholder="Search knowledge..."
-                value={keyword}
-                onChange={(e) => setKeyword(e.target.value)}
-              className="w-full border border-gray-300 rounded-full pl-10 pr-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-800 text-base bg-gray-50"
-              />
-            </form>
+            {/* Category */}
+            <div className="relative" ref={categoryDropdownRef}>
+              <button
+                onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                className={`px-5 py-2 rounded-full flex items-center gap-2 ${
+                  selectedCategory ? "bg-blue-700 text-white" : "bg-blue-100 text-blue-700"
+                }`}
+              >
+                <FaFolderOpen /> Category
+              </button>
+              {showCategoryDropdown && (
+                <div className="absolute top-full left-0 mt-1 bg-white shadow-lg rounded-lg p-2 z-50 w-56">
+                  {categories.map((c) => (
+                    <button
+                      key={c.categoryId}
+                      onClick={() => handleCategorySelection(c.categoryId)}
+                      className="w-full text-left px-3 py-2 hover:bg-gray-100"
+                    >
+                      {c.categoryName}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <button
+              className="px-5 py-2 rounded-full bg-indigo-700 text-white flex items-center gap-2"
+              onClick={handleBrowseAll}
+            >
+              <FaFilter /> Browse All
+            </button>
           </div>
+
+          {/* Search Bar */}
+          <form onSubmit={handleSearch} className="relative w-full sm:w-80 ml-4">
+            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+            <input
+              type="text"
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+              placeholder="Search knowledge..."
+              className="w-full border border-gray-300 rounded-full pl-10 pr-3 py-2 focus:ring-2 focus:ring-blue-400"
+            />
+          </form>
         </div>
       </div>
 
-      {/* Main Section */}
-<div className="pt-0 px-6 w-full">
-  {isSearching && <p className="text-gray-500 text-lg mt-3 text-center">🔍 Searching...</p>}
-  {error && <p className="text-red-500 text-lg mt-3 text-center">{error}</p>}
+      {/* Search Results */}
+      <div className="px-6 w-full">
+        {isSearching && <p className="text-center text-gray-500">Searching...</p>}
+        {error && <p className="text-center text-red-500">{error}</p>}
 
-  {/* Knowledge Cards */}
-  {searchResults.length > 0 && (
-    <KnowledgeCardsDisplay
-      items={searchResults}
-      title="Knowledge Articles"
-      userId={userId}
-      onPreview={(item) => setSelectedItem(item)}
-      onLike={onLike}
-      onFavourite={onFavourite}
-      onComment={onComment}
-      engagement={engagement}
-      onReset={handleReset}
-    />
-  )}
-</main>
+        {searchResults.length > 0 && (
+          <KnowledgeCardsDisplay
+            items={searchResults.map((item) => ({
+              ...item,
+              isLiked: engagement.likedItems.includes(item.id),
+              isFav: engagement.favouritedItems.includes(item.id),
+              likeCount: item.likesCount || 0,
+              comments: item.comments || [],
+            }))}
+            title="Filtered Knowledge Articles"
+            userId={userId}
+            onPreview={(item) => setSelectedItem(item)}
+            onLike={handleLikeClick}
+            onFavourite={handleFavouriteClick}
+            onComment={handleCommentClick}
+          />
+        )}
 
-
-      {/* Preview Modal */}
-      {previewItem && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-[999]">
-          <div className="bg-white rounded-xl shadow-2xl p-6 max-w-lg w-full relative border border-gray-200">
-            <button
-              className="absolute top-3 right-3 text-gray-500 hover:text-gray-800 font-bold text-lg"
-              onClick={() => setPreviewItem(null)}
-            >
-              ✖
-            </button>
-            <h2 className="text-2xl font-bold text-indigo-700 mb-4 border-b pb-2">
-              {previewItem.title || previewItem.name}
-            </h2>
-            <div className="flex flex-wrap gap-2 mb-4">
-              <span className="px-3 py-1 rounded border border-gray-300 bg-indigo-50 text-indigo-700 text-sm">
-                Domain: {previewItem.domainName}
-              </span>
-              <span className="px-3 py-1 rounded border border-gray-300 bg-indigo-50 text-indigo-700 text-sm">
-                Category: {previewItem.categoryName}
-              </span>
-            </div>
-            <div className="mb-4">
-              <h3 className="font-semibold text-gray-800 mb-1">Description</h3>
-              <p className="text-sm text-gray-700 leading-relaxed">
-                {previewItem.description || "No description available."}
-              </p>
-            </div>
-            <div className="mb-6">
-              <h3 className="font-semibold text-gray-800 mb-1">Snippet</h3>
-              <p className="text-sm text-gray-700 leading-relaxed">
-                {previewItem.snippet || "No snippet available."}
-              </p>
-            </div>
-
-            <div className="flex justify-end">
-              <button
-                className="px-4 py-1 text-sm bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 transition"
-                onClick={() => setPreviewItem(null)}
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+        {selectedItem && (
+          <PreviewModal item={selectedItem} onClose={() => setSelectedItem(null)} />
+        )}
+      </div>
     </>
   );
 }

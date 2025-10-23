@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Heart, Star, MessageCircle, Eye } from "lucide-react";
 
@@ -106,7 +107,6 @@ export default function EngagementButtons({
       {showCommentModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="relative bg-white p-6 rounded-xl shadow-xl max-w-lg w-full mx-4">
-
             {/* Close Button */}
             <button
               className="absolute top-3 right-3 text-gray-600 hover:text-gray-900 text-xl font-bold"

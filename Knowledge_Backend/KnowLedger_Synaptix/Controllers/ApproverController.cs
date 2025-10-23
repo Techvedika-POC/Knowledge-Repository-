@@ -26,16 +26,15 @@ namespace KnowLedger_Synaptix.Controllers
             return Ok(items);
         }
 
-        // POST: api/approver/approve/{itemId}
         [HttpPost("approve/{itemId}")]
         public async Task<IActionResult> ApproveItem(Guid itemId)
         {
-            // Extract approver ID from JWT claim
+            // Get the approver ID from the logged-in user's claims
             var approverIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
             if (string.IsNullOrEmpty(approverIdClaim))
-                return Unauthorized("User ID not found in claims.");
+                return Unauthorized("User ID not found in token.");
 
+            // Validate and parse approver ID
             if (!Guid.TryParse(approverIdClaim, out var approverId))
                 return BadRequest("Invalid user ID format.");
 
@@ -46,8 +45,6 @@ namespace KnowLedger_Synaptix.Controllers
 
             return Ok("Item approved successfully.");
         }
-
-        // GET: api/approver/pending/paged
         [HttpGet("pending/paged")]
         public async Task<IActionResult> GetPendingPaged([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {

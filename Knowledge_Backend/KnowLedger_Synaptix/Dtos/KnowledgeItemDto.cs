@@ -9,7 +9,15 @@ namespace KnowLedger_Synaptix.Dtos
         // Unique identifier
         public Guid ItemId { get; set; }
         public int EngagementScore { get; set; }
-        public DateTime CreatedOn { get; set; }
+        public DateTimeOffset CreatedOn { get; set; }
+        public string Language { get; set; } = "[]";   // JSON string
+        public string Framework { get; set; } = "[]";  // JSON string
+
+
+        // 👇 ADD THESE NEW PROPERTIES
+        public int Views { get; set; }       // Total number of times viewed
+        public int Likes { get; set; }       // Number of likes or upvotes
+        public int Comments { get; set; }    // Number of comments
 
         // Main title of the knowledge item
         public string Title { get; set; }
@@ -41,7 +49,7 @@ namespace KnowLedger_Synaptix.Dtos
         // Visibility
         public string Visibility { get; set; }
 
-        // Event-related item flag
+        // Is this an event-related item?
         public bool? IsEventItem { get; set; }
 
         public string ContributorName { get; set; }
@@ -57,16 +65,13 @@ namespace KnowLedger_Synaptix.Dtos
         public string UpdatedByName { get; set; }
 
         // Programming info
-        public string Framework { get; set; }
-        public string Language { get; set; }
+      
 
         // Metadata (JSON/string)
         public string Metadata { get; set; }
 
         public User User { get; set; }
         public string SubmittedBy { get; set; } = string.Empty;
-        public int Views { get; set; } = 0;
-        public int Likes { get; set; } = 0;
-        public int Comments { get; set; } = 0;
+
     }
 }

@@ -226,29 +226,51 @@ namespace KnowLedger_Synaptix.Services.Implementations
         }
         //items uplaoded by current month
         public async Task<IEnumerable<ActivityLogDto>> GetUserContributionsThisMonthAsync(Guid userId)
+
         {
+
             var now = DateTime.UtcNow;
+
             var firstDayOfMonth = new DateTime(now.Year, now.Month, 1);
+
             var firstDayUtc = DateTime.SpecifyKind(firstDayOfMonth, DateTimeKind.Utc);
 
             return await _context.KnowledgeItems
+
                 .Where(k => k.OwnerId == userId && k.CreatedOn >= firstDayUtc)
+
                 .Include(k => k.Category)
+
                 .Include(k => k.Domain)
+
                 .OrderByDescending(k => k.CreatedOn)
+
                 .Select(k => new ActivityLogDto
+
                 {
+
                     UserId = k.OwnerId,
+
                     ItemId = k.ItemId,
+
                     Title = k.Title,
+
                     Category = k.Category != null ? k.Category.CategoryName : null,
+
                     Domain = k.Domain != null ? k.Domain.DomainName : null,
+
                     Description = k.Description.Length > 100 ? k.Description.Substring(0, 100) + "..." : k.Description,
+
                     Status = k.Status,
+
                     Date = k.CreatedOn
+
                 })
+
                 .ToListAsync();
+
         }
+
 
 
     }

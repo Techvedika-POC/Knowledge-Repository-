@@ -1,8 +1,6 @@
 ﻿using KnowLedger_Synaptix.Dtos;
 using KnowLedger_Synaptix.Models;
 using KnowLedger_Synaptix.Services.Interfaces;
-using KnowledgeSynaptix.Services.Implementations;
-using KnowledgeSynaptix.Services.Interfaces;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -10,55 +8,33 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
-using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace KnowLedger_Synaptix.Services.Implementations
 {
     /// <summary>
-    /// Service responsible for all Knowledge Item operations.
-    /// This includes creation, retrieval, filtering, attachments handling,
-    /// embedding generation, and storage in the Qdrant vector database.
+    /// Service responsible for all Knowledge Item operations:
+    /// creation, retrieval, filtering, attachments, and events.
     /// </summary>
     public class KnowledgeItemService : IKnowledgeItemService
     {
         private readonly Knowledge_Repository_dbContext _context;
-        private readonly IEmbeddingService _embeddingService;
-        private readonly HttpClient _qdrantClient;
         private readonly IWebHostEnvironment _env;
         private readonly ILogger<KnowledgeItemService> _logger;
-        private readonly IFileEmbeddingService _fileEmbeddingService;
-        private readonly IQdrantService _qdrantService;
 
-        /// <summary>
-        /// Constructor for dependency injection.
-        /// Initializes the database context, embedding services, Qdrant service, hosting environment, and logger.
-        /// Throws ArgumentNullException if any required dependency is null.
-        /// </summary>
         public KnowledgeItemService(
             Knowledge_Repository_dbContext context,
-            IEmbeddingService embeddingService,
-            IFileEmbeddingService fileEmbeddingService,
-            IQdrantService qdrantService,
             IWebHostEnvironment env,
             ILogger<KnowledgeItemService> logger)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
-            _embeddingService = embeddingService ?? throw new ArgumentNullException(nameof(embeddingService));
-            _fileEmbeddingService = fileEmbeddingService ?? throw new ArgumentNullException(nameof(fileEmbeddingService));
-            _qdrantService = qdrantService ?? throw new ArgumentNullException(nameof(qdrantService));
             _env = env ?? throw new ArgumentNullException(nameof(env));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         #region Knowledge Item Retrieval
 
-        /// <summary>
-        /// Retrieves full details for a single knowledge item, including tags, attachments, owner, category, and domain.
-        /// Returns null if the item does not exist.
-        /// </summary>
         public async Task<KnowledgeItemDetailsDto?> GetKnowledgeItemDetailsAsync(Guid itemId)
         {
             var item = await _context.KnowledgeItems
@@ -71,7 +47,6 @@ namespace KnowLedger_Synaptix.Services.Implementations
 
             if (item == null) return null;
 
-            // Map database entity to DTO for API consumption
             return new KnowledgeItemDetailsDto
             {
                 ItemId = item.ItemId,
@@ -102,25 +77,15 @@ namespace KnowLedger_Synaptix.Services.Implementations
 
         #region Knowledge Item Upload
 
-        /// <summary>
-        /// Handles uploading a new knowledge item.
-        /// 1. Creates the KnowledgeItem entity
-        /// 2. Creates an initial version
-        /// 3. Saves attachments and generates embeddings
-        /// 4. Adds tags
-        /// 5. Generates the text embedding and stores it in Qdrant
-        /// The method runs inside a database transaction to ensure consistency.
-        /// </summary>
         public async Task<KnowledgeItem> UploadKnowledgeItemAsync(KnowledgeItemUploadDto dto, Guid userId)
         {
             if (string.IsNullOrWhiteSpace(dto.Title) || dto.DomainId == Guid.Empty || dto.CategoryId == Guid.Empty)
                 throw new ArgumentException("Title, Domain, and Category are required.");
 
             using var transaction = await _context.Database.BeginTransactionAsync();
-
             try
             {
-                //  Create Knowledge Item
+                // Create Knowledge Item
                 var knowledgeItem = new KnowledgeItem
                 {
                     ItemId = Guid.NewGuid(),
@@ -141,7 +106,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 };
                 _context.KnowledgeItems.Add(knowledgeItem);
 
-                //  Create Initial Version
+                // Create Initial Version
                 var version = new KnowledgeVersion
                 {
                     VersionId = Guid.NewGuid(),
@@ -154,7 +119,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 _context.KnowledgeVersions.Add(version);
                 await _context.SaveChangesAsync();
 
-                //  Handle Attachments
+                // Handle Attachments
                 var uploadsRoot = Path.Combine(_env.WebRootPath ?? Path.Combine(AppContext.BaseDirectory, "wwwroot"), "uploads");
                 Directory.CreateDirectory(uploadsRoot);
 
@@ -168,7 +133,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                             var diskPath = Path.Combine(uploadsRoot, uniqueFileName);
                             await File.WriteAllBytesAsync(diskPath, file.FileData);
 
-                            _context.Attachments.Add(new Attachment
+                            var attachment = new Attachment
                             {
                                 AttachmentId = Guid.NewGuid(),
                                 ItemId = knowledgeItem.ItemId,
@@ -177,19 +142,19 @@ namespace KnowLedger_Synaptix.Services.Implementations
                                 FilePath = $"/uploads/{uniqueFileName}",
                                 MimeType = file.MimeType,
                                 FileSize = file.FileSize,
-                                FileData = null,
                                 FileType = Path.GetExtension(file.FileName)?.ToLower() ?? "unknown",
                                 CreatedOn = DateTime.UtcNow,
                                 CreatedBy = userId,
                                 UpdatedOn = DateTime.UtcNow,
                                 UpdatedBy = userId
-                            });
+                            };
+                            _context.Attachments.Add(attachment);
                         }
                     }
                     await _context.SaveChangesAsync();
                 }
 
-                //  Add Tags
+                // Add Tags
                 foreach (var tag in dto.Tags ?? new List<string>())
                 {
                     _context.KnowledgeTags.Add(new KnowledgeTag
@@ -206,10 +171,9 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 }
                 await _context.SaveChangesAsync();
 
-                //  Handle Event & Team (if applicable)
+                // Handle Event & Team (if applicable)
                 if (dto.IsEventItem && dto.EventId.HasValue)
                 {
-                    // Create Team
                     var team = new Team
                     {
                         TeamId = Guid.NewGuid(),
@@ -221,7 +185,6 @@ namespace KnowLedger_Synaptix.Services.Implementations
                     _context.Teams.Add(team);
                     await _context.SaveChangesAsync();
 
-                    // Add Team Members
                     if (dto.TeamMemberEmails != null)
                     {
                         foreach (var email in dto.TeamMemberEmails)
@@ -241,7 +204,6 @@ namespace KnowLedger_Synaptix.Services.Implementations
                         await _context.SaveChangesAsync();
                     }
 
-                    // Create EventKnowledgeItem
                     var eventKnowledgeItem = new EventKnowledgeItem
                     {
                         EventItemId = Guid.NewGuid(),
@@ -257,14 +219,14 @@ namespace KnowLedger_Synaptix.Services.Implementations
                     await _context.SaveChangesAsync();
                 }
 
-                //  Create Activity Log for Upload (Action as string)
+                // Log upload activity
                 _context.ActivityLogs.Add(new ActivityLog
                 {
                     ActivityId = Guid.NewGuid(),
                     UserId = userId,
                     ItemId = knowledgeItem.ItemId,
                     EventId = dto.IsEventItem ? dto.EventId : null,
-                    Action = "Upload", 
+                    Action = "Upload",
                     Details = $"Knowledge item '{knowledgeItem.Title}' uploaded successfully.",
                     CreatedOn = DateTime.UtcNow
                 });
@@ -274,31 +236,30 @@ namespace KnowLedger_Synaptix.Services.Implementations
 
                 return knowledgeItem;
             }
-            catch
+            catch (Exception ex)
             {
                 await transaction.RollbackAsync();
+                _logger.LogError(ex, "Error uploading knowledge item");
                 throw;
             }
         }
 
         #endregion
 
-        #region Knowledge Item Listing & Filtering
+        #region Listing
 
-        /// <summary>
-        /// Retrieves a list of knowledge items with optional filtering by date and sorting.
-        /// Returns summarized DTOs for listing in UI or API endpoints.
-        /// </summary>
         public async Task<IEnumerable<KnowledgeItemFilterDto>> GetKnowledgeItemSummariesAsync(string sortOrder = "desc", DateTime? filterDate = null)
         {
-            DateTime? utcFilterDate = filterDate?.Date.ToUniversalTime();
-            var query = _context.KnowledgeItems.Include(k => k.Domain).Include(k => k.Category).AsQueryable();
+            var query = _context.KnowledgeItems
+                .Include(k => k.Domain)
+                .Include(k => k.Category)
+                .AsQueryable();
 
-            if (utcFilterDate.HasValue)
+            if (filterDate.HasValue)
             {
-                var startUtc = utcFilterDate.Value;
-                var endUtc = startUtc.AddDays(1);
-                query = query.Where(k => k.CreatedOn.HasValue && k.CreatedOn.Value >= startUtc && k.CreatedOn.Value < endUtc);
+                var date = filterDate.Value.Date;
+                query = query.Where(k => k.CreatedOn.HasValue &&
+                                         k.CreatedOn.Value.Date == date);
             }
 
             query = sortOrder.ToLower() == "asc" ? query.OrderBy(k => k.CreatedOn) : query.OrderByDescending(k => k.CreatedOn);
@@ -306,86 +267,150 @@ namespace KnowLedger_Synaptix.Services.Implementations
             return await query
                 .Select(k => new KnowledgeItemFilterDto
                 {
-                    Title = k.Title,
-                    DomainName = k.Domain.DomainName,
-
-                    CategoryName = k.Category.CategoryName,
-                    Description = k.Description,
-                    CreatedOn = k.CreatedOn ?? DateTime.MinValue
-                })
-                .ToListAsync();
-        }
-        public async Task<IEnumerable<KnowledgeItemFilterDto>> GetKnowledgeItemsByDomainAsync(Guid domainId)
-        {
-            return await _context.KnowledgeItems
-                .Include(k => k.Domain)
-                .Include(k => k.Category)
-                .Include(k => k.Owner) 
-                .Where(k => k.DomainId == domainId)
-                .Select(k => new KnowledgeItemFilterDto
-                {
                     ItemId = k.ItemId,
                     Title = k.Title,
                     Description = k.Description,
                     DomainName = k.Domain.DomainName,
                     CategoryName = k.Category.CategoryName,
-                    SubmittedBy = k.Owner != null ? k.Owner.Name : "Unknown", 
-                    Status = k.Status ?? string.Empty,
-                    CreatedOn = k.CreatedOn ?? DateTime.MinValue,
-                    Tags = new List<string>() 
+                    CreatedOn = k.CreatedOn ?? DateTime.MinValue
                 })
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<KnowledgeItemFilterDto>> GetKnowledgeItemsByCategoryAsync(Guid categoryId)
+        #region Knowledge Item Listing
+
+        // ✅ Get all knowledge items
+        public async Task<List<KnowledgeItemDto>> GetAllKnowledgeItemsAsync()
         {
             return await _context.KnowledgeItems
                 .Include(k => k.Domain)
                 .Include(k => k.Category)
                 .Include(k => k.Owner)
-                .Where(k => k.CategoryId == categoryId)
-                .Select(k => new KnowledgeItemFilterDto
+                .Include(k => k.CreatedByNavigation)
+                .Include(k => k.UpdatedByNavigation)
+                .Include(k => k.KnowledgeTags)
+                .Select(k => new KnowledgeItemDto
                 {
                     ItemId = k.ItemId,
                     Title = k.Title,
                     Description = k.Description,
-                    DomainName = k.Domain.DomainName,
-                    CategoryName = k.Category.CategoryName,
-                    SubmittedBy = k.Owner != null ? k.Owner.Name : "Unknown",
-                    Status = k.Status ?? string.Empty,
+                    KnowledgeItem = k.KnowledgeText,
+                    DomainId = k.DomainId,
+                    DomainName = k.Domain != null ? k.Domain.DomainName : null,
+                    CategoryId = k.CategoryId,
+                    CategoryName = k.Category != null ? k.Category.CategoryName : null,
+                    OwnerId = k.OwnerId,
+                    OwnerName = k.Owner != null ? k.Owner.Name : null,
+                    Status = k.Status,
+                    Version = k.Version,
+                    Visibility = "", // keep empty if not stored
+                    IsEventItem = k.IsEventItem,
+                    ContributorName = k.Owner != null ? k.Owner.Name : null,
+                    CreatedBy = k.CreatedBy,
+                    CreatedByName = k.CreatedByNavigation != null ? k.CreatedByNavigation.Name : null,
+                    UpdatedOn = k.UpdatedOn,
+                    UpdatedBy = k.UpdatedBy,
+                    UpdatedByName = k.UpdatedByNavigation != null ? k.UpdatedByNavigation.Name : null,
                     CreatedOn = k.CreatedOn ?? DateTime.MinValue,
-                    Tags = new List<string>()
+                    EngagementScore = 0, // calculate if needed
+                    Metadata = k.Metadata,
+                    Language = k.Language ?? "[]",
+                    Framework = k.Framework ?? "[]",
+                    Tags = k.KnowledgeTags != null ? k.KnowledgeTags.Select(t => t.TagName).ToList() : new List<string>(),
+                    Views = 0, // set from engagement if available
+                    Likes = 0,
+                    Comments = 0,
+                    SubmittedBy = k.Owner != null ? k.Owner.Name : string.Empty
                 })
                 .ToListAsync();
         }
 
-
-        /// <summary>
-        /// Retrieves all knowledge items, sorted by creation date (newest first),
-        /// including domain, category, and submitter details.
-        /// </summary>
-        public async Task<IEnumerable<KnowledgeItemFilterDto>> GetAllKnowledgeItemsAsync()
+        // ✅ Get items by domain
+        public async Task<List<KnowledgeItemDto>> GetKnowledgeItemsByDomainAsync(Guid domainId)
         {
             return await _context.KnowledgeItems
                 .Include(k => k.Domain)
                 .Include(k => k.Category)
-                .Include(k => k.Owner) 
-                .OrderByDescending(k => k.CreatedOn)
-                .Select(k => new KnowledgeItemFilterDto
+                .Include(k => k.Owner)
+                .Include(k => k.CreatedByNavigation)
+                .Include(k => k.UpdatedByNavigation)
+                .Include(k => k.KnowledgeTags)
+                .Where(k => k.DomainId == domainId)
+                .Select(k => new KnowledgeItemDto
                 {
-                    ItemId = k.ItemId, 
+                    ItemId = k.ItemId,
                     Title = k.Title,
                     Description = k.Description,
-                    DomainName = k.Domain != null ? k.Domain.DomainName : "Unknown Domain",
-                    CategoryName = k.Category != null ? k.Category.CategoryName : "Unknown Category",
-                    SubmittedBy = k.Owner != null ? k.Owner.Name : "Unknown", 
-                    Status = k.Status ?? string.Empty,
+                    DomainId = k.DomainId,
+                    DomainName = k.Domain != null ? k.Domain.DomainName : null,
+                    CategoryId = k.CategoryId,
+                    CategoryName = k.Category != null ? k.Category.CategoryName : null,
+                    OwnerId = k.OwnerId,
+                    OwnerName = k.Owner != null ? k.Owner.Name : null,
+                    CreatedBy = k.CreatedBy,
+                    CreatedByName = k.CreatedByNavigation != null ? k.CreatedByNavigation.Name : null,
                     CreatedOn = k.CreatedOn ?? DateTime.MinValue,
-                    Tags = new List<string>() 
+                    UpdatedOn = k.UpdatedOn,
+                    UpdatedBy = k.UpdatedBy,
+                    UpdatedByName = k.UpdatedByNavigation != null ? k.UpdatedByNavigation.Name : null,
+                    EngagementScore = 0,
+                    Status = k.Status,
+                    Visibility = "",
+                    Language = k.Language ?? "[]",
+                    Framework = k.Framework ?? "[]",
+                    Tags = k.KnowledgeTags != null ? k.KnowledgeTags.Select(t => t.TagName).ToList() : new List<string>(),
+                    Views = 0,
+                    Likes = 0,
+                    Comments = 0,
+                    SubmittedBy = k.Owner != null ? k.Owner.Name : string.Empty
+                })
+                .ToListAsync();
+        }
+
+        // ✅ Get items by category
+        public async Task<List<KnowledgeItemDto>> GetKnowledgeItemsByCategoryAsync(Guid categoryId)
+        {
+            return await _context.KnowledgeItems
+                .Include(k => k.Domain)
+                .Include(k => k.Category)
+                .Include(k => k.Owner)
+                .Include(k => k.CreatedByNavigation)
+                .Include(k => k.UpdatedByNavigation)
+                .Include(k => k.KnowledgeTags)
+                .Where(k => k.CategoryId == categoryId)
+                .Select(k => new KnowledgeItemDto
+                {
+                    ItemId = k.ItemId,
+                    Title = k.Title,
+                    Description = k.Description,
+                    DomainId = k.DomainId,
+                    DomainName = k.Domain != null ? k.Domain.DomainName : null,
+                    CategoryId = k.CategoryId,
+                    CategoryName = k.Category != null ? k.Category.CategoryName : null,
+                    OwnerId = k.OwnerId,
+                    OwnerName = k.Owner != null ? k.Owner.Name : null,
+                    CreatedBy = k.CreatedBy,
+                    CreatedByName = k.CreatedByNavigation != null ? k.CreatedByNavigation.Name : null,
+                    CreatedOn = k.CreatedOn ?? DateTime.MinValue,
+                    UpdatedOn = k.UpdatedOn,
+                    UpdatedBy = k.UpdatedBy,
+                    UpdatedByName = k.UpdatedByNavigation != null ? k.UpdatedByNavigation.Name : null,
+                    EngagementScore = 0,
+                    Status = k.Status,
+                    Visibility = "",
+                    Language = k.Language ?? "[]",
+                    Framework = k.Framework ?? "[]",
+                    Tags = k.KnowledgeTags != null ? k.KnowledgeTags.Select(t => t.TagName).ToList() : new List<string>(),
+                    Views = 0,
+                    Likes = 0,
+                    Comments = 0,
+                    SubmittedBy = k.Owner != null ? k.Owner.Name : string.Empty
                 })
                 .ToListAsync();
         }
 
         #endregion
+        #endregion
+
     }
 }
