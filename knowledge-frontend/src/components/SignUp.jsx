@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import api from "../api";
-
 export default function Signup() {
   const navigate = useNavigate();
   const [form, setForm] = useState({

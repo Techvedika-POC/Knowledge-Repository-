@@ -4,7 +4,6 @@ import axios from "axios";
 import { FaLightbulb } from "react-icons/fa";
 import api from "../api";
 import toast from "react-hot-toast";
-
 export default function UploadKnowledgeItem() {
   const [frameworks, setFrameworks] = useState([
     "C#",
