@@ -44,17 +44,7 @@ var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend", policy =>
-    {
-        policy.WithOrigins(allowedOrigins ?? new[]
-        {
-            "http://localhost:3000",
-            "https://knowledge-frontend-n567.onrender.com"
-        })
-        .AllowAnyHeader()
-        .AllowAnyMethod()
-        .AllowCredentials();
-    });
+
 });
 
 // ==========================
@@ -128,6 +118,9 @@ app.UseStaticFiles(new StaticFileOptions
         Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads")),
     RequestPath = "/uploads"
 });
+app.UseRouting();
+// Use CORS
+app.UseCors("AllowFrontend");
 
 app.UseRouting();
 app.UseCors("AllowFrontend");
