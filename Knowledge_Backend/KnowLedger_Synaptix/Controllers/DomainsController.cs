@@ -18,13 +18,14 @@ namespace KnowLedger_Synaptix.Controllers
             _domainService = domainService;
         }
 
+        //Get All the domains
         [HttpGet]
         public async Task<ActionResult<List<Domain>>> GetAllDomains()
         {
             var domains = await _domainService.GetAllDomainsAsync();
             return Ok(domains);
         }
-
+        //Get domaind by id
         [HttpGet("{id}")]
         public async Task<ActionResult<Domain>>GetDomainById(Guid id)
         {
@@ -35,6 +36,7 @@ namespace KnowLedger_Synaptix.Controllers
             }
             return Ok(domain);
         }
+        //Get domains by name
         [HttpGet("byname/{name}")]
         public async Task<ActionResult<Domain>> GetDomainByName(string name)
         {
@@ -43,6 +45,7 @@ namespace KnowLedger_Synaptix.Controllers
                 return NotFound();
             return Ok(domain);
         }
+        //Get Categories by domain id
         [HttpGet("{domainid}/categories")]
         public async Task<ActionResult<List<Category>>> GetCategoriesByDomainId(Guid domainid)
         {

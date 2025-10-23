@@ -104,8 +104,11 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization();
 #endregion
 
-#region ----------------- Swagger / API Documentation -----------------
-builder.Services.AddEndpointsApiExplorer();
+// ==========================
+// Authorization & Swagger
+// ==========================
+builder.Services.AddAuthorization();
+builder.Services.AddEndpointsApiExplorer();///it will collect all the metadaa about the endpoints in controllers
 builder.Services.AddSwaggerGen();
 #endregion
 
@@ -118,31 +121,27 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseStaticFiles(); // Serve wwwroot
+app.UseHttpsRedirection();
+
+// Serve static files (wwwroot)
+app.UseStaticFiles();
+
+// Serve uploads directory (optional)
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(
         Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads")),
     RequestPath = "/uploads"
 });
+app.UseRouting();
+// Use CORS
+app.UseCors("AllowFrontend");
 
 app.UseHttpsRedirection();
 app.UseRouting();
 app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
-#endregion
-
-#region ----------------- Ensure Uploads Directory -----------------
-var uploadsPath = Path.Combine(
-    app.Environment.WebRootPath ?? Path.Combine(AppContext.BaseDirectory, "wwwroot"),
-    "uploads");
-
-if (!Directory.Exists(uploadsPath))
-{
-    Directory.CreateDirectory(uploadsPath);
-}
-#endregion
-
 app.Run();

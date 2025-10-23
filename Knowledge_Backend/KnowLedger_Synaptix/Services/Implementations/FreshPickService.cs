@@ -29,7 +29,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
         /// <returns>List of KnowledgeItemDto representing the fresh picks.</returns>
         public async Task<List<KnowledgeItemDto>> GetFreshPicksAsync(int count = 10)
         {
-            // Fetch latest items including related navigation properties
+            // Fetch latest items
             var items = await _context.KnowledgeItems
                 .Include(k => k.Domain)
                 .Include(k => k.Category)
@@ -38,8 +38,6 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 .OrderByDescending(k => k.CreatedOn)
                 .Take(count)
                 .ToListAsync();
-
-            // Map database entities to DTOs for cleaner front-end consumption
             return items.Select(k => new KnowledgeItemDto
             {
                 ItemId = k.ItemId,
@@ -49,7 +47,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 DomainName = k.Domain?.DomainName,
                 CategoryId = k.CategoryId,
                 CategoryName = k.Category?.CategoryName,
-                Language = k.Language,       // JSON string from DB
+                Language = k.Language,      
                 Framework = k.Framework,
                 OwnerId = k.OwnerId,
                 OwnerName = k.Owner?.Name ?? "Unknown",

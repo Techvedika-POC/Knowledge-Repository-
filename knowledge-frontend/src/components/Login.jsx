@@ -40,7 +40,7 @@ console.log("Storing userId:", userId);
       }
 
       toast.success("Login successful!");
-      navigate("/app/home"); // redirect to home
+      navigate("/app/home"); 
     } catch (err) {
       console.error("Login failed", err);
       toast.error(err.response?.data?.message || "Invalid email or password.");

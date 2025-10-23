@@ -105,7 +105,7 @@ export default function Sidebar() {
           <nav className="flex flex-col gap-2">
             <MenuItem
               icon={<Star size={18} />}
-              label="Favorites"
+              label="Favourites"
               active={location.pathname === "/app/favorites"}
               onClick={() => navigate("/app/favorites")}
             />

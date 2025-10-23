@@ -17,15 +17,14 @@ namespace KnowLedger_Synaptix.Controllers
         {
             _approverService = approverService;
         }
-
-        // GET: api/approver/pending
+        //getting the pending items
         [HttpGet("pending")]
         public async Task<IActionResult> GetPendingItems()
         {
             var items = await _approverService.GetPendingKnowledgeItemsAsync();
             return Ok(items);
         }
-
+        //aproving the item
         [HttpPost("approve/{itemId}")]
         public async Task<IActionResult> ApproveItem(Guid itemId)
         {
@@ -45,6 +44,7 @@ namespace KnowLedger_Synaptix.Controllers
 
             return Ok("Item approved successfully.");
         }
+        //pagination for the pending items
         [HttpGet("pending/paged")]
         public async Task<IActionResult> GetPendingPaged([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
@@ -60,6 +60,8 @@ namespace KnowLedger_Synaptix.Controllers
                 pageSize
             });
         }
+
+
 
         // POST: api/approver/reject/{itemId}
         [HttpPost("reject/{itemId}")]

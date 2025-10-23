@@ -24,7 +24,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
         // Fetch pending items for approver
         public async Task<List<KnowledgeItemDto>> GetPendingKnowledgeItemsAsync()
         {
-            // Query for pending knowledge items including related navigation properties
+            // Query for pending knowledge items 
             var query = _context.KnowledgeItems
                 .AsNoTracking()
                 .Include(k => k.Domain)
@@ -32,8 +32,6 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 .Include(k => k.CreatedByNavigation)
                 .Where(k => k.Status == "Pending")
                 .AsQueryable();
-
-            // Project results into DTO for API response
             return await query
                 .Select(k => new KnowledgeItemDto
                 {
@@ -51,7 +49,6 @@ namespace KnowLedger_Synaptix.Services.Implementations
                     Framework = k.Framework,
                     Language = k.Language,
                     Metadata = k.Metadata,
-                    
                     CreatedBy = k.CreatedBy,
                     CreatedByName = k.CreatedByNavigation != null ? k.CreatedByNavigation.Name : string.Empty,
                     UpdatedOn = k.UpdatedOn,

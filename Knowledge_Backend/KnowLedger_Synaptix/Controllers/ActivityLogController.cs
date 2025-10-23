@@ -136,7 +136,7 @@ namespace KnowLedger_Synaptix.Controllers
           [FromQuery] string status = null,
           [FromQuery] DateTime? date = null)
         {
-            // Get logged-in user's ID from claims
+           
             var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!Guid.TryParse(userIdStr, out var userId))
                 return Unauthorized("Invalid user.");
@@ -152,6 +152,13 @@ namespace KnowLedger_Synaptix.Controllers
             var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
             var contributions = await _activityLogService.GetUserContributionsThisMonthAsync(userId);
             return Ok(contributions);
+        }
+        [HttpGet("my/favourites")]
+        public async Task<IActionResult> GetMyFavourites()
+        {
+            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            var items = await _activityLogService.GetUserFavouritesAsync(userId);
+            return Ok(items);
         }
     }
 }

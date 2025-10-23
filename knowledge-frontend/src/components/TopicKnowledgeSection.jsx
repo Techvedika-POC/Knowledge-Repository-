@@ -1,4 +1,3 @@
-// TopicKnowledgeSection.jsx
 import React, { useState } from "react";
 import KnowledgeCardsDisplay from "./KnowledgeCardsDisplay";
 import PreviewModal from "./PreviewModal";

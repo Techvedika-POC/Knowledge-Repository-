@@ -13,7 +13,7 @@ namespace KnowledgeSynaptix.Services.Implementations
     public class QdrantService : IQdrantService
     {
         private readonly HttpClient _client;
-        private const string QdrantUrl = "http://localhost:6333"; // Base URL of Qdrant service
+        private const string QdrantUrl = "http://localhost:6333"; 
         private readonly int _expectedDim;
 
         /// <summary>
@@ -45,15 +45,13 @@ namespace KnowledgeSynaptix.Services.Implementations
             if (embedding.Length != _expectedDim)
                 throw new ArgumentException(
                     $"Embedding must be {_expectedDim}-dimensional. Actual: {embedding.Length}", nameof(embedding));
-
-            // Prepare payload for Qdrant
             var payload = new
             {
                 points = new[]
                 {
                     new
                     {
-                        id = id, // Already string UUID
+                        id = id,
                         vector = embedding,
                         payload = new
                         {
@@ -63,8 +61,6 @@ namespace KnowledgeSynaptix.Services.Implementations
                     }
                 }
             };
-
-            // Serialize payload to JSON
             var json = JsonSerializer.Serialize(payload, new JsonSerializerOptions
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -73,10 +69,8 @@ namespace KnowledgeSynaptix.Services.Implementations
 
             using var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            // Send PUT request to Qdrant
             var response = await _client.PutAsync($"{QdrantUrl}/collections/knowledge_items/points", content);
 
-            // Throw exception if request failed
             if (!response.IsSuccessStatusCode)
             {
                 var responseText = await response.Content.ReadAsStringAsync();

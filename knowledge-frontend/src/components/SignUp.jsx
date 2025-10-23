@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import api from "../api";
-
 export default function Signup() {
   const navigate = useNavigate();
   const [form, setForm] = useState({
@@ -17,7 +16,7 @@ export default function Signup() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // ✅ Validation function
+  // Validation function
   const validateForm = () => {
     const newErrors = {};
 
@@ -36,7 +35,7 @@ export default function Signup() {
       newErrors.DepartmentName = "Department name must contain only letters";
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0; // ✅ Return true if valid
+    return Object.keys(newErrors).length === 0; 
   };
 
   const handleSubmit = async (e) => {
@@ -48,11 +47,11 @@ export default function Signup() {
 
     try {
       await api.post(`/auth/register`, form);
-      toast.success("🎉 Account created successfully! Please login.");
+      toast.success(" Account created successfully! Please login.");
       navigate("/login");
     } catch (err) {
       console.error("Signup failed", err);
-      toast.error("❌ Signup failed. Try again.");
+      toast.error(" Signup failed. Try again.");
     }
   };
 

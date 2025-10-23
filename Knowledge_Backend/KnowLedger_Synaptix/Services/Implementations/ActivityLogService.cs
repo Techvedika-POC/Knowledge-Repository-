@@ -103,7 +103,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
             // Apply optional date filter (only items created on that specific day)
             if (date.HasValue)
             {
-               
+
                 var selectedDate = DateTime.SpecifyKind(date.Value.Date, DateTimeKind.Utc);
 
                 query = query.Where(k =>
@@ -270,7 +270,40 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 .ToListAsync();
 
         }
+        public async Task<IEnumerable<KnowledgeItemDto>> GetUserFavouritesAsync(Guid userId)
+        {
+            var favouriteItems = await _context.KnowledgeItems
+                .Include(k => k.Category)
+                .Include(k => k.Domain)
+                .Include(k => k.Owner)
+                .Include(k => k.Engagements)
+                .Where(k => k.Engagements.Any(e => e.UserId == userId && e.EngagementType == "Favourite"))
+                .OrderByDescending(k => k.CreatedOn)
+                .ToListAsync();
 
+            return favouriteItems.Select(k => new KnowledgeItemDto
+            {
+                ItemId = k.ItemId,
+                Title = k.Title,
+                Description = k.Description,
+                DomainId = k.DomainId,
+                DomainName = k.Domain?.DomainName,
+                CategoryId = k.CategoryId,
+                CategoryName = k.Category?.CategoryName,
+                OwnerId = k.OwnerId,
+                OwnerName = k.Owner?.Name,
+                Status = k.Status,
+                CreatedOn = k.CreatedOn ?? DateTime.Now,
+                UpdatedOn = k.UpdatedOn,
+                Tags = k.KnowledgeTags.Select(t => t.TagName).ToList(),
+                Language = k.Language,
+                Framework = k.Framework,
+                Views = k.Engagements.Count(e => e.EngagementType == "View"),
+                Likes = k.Engagements.Count(e => e.EngagementType == "Like"),
+                Comments = k.Engagements.Count(e => e.EngagementType == "Comment"),
+                SubmittedBy = k.Owner?.Name
+            }).ToList();
+        }
 
 
     }

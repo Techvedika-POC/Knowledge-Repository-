@@ -27,7 +27,6 @@ export default function TrendingSection({ trending = [] }) {
     setMappedTrending(mapped);
   }, [trending]);
 
-  // ✅ Define missing handlers (even if just placeholders)
   const handleLikeClick = (item) => {
     console.log("Liked item:", item);
   };
