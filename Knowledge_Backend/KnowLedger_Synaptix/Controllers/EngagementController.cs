@@ -13,7 +13,7 @@ public class EngagementController : ControllerBase
     {
         _service = service;
     }
-
+    //Liking the item
     [HttpPost("like/{itemId}")]
     public async Task<IActionResult> LikeItem(Guid itemId, [FromQuery] Guid userId)
     {
@@ -27,7 +27,7 @@ public class EngagementController : ControllerBase
         await _service.AddEngagementAsync(dto);
         return Ok(new { message = "Item liked.", likesCount = await _service.GetLikesCountAsync(itemId) });
     }
-
+    //Adding favourites
     [HttpPost("favourite/{itemId}")]
     public async Task<IActionResult> FavouriteItem(Guid itemId, [FromQuery] Guid userId)
     {
@@ -45,7 +45,7 @@ public class EngagementController : ControllerBase
     {
         public string CommentText { get; set; } = string.Empty;
     }
-
+    //Adding comments 
     [HttpPost("comment/{itemId}")]
     public async Task<IActionResult> CommentItem(Guid itemId, [FromQuery] Guid userId, [FromBody] CommentRequestDto dto)
     {
@@ -64,32 +64,35 @@ public class EngagementController : ControllerBase
         return Ok(new { message = "Comment added." });
     }
 
-
+    //In detail information about the engagements of a particular item 
     [HttpGet("summary/{itemId}")]
     public async Task<IActionResult> GetSummary(Guid itemId, [FromQuery] Guid userId)
     {
         var summary = await _service.GetEngagementSummaryAsync(itemId, userId);
         return Ok(summary);
     }
+    //particular user engagements
     [HttpGet("user-engagements/{userId}")]
     public async Task<IActionResult> GetUserEngagements(Guid userId)
     {
         var engagements = await _service.GetUserEngagementsAsync(userId);
         return Ok(engagements);
     }
+    //Unliking the item
     [HttpDelete("like/{itemId}")]
     public async Task<IActionResult> UnlikeItem(Guid itemId, [FromQuery] Guid userId)
     {
         await _service.RemoveEngagementAsync(itemId, userId, "Like");
         return Ok(new { message = "Like removed.", likesCount = await _service.GetLikesCountAsync(itemId) });
     }
-
+    //removing teh item from favourites
     [HttpDelete("favourite/{itemId}")]
     public async Task<IActionResult> UnfavouriteItem(Guid itemId, [FromQuery] Guid userId)
     {
         await _service.RemoveEngagementAsync(itemId, userId, "Favourite");
         return Ok(new { message = "Favourite removed." });
     }
+    //Most liked items 
     [HttpGet("top-liked")]
     public async Task<IActionResult> GetTopLikedItems([FromQuery] int top = 5)
     {

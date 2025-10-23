@@ -20,7 +20,7 @@ namespace KnowLedger_Synaptix.Controllers
         {
             _globalSearchService = globalSearchService;
         }
-
+        //Global search filter
         [HttpGet]
         public async Task<ActionResult<List<KnowledgeItemDto>>> Get([FromQuery] string keyword)
         {
@@ -29,11 +29,9 @@ namespace KnowLedger_Synaptix.Controllers
                 return BadRequest("Keyword cannot be empty.");
 
             try
-            {
-                // Perform global search using the service
+            {  
                 var results = await _globalSearchService.GlobalSearchAsync(keyword);
 
-                // Check if no results found
                 if (results == null || results.Count == 0)
                     return NotFound("No matching results found.");
 

@@ -104,12 +104,9 @@ export default function TopicsSection({ topics, userId }) {
   if (!topics || topics.length === 0)
     return <div className="p-4 text-gray-500">No topics available</div>;
   const handleReset = () => {
-  setSelectedTopic(null); // clears the selected topic
-  setDomainKnowledgeItems([]); // clears the displayed cards
+  setSelectedTopic(null); 
+  setDomainKnowledgeItems([]); 
 };
-
- 
-
   return (
     <div className="p-4">
       <Swiper

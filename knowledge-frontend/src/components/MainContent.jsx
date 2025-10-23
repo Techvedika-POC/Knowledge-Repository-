@@ -36,7 +36,6 @@ const MainContent = () => {
   const navigate = useNavigate();
   const userId = localStorage.getItem("userId");
 
-  // ------------------- API Calls -------------------
   useEffect(() => {
     const fetchEvent = async () => {
       try {
@@ -153,7 +152,6 @@ const MainContent = () => {
     fetchLeaderboard();
   }, []);
 
-  // ------------------- Engagement Handlers -------------------
   const handleLike = async (item) => {
     try {
       if (!item?.itemId) return;
@@ -191,11 +189,11 @@ const MainContent = () => {
 
   const leaderboardNumberColors = ["bg-blue-100 text-blue-900", "bg-green-100 text-green-900", "bg-pink-100 text-pink-900"];
 
-  // ------------------- JSX -------------------
+
   return (
     <div className="flex flex-col w-full">
 
-      {/* Navbar + Highlights tightly stacked */}
+      {/* Navbar  */}
       <Navbar />
       <AppHighlights />
 
@@ -236,7 +234,7 @@ const MainContent = () => {
         </div>
       </div>
 
-      {/* Quick Events immediately below content */}
+      {/* Quick Events  */}
       <div className="px-6 mt-2">
         <QuickEvents navigate={navigate} />
       </div>

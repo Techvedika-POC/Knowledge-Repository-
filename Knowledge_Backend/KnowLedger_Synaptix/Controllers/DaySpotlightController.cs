@@ -14,7 +14,7 @@ namespace KnowLedger_Synaptix.Controllers
         {
             _spotlightService = spotlightService;
         }
-
+        //Getting the items to disply in spotlight 
         [HttpGet]
         public async Task<IActionResult> GetDaySpotlight()
         {

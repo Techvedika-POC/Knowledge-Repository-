@@ -105,7 +105,7 @@ export default function KnowledgeCardsDisplay({ items = [], title, onPreview, us
                   <span className="font-medium text-gray-900">{item.title}</span>
                 </div>
 
-                {/* Description (only one line shown) */}
+                {/* Description */}
                 <div className="mb-4">
                   <div className="flex items-center gap-2 mb-1">
                     <FileText className="w-4 h-4 text-indigo-500" />
@@ -144,7 +144,7 @@ export default function KnowledgeCardsDisplay({ items = [], title, onPreview, us
                 <div className="mt-auto flex justify-center">
                   <EngagementButtons
                     item={item}
-                    onPreview={onPreview} // ✅ When clicked, opens PreviewModal
+                    onPreview={onPreview} //  When clicked, opens PreviewModal
                     onLike={handleLike}
                     onFavourite={handleFavourite}
                     onComment={handleComment}

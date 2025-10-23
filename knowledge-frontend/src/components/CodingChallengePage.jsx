@@ -80,12 +80,12 @@ export default function CodingChallengePage() {
                 <p className="text-lg text-gray-700 max-w-2xl mx-auto mb-8">
                     Join professionally curated coding challenges designed for innovation, skill growth, and business success.
                 </p>
-                {/* <a
+                <a
                     href="/register"
                     className="bg-blue-600 text-white px-8 py-3 rounded-full font-semibold hover:bg-blue-700 transition"
                 >
                     Register Now
-                </a> */}
+                </a>
             </section>
 
             {/* About Section */}

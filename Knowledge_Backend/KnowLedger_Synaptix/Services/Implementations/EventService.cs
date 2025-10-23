@@ -53,8 +53,5 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 })
                 .ToListAsync();
         }
-
-  
-        
     }
 }

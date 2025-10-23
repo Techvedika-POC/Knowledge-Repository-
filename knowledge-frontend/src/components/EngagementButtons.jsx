@@ -6,7 +6,7 @@ export default function EngagementButtons({
   item,
   onLike,
   onFavourite,
-  onComment: handleCommentProp, // renamed to avoid clash
+  onComment: handleCommentProp,
   onPreview,
   isLiked,
   isFav,
@@ -20,7 +20,7 @@ export default function EngagementButtons({
   const [liked, setLiked] = useState(isLiked);
   const [favoured, setFavoured] = useState(isFav);
 
-  // Sync with props when they change
+
   useEffect(() => {
     setLiked(isLiked);
   }, [isLiked]);
@@ -31,26 +31,25 @@ export default function EngagementButtons({
 
   const handleLike = (e) => {
     e.stopPropagation();
-    setLiked(!liked); // instant UI change
-    onLike(item); // call parent function for backend
+    setLiked(!liked);
+    onLike(item);
   };
 
   const handleFavourite = (e) => {
     e.stopPropagation();
-    setFavoured(!favoured); // instant UI change
-    onFavourite(item); // call parent function for backend
+    setFavoured(!favoured);
+    onFavourite(item);
   };
 
   const handleCommentSend = (e) => {
     e.stopPropagation();
     if (!commentText.trim()) return;
 
-    handleCommentProp(item, commentText.trim()); // send comment text to parent
+    handleCommentProp(item, commentText.trim());
     setCommentText("");
     setShowCommentModal(false);
   };
 
-  // Base button style for hover only
   const buttonClass =
     "flex items-center gap-1 p-2 rounded-full hover:bg-gray-200 transition cursor-pointer";
 
@@ -66,32 +65,30 @@ export default function EngagementButtons({
           <Eye size={20} />
         </button>
 
-    {/* Like */}
-<button
-  onClick={handleLike}
-  className={buttonClass}
-  title="Like"
->
-  <Heart
-    size={20}
-    className={liked ? "text-red-600" : "text-red-300"}  // darker when liked
-  />
-  <span className="text-sm">{likeCount}</span>
-</button>
+        {/* Like */}
+        <button
+          onClick={handleLike}
+          className={buttonClass}
+          title="Like"
+        >
+          <Heart
+            size={20}
+            className={liked ? "text-red-600" : "text-red-300"}
+          />
+          <span className="text-sm">{likeCount}</span>
+        </button>
 
-{/* Favourite */}
-<button
-  onClick={handleFavourite}
-  className={buttonClass}
-  title="Favourite"
->
-  <Star
-    size={20}
-    className={favoured ? "text-yellow-600" : "text-yellow-300"}  // darker when favourited
-  />
-</button>
-
-
+        {/* Favourite */}
+        <button
+          onClick={handleFavourite}
+          className={buttonClass}
+          title="Favourite"
+        >
+          <Star
+            size={20}
+            className={favoured ? "text-yellow-600" : "text-yellow-300"}
+          />
+        </button>
         {/* Comment */}
         <button
           onClick={(e) => { e.stopPropagation(); setShowCommentModal(true); }}
