@@ -1,145 +1,343 @@
-import React from "react";
-import { Search, Calendar } from "lucide-react";
+
+import React, { useEffect, useState } from "react";
+import { Search, X, ChevronLeft, ChevronRight } from "lucide-react";
+import api from "../api";
 
 export default function MyContributions() {
-  const contributions = [
-    { title: "Zero Trust Security Playbook", category: "Security", date: "2025-09-02", status: "Approved" },
-    { title: "GraphQL Gateway Patterns", category: "APIs", date: "2025-08-28", status: "Pending" },
-    { title: "Data Contracts 101", category: "Data", date: "2025-08-11", status: "Rejected" },
-    { title: "Observability Primer", category: "SRE", date: "2025-07-30", status: "Approved" },
-  ];
+  const [contributions, setContributions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const metrics = {
-    knowledgeItems: 42,
-    pendingReviews: 6,
-    approved: 31,
-    rejected: 5,
-  };
+  const [hoveredItem, setHoveredItem] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
 
-  const submissions = [
-    { domain: "Security", value: 72 },
-    { domain: "APIs", value: 54 },
-    { domain: "Data", value: 36 },
-    { domain: "SRE", value: 28 },
-  ];
+  const [metrics, setMetrics] = useState({
+    knowledgeItems: 0,
+    pendingReviews: 0,
+    approved: 0,
+    rejected: 0,
+  });
 
-  const getStatusStyle = (status) => {
-    switch (status) {
-      case "Approved":
-        return "bg-green-100 text-green-600";
-      case "Pending":
-        return "bg-yellow-100 text-yellow-600";
-      case "Rejected":
-        return "bg-red-100 text-red-600";
-      default:
-        return "bg-gray-100 text-gray-600";
+  const [searchType, setSearchType] = useState("Title");
+  const [keyword, setKeyword] = useState("");
+  const [domainList, setDomainList] = useState([]);
+  const [categoryList, setCategoryList] = useState([]);
+  const [titleList, setTitleList] = useState([]);
+
+  const [pageNumber, setPageNumber] = useState(1);
+  const [pageSize] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+
+  const searchTypes = ["Title", "Domain", "Category", "Status", "Date"];
+
+  useEffect(() => {
+    fetchContributions();
+    fetchFilterOptions();
+  }, [pageNumber]);
+
+  const fetchContributions = async (filters = {}) => {
+    const token = localStorage.getItem("jwtToken");
+    if (!token) {
+      setError("Authentication required");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const cleanFilters = Object.fromEntries(
+        Object.entries(filters).filter(([_, v]) => v != null && v !== "")
+      );
+
+      const params = new URLSearchParams({
+        pageNumber,
+        pageSize,
+        ...cleanFilters,
+      }).toString();
+
+      const url = `/Contributions/my/paged?${params}`;
+
+      const response = await api.get(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const { items, totalPages, total, approved, rejected, pending } = response.data;
+
+      setContributions(items || []);
+      setTotalPages(totalPages || 1);
+
+      setMetrics({
+        knowledgeItems: total,
+        approved,
+        rejected,
+        pendingReviews: pending,
+      });
+    } catch (err) {
+      console.error("Fetch contributions error:", err.response?.data || err);
+      setError(err.response?.data?.title || "Failed to fetch contributions");
+    } finally {
+      setLoading(false);
     }
   };
 
+  const fetchFilterOptions = async () => {
+    try {
+      const [domainsRes, categoriesRes, titlesRes] = await Promise.all([
+        api.get("/Contributions/my/domains"),
+        api.get("/Contributions/my/categories"),
+        api.get("/Contributions/my/titles"),
+      ]);
+      setDomainList(domainsRes.data || []);
+      setCategoryList(categoriesRes.data || []);
+      setTitleList(titlesRes.data || []);
+    } catch (error) {
+      console.error("Failed to load filter options:", error);
+    }
+  };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    setPageNumber(1);
+
+    const filters = {};
+    if (keyword.trim()) {
+      switch (searchType) {
+        case "Domain":
+          filters.domain = keyword.trim();
+          break;
+        case "Category":
+          filters.category = keyword.trim();
+          break;
+        case "Title":
+          filters.title = keyword.trim();
+          break;
+        case "Status":
+          filters.status = keyword.trim();
+          break;
+        case "Date":
+          filters.date = keyword;
+          break;
+      }
+    }
+    fetchContributions(filters);
+  };
+
+  const openModal = (item) => {
+    setSelectedItem(item);
+    setModalOpen(true);
+  };
+  const closeModal = () => {
+    setModalOpen(false);
+    setSelectedItem(null);
+  };
+
+  const handlePrevPage = () => {
+    if (pageNumber > 1) setPageNumber(pageNumber - 1);
+  };
+  const handleNextPage = () => {
+    if (pageNumber < totalPages) setPageNumber(pageNumber + 1);
+  };
+
+  if (loading) return <p className="p-4">Loading...</p>;
+  if (error) return <p className="p-4 text-red-500">{error}</p>;
+
   return (
-    <div className="p-6 bg-gray-50 min-h-screen font-inter">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-[22px] font-semibold">My Contributions</h1>
-        <button className="bg-[#22c55e] text-white px-4 py-2 rounded-full hover:bg-[#16a34a] transition">
-          New Upload
+    <div className="bg-gray-50 min-h-screen font-sans m-0 p-4">
+      {/* HEADER */}
+      <div className="mb-2">
+        <h1 className="text-2xl font-bold text-indigo-700 mt-0">
+          My Contributions
+        </h1>
+        <p className="text-sm font-bold text-gray-800 px-2 py-1 rounded mt-1 border border-gray-200 bg-white">
+          View and filter your uploaded knowledge articles.
+        </p>
+      </div>
+
+      {/* SEARCH */}
+      <form
+        onSubmit={handleSearch}
+        className="flex gap-2 p-3 flex-wrap rounded-lg border border-gray-200 bg-white mb-3"
+      >
+        <select
+          value={searchType}
+          onChange={(e) => setSearchType(e.target.value)}
+          className="border rounded px-2 py-1 bg-white text-sm"
+        >
+          {searchTypes.map((type) => (
+            <option key={type} value={type}>
+              {type}
+            </option>
+          ))}
+        </select>
+
+        {searchType === "Domain" ? (
+          <select
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            className="border rounded px-2 py-1 bg-white text-sm"
+          >
+            <option value="">Select Domain</option>
+            {domainList.map((d) => (
+              <option key={d} value={d}>
+                {d}
+              </option>
+            ))}
+          </select>
+        ) : searchType === "Category" ? (
+          <select
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            className="border rounded px-2 py-1 bg-white text-sm"
+          >
+            <option value="">Select Category</option>
+            {categoryList.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        ) : searchType === "Title" ? (
+          <select
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            className="border rounded px-2 py-1 bg-white text-sm"
+          >
+            <option value="">Select Title</option>
+            {titleList.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </select>
+        ) : searchType === "Date" ? (
+          <input
+            type="date"
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            className="border rounded px-2 py-1 bg-white text-sm"
+          />
+        ) : (
+          <input
+            type="text"
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            placeholder={`Enter ${searchType}`}
+            className="border rounded px-2 py-1 bg-white text-sm"
+          />
+        )}
+
+        <button
+          type="submit"
+          className="flex items-center gap-1 px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+        >
+          <Search size={16} /> Search
         </button>
+      </form>
+
+      {/* METRICS */}
+      <div className="grid grid-cols-4 gap-2 p-2 mb-3 text-center">
+        {[
+          { label: "Knowledge Items", value: metrics.knowledgeItems, text: "text-blue-700" },
+          { label: "Pending", value: metrics.pendingReviews, text: "text-yellow-600" },
+          { label: "Approved", value: metrics.approved, text: "text-green-700" },
+          { label: "Rejected", value: metrics.rejected, text: "text-red-700" },
+        ].map((metric, idx) => (
+          <div key={idx} className="p-2 rounded border border-gray-200 bg-white">
+            <p className={`text-sm font-semibold ${metric.text}`}>{metric.label}</p>
+            <p className="font-bold text-lg">{metric.value}</p>
+          </div>
+        ))}
       </div>
 
-      {/* Info bar */}
-      <div className="bg-[#fde68a] text-gray-900 p-3 rounded-lg flex justify-between items-center mb-4">
-        <span>All uploads made by you. Use quick filters for Category, Title, and Date.</span>
-      </div>
-
-      {/* Filters */}
-      <div className="flex gap-3 mb-6">
-        <div className="flex items-center gap-2 border border-gray-300 rounded-full px-3 py-2 bg-white">
-          <Search size={16} className="text-gray-500" />
-          <input type="text" placeholder="Search by Title" className="outline-none text-sm" />
-        </div>
-        <div className="flex items-center gap-2 border border-gray-300 rounded-full px-3 py-2 bg-white">
-          <Search size={16} className="text-gray-500" />
-          <input type="text" placeholder="Search by Category" className="outline-none text-sm" />
-        </div>
-        <div className="flex items-center gap-2 border border-gray-300 rounded-full px-3 py-2 bg-white">
-          <Calendar size={16} className="text-gray-500" />
-          <input type="date" className="outline-none text-sm" />
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="bg-white rounded-xl shadow-md overflow-hidden mb-8">
+      {/* TABLE */}
+      <div className="bg-white rounded shadow overflow-x-auto p-2">
         <table className="w-full text-sm">
-          <thead className="bg-[#fde68a] text-gray-700 text-left">
+          <thead className="bg-purple-100 text-left text-purple-700">
             <tr>
-              <th className="px-4 py-3">Title</th>
-              <th className="px-4 py-3">Category</th>
-              <th className="px-4 py-3">Date</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Actions</th>
+              <th className="px-2 py-1">Title</th>
+              <th className="px-2 py-1">Category</th>
+              <th className="px-2 py-1">Date</th>
+              <th className="px-2 py-1">Status</th>
+              <th className="px-2 py-1">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {contributions.map((c, i) => (
-              <tr key={i} className="border-t">
-                <td className="px-4 py-3">{c.title}</td>
-                <td className="px-4 py-3">{c.category}</td>
-                <td className="px-4 py-3">{c.date}</td>
-                <td className="px-4 py-3">
-                  <span className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusStyle(c.status)}`}>
-                    {c.status}
-                  </span>
+            {contributions.map((c) => (
+              <tr key={c.itemId} className="border-t hover:bg-gray-50">
+                <td
+                  className="px-2 py-1 cursor-pointer"
+                  onMouseEnter={() => setHoveredItem(c)}
+                  onMouseLeave={() => setHoveredItem(null)}
+                >
+                  {c.title}
                 </td>
-                <td className="px-4 py-3 flex gap-2">
-                  <button className="px-3 py-1 text-sm bg-gray-200 rounded-full hover:bg-gray-300">View</button>
-                  <button className="px-3 py-1 text-sm bg-yellow-300 rounded-full hover:bg-yellow-400">Edit</button>
+                <td className="px-2 py-1">{c.category}</td>
+                <td className="px-2 py-1">
+                  {new Date(c.date).toLocaleDateString()}
+                </td>
+                <td className="px-2 py-1">{c.status}</td>
+                <td className="px-2 py-1">
+                  <button
+                    className="text-indigo-600 hover:underline"
+                    onClick={() => openModal(c)}
+                  >
+                    Preview
+                  </button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+
+        {/* PAGINATION */}
+        <div className="flex justify-end items-center gap-2 mt-2">
+          <button
+            onClick={handlePrevPage}
+            disabled={pageNumber === 1}
+            className="flex items-center px-2 py-1 border rounded hover:bg-gray-100 disabled:opacity-50"
+          >
+            <ChevronLeft size={16} /> Prev
+          </button>
+          <span>
+            Page {pageNumber} of {totalPages}
+          </span>
+          <button
+            onClick={handleNextPage}
+            disabled={pageNumber === totalPages}
+            className="flex items-center px-2 py-1 border rounded hover:bg-gray-100 disabled:opacity-50"
+          >
+            Next <ChevronRight size={16} />
+          </button>
+        </div>
       </div>
 
-      {/* Metrics Heading */}
-      <h2 className="text-lg font-semibold mb-4">Your Contribution Metrics</h2>
+      {/* TOOLTIP */}
+      {hoveredItem && (
+        <div className="fixed bottom-16 left-1/2 transform -translate-x-1/2 bg-white border border-gray-300 shadow-lg rounded p-3 text-sm z-50 w-80">
+          <h3 className="font-semibold text-indigo-700">{hoveredItem.title}</h3>
+          <p className="mt-1 text-gray-700">{hoveredItem.description}</p>
+        </div>
+      )}
 
-      {/* Metrics */}
-      <div className="grid grid-cols-4 gap-4">
-        <div className="bg-[#fef3c7] rounded-xl p-4 text-center">
-          <p className="text-gray-500 text-sm">Knowledge Items</p>
-          <p className="text-2xl font-semibold">{metrics.knowledgeItems}</p>
+      {/* PREVIEW MODAL */}
+      {modalOpen && selectedItem && (
+        <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-40 z-50">
+          <div className="bg-white rounded-lg w-2/5 p-4 relative shadow-lg">
+            <button
+              className="absolute top-2 right-2 text-gray-600 hover:text-gray-900"
+              onClick={closeModal}
+            >
+              <X size={20} />
+            </button>
+            <h2 className="text-lg font-bold text-indigo-700">
+              {selectedItem.title}
+            </h2>
+            <p className="mt-2 text-sm text-gray-700">
+              {selectedItem.description}
+            </p>
+          </div>
         </div>
-        <div className="bg-[#ffe4e6] rounded-xl p-4 text-center">
-          <p className="text-gray-500 text-sm">Pending Reviews</p>
-          <p className="text-2xl font-semibold">{metrics.pendingReviews}</p>
-        </div>
-        <div className="bg-[#dcfce7] rounded-xl p-4 text-center">
-          <p className="text-gray-500 text-sm">Approved</p>
-          <p className="text-2xl font-semibold">{metrics.approved}</p>
-        </div>
-        <div className="bg-[#fef9c3] rounded-xl p-4 text-center">
-          <p className="text-gray-500 text-sm">Rejected</p>
-          <p className="text-2xl font-semibold">{metrics.rejected}</p>
-        </div>
-      </div>
-
-      {/* Submissions by Domain */}
-      <div className="mt-8">
-        <h2 className="text-lg font-semibold mb-4">Submissions by Domain</h2>
-        <div className="space-y-4">
-          {submissions.map((s, i) => (
-            <div key={i}>
-              <div className="flex justify-between text-sm mb-1">
-                <span>{s.domain}</span>
-                <span>{s.value}</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-yellow-500 h-2 rounded-full" style={{ width: `${s.value}%` }}></div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      )}
     </div>
   );
 }

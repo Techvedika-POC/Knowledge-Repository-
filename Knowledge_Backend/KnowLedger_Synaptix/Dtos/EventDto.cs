@@ -7,7 +7,6 @@ namespace KnowLedger_Synaptix.Dtos
         public Guid EventId { get; set; }
         public string Title { get; set; } = string.Empty;
         public string? Description { get; set; }
-   
         public string event_type { get; set; }
         public DateOnly? StartDate { get; set; }
         public DateOnly? EndDate { get; set; }

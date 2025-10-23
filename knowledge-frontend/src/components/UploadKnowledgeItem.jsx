@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import axios from "axios";
-// import { API_BASE_URL } from "../config";
 import { FaLightbulb } from "react-icons/fa";
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
-
+import api from "../api";
+import toast from "react-hot-toast";
 export default function UploadKnowledgeItem() {
   const [frameworks, setFrameworks] = useState([
     "C#",
@@ -14,10 +14,10 @@ export default function UploadKnowledgeItem() {
     "Spring Boot",
   ]);
   const [files, setFiles] = useState([]);
+  const [tags, setTags] = useState("");
   const [domains, setDomains] = useState([]);
   const [categories, setCategories] = useState([]);
   const [events, setEvents] = useState([]);
-
   const [form, setForm] = useState({
     name: "",
     domainId: "",
@@ -27,29 +27,49 @@ export default function UploadKnowledgeItem() {
     teamMemberEmails: "",
     isEventItem: false,
     languages: [],
+    tags: [],
     description: "",
   });
-
   const [activeTab, setActiveTab] = useState("File");
+  const location = useLocation();
+  const { eventId, eventTitle, eventType } = location.state || {};
+
   useEffect(() => {
-    axios
-      .get(`${API_BASE_URL}/domains`)
+    // If coming from an event (via state)
+    if (location.state?.eventId) {
+      setForm((prev) => ({
+        ...prev,
+        isEventItem: true,
+        eventId: location.state.eventId,
+      }));
+    }
+  }, [location.state]);
+  useEffect(() => {
+    if (eventId) {
+      console.log("Prefilled Event:", { eventId, eventTitle, eventType });
+      // set form data here if needed
+    }
+  }, [eventId]);
+
+  useEffect(() => {
+    api.
+      get(`/domains`)
       .then((res) => setDomains(res.data))
       .catch((err) => console.error(err));
   }, []);
 
   useEffect(() => {
     if (form.domainId) {
-      axios
-        .get(`${API_BASE_URL}/domains/${form.domainId}/categories`)
+      api
+        .get(`/domains/${form.domainId}/categories`)
         .then((res) => setCategories(res.data))
         .catch((err) => console.error(err));
     }
   }, [form.domainId]);
 
   useEffect(() => {
-    axios
-      .get(`${API_BASE_URL}/events`)
+    api
+      .get(`/events`)
       .then((res) => setEvents(res.data))
       .catch((err) => console.error(err));
   }, []);
@@ -70,49 +90,100 @@ export default function UploadKnowledgeItem() {
     }));
   };
 
-  const handleTabChange = (tab) => {
-    setActiveTab(tab);
-  };
+  const handleTabChange = (tab) => setActiveTab(tab);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  const token = localStorage.getItem("jwtToken");
+  if (!token) {
+    alert("You must be logged in to upload a knowledge item.");
+    return;
+  }
+
+  try {
     const formData = new FormData();
+
+    // Basic Info
     formData.append("Title", form.name);
     formData.append("DomainId", form.domainId);
     formData.append("CategoryId", form.categoryId);
-    formData.append("Language", form.language);
     formData.append("Description", form.description);
-    frameworks.forEach((fw) => formData.append("Frameworks", fw));
-    files.forEach((file) => formData.append("Files", file));
 
+    // Languages: handle string or array safely
+      // Languages:
+    const languageList = Array.isArray(form.languages)
+      ? form.languages
+      : (form.languages || "").split(",").map((l) => l.trim()).filter(Boolean);
+
+    languageList.forEach((lang) => formData.append("Language", lang));
+
+    // Frameworks: handle string or array safely
+      // Frameworks
+    const frameworkList = Array.isArray(frameworks)
+      ? frameworks
+      : (frameworks || "").split(",").map((f) => f.trim()).filter(Boolean);
+
+    frameworkList.forEach((fw) => formData.append("Framework", fw));
+
+      const tagInput = document.getElementById("tagInput").value.trim();
+      const allTags = [...form.tags];
+      if (tagInput && !allTags.includes(tagInput)) allTags.push(tagInput);
+
+      allTags.forEach((tag) => formData.append("Tags", tag));
+
+    (files || []).forEach((file) => formData.append("Files", file));
+
+
+    // Event-specific fields
     if (form.isEventItem) {
       formData.append("IsEventItem", true);
       formData.append("EventId", form.eventId);
       formData.append("TeamName", form.teamName);
-      if (form.teamMemberEmails.trim()) {
-        form.teamMemberEmails
-          .split(",")
-          .map((email) => email.trim())
-          .forEach((email) => formData.append("TeamMemberEmails", email));
-      }
+
+      let emails = (form.teamMemberEmails || "")
+        .split(",")
+        .map((e) => e.trim())
+        .filter(Boolean);
+
+      const userEmail = localStorage.getItem("userEmail");
+      if (userEmail && !emails.includes(userEmail)) emails.push(userEmail);
+
+      emails.forEach((email) => formData.append("TeamMemberEmails", email));
     }
+      console.log("FormData entries:");
+      for (let pair of formData.entries()) {
+        console.log(pair[0], ":", pair[1]);
+      }
+      // Submit the form
+      const response = await api.post(
+        `/knowledgeitem/upload`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-    axios
-      .post(`${API_BASE_URL}/knowledgeitem/upload`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      })
-      .then(() => alert("Knowledge item uploaded successfully!"))
-      .catch((err) => console.error(err));
-  };
-
+    alert("Knowledge item uploaded successfully!");
+    console.log("Upload response:", response.data);
+  } catch (err) {
+    if (err.response) {
+      console.error("Error response:", err.response.data);
+      toast.success(`Upload failed: ${JSON.stringify(err.response.data)}`);
+    } else {
+      console.error("Error:", err.message);
+      toast.error(`Upload failed: ${err.message}`);
+    }
+  }
+};
   return (
     <div className="max-w-[1000px] mx-auto mt-5 p-6 bg-white rounded-[12px] shadow-[0_6px_12px_rgba(0,0,0,0.05)] font-inter text-[#1f2937]">
-      {/* Header */}
       <div className="flex flex-wrap justify-between items-center mb-4 relative">
-        <h2 className="text-[22px] font-semibold">Upload Knowledge Item</h2>
+        <h2 className="text-[22px] font-semibold">Upload Knowledge Articles</h2>
       </div>
 
-      {/* Tip Bar */}
       <div className="flex items-center gap-2 bg-[#fef3c7] p-3 rounded-[8px] text-[#92400e] text-sm mb-5">
         <FaLightbulb />
         <span>
@@ -120,7 +191,6 @@ export default function UploadKnowledgeItem() {
         </span>
       </div>
 
-      {/* === Form === */}
       <form onSubmit={handleSubmit}>
         {/* Knowledge Item Details */}
         <section className="bg-[#f9fafb] p-4 rounded-[8px] mb-6">
@@ -216,24 +286,61 @@ export default function UploadKnowledgeItem() {
           )}
         </section>
 
-        {/* === Languages Section === */}
+      
+{/* Languages Section */}
+
+<section className="bg-[#f9fafb] p-4 rounded-[8px] mb-6">
+  <h3 className="text-[16px] font-semibold mb-2 text-[#111827]">
+    Languages (comma-separated)
+  </h3>
+  <input
+    type="text"
+    name="languages"
+    placeholder="e.g. C#, Python, Java"
+    value={form.languages}
+    onChange={(e) =>
+      setForm((prev) => ({
+        ...prev,
+        languages: e.target.value,
+      }))
+    }
+    className="w-[96%] px-2 py-2 border border-[#d1d5db] rounded-[8px]"
+  />
+</section>
+
+{/* Frameworks Section */}
+<section className="bg-[#f9fafb] p-4 rounded-[8px] mb-6">
+  <h3 className="text-[16px] font-semibold mb-2 text-[#111827]">
+    Frameworks (comma-separated)
+  </h3>
+  <input
+    type="text"
+    name="frameworks"
+    placeholder="e.g. React, .NET, Spring Boot"
+    value={frameworks}
+    onChange={(e) => setFrameworks(e.target.value)}
+    className="w-[96%] px-2 py-2 border border-[#d1d5db] rounded-[8px]"
+  />
+</section>
+
+        {/* Tags Section */}
         <section className="bg-[#f9fafb] p-4 rounded-[8px] mb-6">
-          <h3 className="text-[16px] font-semibold mb-4 text-[#111827]">
-            Programming Languages
+          <h3 className="text-[16px] font-semibold mb-2 text-[#111827]">
+            Tags
           </h3>
           <div className="flex flex-wrap gap-2 mb-2">
-            {form.languages.map((lang, index) => (
+            {form.tags.map((tag, index) => (
               <div
                 key={index}
-                className="flex items-center gap-1 px-2 py-1 rounded-[16px] bg-gradient-to-r from-[#a5b4fc] to-[#6366f1] text-white text-[13px]"
+                className="flex items-center gap-1 px-2 py-1 rounded-[16px] bg-[#d1fae5] text-[#065f46] text-[13px]"
               >
-                <span>{lang}</span>
+                <span>{tag}</span>
                 <button
                   type="button"
                   onClick={() =>
                     setForm((prev) => ({
                       ...prev,
-                      languages: prev.languages.filter((l) => l !== lang),
+                      tags: prev.tags.filter((t) => t !== tag),
                     }))
                   }
                 >
@@ -242,45 +349,18 @@ export default function UploadKnowledgeItem() {
               </div>
             ))}
           </div>
-
-          {/* Suggestions */}
-          <div className="flex flex-wrap gap-2 mb-2">
-            {["JavaScript", "Python", "Java", "C#", "Go", "Ruby"].map(
-              (suggestion) => (
-                <button
-                  key={suggestion}
-                  type="button"
-                  className="px-2 py-1 rounded-[12px] bg-[#e0e7ff] text-[#3730a3] text-[12px]"
-                  onClick={() => {
-                    if (!form.languages.includes(suggestion)) {
-                      setForm((prev) => ({
-                        ...prev,
-                        languages: [...prev.languages, suggestion],
-                      }));
-                    }
-                  }}
-                >
-                  {suggestion}
-                </button>
-              )
-            )}
-          </div>
-          {/* Add new language */}
           <div className="flex gap-2 mt-2">
             <input
               type="text"
-              placeholder="Add a language..."
+              id="tagInput"
+              placeholder="Add a tag..."
               className="flex-1 px-2 py-2 border border-[#d1d5db] rounded-[8px]"
-              id="languageInput"
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
                   const value = e.target.value.trim();
-                  if (value && !form.languages.includes(value)) {
-                    setForm((prev) => ({
-                      ...prev,
-                      languages: [...prev.languages, value],
-                    }));
+                  if (value && !form.tags.includes(value)) {
+                    setForm((prev) => ({ ...prev, tags: [...prev.tags, value] }));
                     e.target.value = "";
                   }
                 }
@@ -290,13 +370,10 @@ export default function UploadKnowledgeItem() {
               type="button"
               className="px-2 py-1 rounded-[18px] bg-[#06b6d4] text-white"
               onClick={() => {
-                const input = document.getElementById("languageInput");
+                const input = document.getElementById("tagInput");
                 const value = input.value.trim();
-                if (value && !form.languages.includes(value)) {
-                  setForm((prev) => ({
-                    ...prev,
-                    languages: [...prev.languages, value],
-                  }));
+                if (value && !form.tags.includes(value)) {
+                  setForm((prev) => ({ ...prev, tags: [...prev.tags, value] }));
                   input.value = "";
                 }
               }}
@@ -306,54 +383,7 @@ export default function UploadKnowledgeItem() {
           </div>
         </section>
 
-        {/* === Frameworks === */}
-        <section className="bg-[#f9fafb] p-4 rounded-[8px] mb-6">
-          <h3 className="text-[16px] font-semibold mb-4 text-[#111827]">
-            Frameworks
-          </h3>
-          <div className="flex flex-wrap gap-2 mb-2">
-            {frameworks.map((fw, index) => (
-              <div
-                key={index}
-                className="flex items-center gap-1 px-2 py-1 rounded-[16px] bg-[#fef3c7] text-[13px]"
-              >
-                <span>{fw}</span>
-                <button
-                  type="button"
-                  className="text-red-600"
-                  onClick={() =>
-                    setFrameworks(frameworks.filter((f) => f !== fw))
-                  }
-                >
-                  ×
-                </button>
-              </div>
-            ))}
-          </div>
-          <div className="flex gap-2 mt-2">
-            <input
-              type="text"
-              id="frameworkInput"
-              placeholder="Add another framework..."
-              className="flex-1 px-2 py-2 border border-[#d1d5db] rounded-[8px]"
-            />
-            <button
-              type="button"
-              className="px-2 py-1 rounded-[18px] bg-[#06b6d4] text-white"
-              onClick={() => {
-                const input = document.getElementById("frameworkInput");
-                if (input.value.trim()) {
-                  setFrameworks([...frameworks, input.value.trim()]);
-                  input.value = "";
-                }
-              }}
-            >
-              Add
-            </button>
-          </div>
-        </section>
-
-        {/* === Description === */}
+        {/* Description Section */}
         <section className="bg-[#f9fafb] p-4 rounded-[8px] mb-6">
           <h3 className="text-[16px] font-semibold mb-4 text-[#111827]">
             Description
@@ -369,7 +399,7 @@ export default function UploadKnowledgeItem() {
           />
         </section>
 
-        {/* === Upload Options === */}
+        {/* Upload Options */}
         <section className="bg-[#f9fafb] p-4 rounded-[8px] mb-6">
           <h3 className="text-[16px] font-semibold mb-3 text-[#111827]">
             Upload Options
@@ -379,10 +409,8 @@ export default function UploadKnowledgeItem() {
               <button
                 type="button"
                 key={tab}
-                className={`px-2 py-1 rounded-[15px] ${activeTab === tab
-                  ? "bg-[#e4a931] text-[#0c0c0c]"
-                  : "bg-[#fef3c7]"
-                  }`}
+                className={`px-2 py-1 rounded-[15px] ${activeTab === tab ? "bg-[#e4a931] text-[#0c0c0c]" : "bg-[#fef3c7]"
+                }`}
                 onClick={() => handleTabChange(tab)}
               >
                 {tab}
@@ -438,7 +466,7 @@ export default function UploadKnowledgeItem() {
           )}
         </section>
 
-        {/* === Footer Buttons === */}
+        {/* Footer Buttons */}
         <div className="flex gap-2 justify-end mt-5">
           <button
             type="button"

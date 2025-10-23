@@ -1,4 +1,5 @@
 ﻿using KnowLedger_Synaptix.Dtos;
+using KnowLedger_Synaptix.Models;
 using KnowLedger_Synaptix.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -17,15 +18,16 @@ namespace KnowLedger_Synaptix.Controllers
             _domainService = domainService;
         }
 
+        //Get All the domains
         [HttpGet]
-        public async Task<ActionResult<List<DomainDto>>> GetAllDomains()
+        public async Task<ActionResult<List<Domain>>> GetAllDomains()
         {
             var domains = await _domainService.GetAllDomainsAsync();
             return Ok(domains);
         }
-
+        //Get domaind by id
         [HttpGet("{id}")]
-        public async Task<ActionResult<DomainDto>> GetDomainById(Guid id)
+        public async Task<ActionResult<Domain>>GetDomainById(Guid id)
         {
             var domain = await _domainService.GetDomainByIdAsync(id);
             if (domain == null)
@@ -34,16 +36,18 @@ namespace KnowLedger_Synaptix.Controllers
             }
             return Ok(domain);
         }
+        //Get domains by name
         [HttpGet("byname/{name}")]
-        public async Task<ActionResult<DomainDto>> GetDomainByName(string name)
+        public async Task<ActionResult<Domain>> GetDomainByName(string name)
         {
             var domain = await _domainService.GetDomainByNameAsync(name);
             if (domain == null)
                 return NotFound();
             return Ok(domain);
         }
+        //Get Categories by domain id
         [HttpGet("{domainid}/categories")]
-        public async Task<ActionResult<List<CategoryDto>>> GetCategoriesByDomainId(Guid domainid)
+        public async Task<ActionResult<List<Category>>> GetCategoriesByDomainId(Guid domainid)
         {
             var categories = await _domainService.GetCategoriesByDomainIdAsync(domainid);
             if (categories == null || !categories.Any())

@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 
 namespace KnowLedger_Synaptix.Controllers
 {
+    /// <summary>
+    /// Provides a global search endpoint to query knowledge items by keyword.
+    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     public class GlobalSearchController : ControllerBase
@@ -17,16 +20,16 @@ namespace KnowLedger_Synaptix.Controllers
         {
             _globalSearchService = globalSearchService;
         }
-
-        // GET: api/GlobalSearch?keyword=abc
+        //Global search filter
         [HttpGet]
-        public async Task<ActionResult<List<GlobalSearchResultDto>>> Get([FromQuery] string keyword)
+        public async Task<ActionResult<List<KnowledgeItemDto>>> Get([FromQuery] string keyword)
         {
+            // Validate the input keyword
             if (string.IsNullOrWhiteSpace(keyword))
                 return BadRequest("Keyword cannot be empty.");
 
             try
-            {
+            {  
                 var results = await _globalSearchService.GlobalSearchAsync(keyword);
 
                 if (results == null || results.Count == 0)
@@ -36,7 +39,7 @@ namespace KnowLedger_Synaptix.Controllers
             }
             catch (Exception ex)
             {
-                // Optionally log the exception
+                // Return internal server error with exception message
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }

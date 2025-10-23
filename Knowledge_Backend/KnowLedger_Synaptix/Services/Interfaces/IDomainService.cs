@@ -1,12 +1,37 @@
 ﻿using KnowLedger_Synaptix.Dtos;
+using KnowLedger_Synaptix.Models;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace KnowLedger_Synaptix.Services.Interfaces
 {
+    /// <summary>
+    /// Provides operations to manage and retrieve domain data and related categories.
+    /// </summary>
     public interface IDomainService
     {
-        Task<List<DomainDto>> GetAllDomainsAsync();
-        Task<DomainDto?> GetDomainByIdAsync(Guid domainId);
-        Task<DomainDto?> GetDomainByNameAsync(string domainName);
-        Task<List<CategoryDto>> GetCategoriesByDomainIdAsync(Guid domainId);
+        /// <summary>
+        /// Retrieves all domains available in the system.
+    
+        Task<List<Domain>> GetAllDomainsAsync();
+
+        /// <summary>
+        /// Retrieves a domain by its unique identifier.
+        /// </summary>
+      
+        Task<Domain?> GetDomainByIdAsync(Guid domainId);
+
+        /// <summary>
+        /// Retrieves a domain by its name.
+        /// </summary>
+     
+        Task<Domain?> GetDomainByNameAsync(string domainName);
+
+        /// <summary>
+        /// Retrieves all categories associated with a specific domain.
+        /// </summary>
+   
+        Task<List<Category>> GetCategoriesByDomainIdAsync(Guid domainId);
     }
 }

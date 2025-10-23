@@ -2,6 +2,7 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace KnowLedger_Synaptix.Models;
 
@@ -15,12 +16,19 @@ public partial class KnowledgeItem
 
     public Guid? DomainId { get; set; }
 
+    public string KnowledgeItem1 { get; set; }
+
     public Guid? CategoryId { get; set; }
 
     public Guid? OwnerId { get; set; }
 
+    public string Status { get; set; }
+
     public int? Version { get; set; }
 
+    public string Visibility { get; set; }
+    [NotMapped] // if you don't want to store in the DB, just for runtime
+    public List<float> Embedding { get; set; } = new List<float>();
     public bool? IsEventItem { get; set; }
 
     public DateTime? CreatedOn { get; set; }
@@ -36,8 +44,6 @@ public partial class KnowledgeItem
     public string Language { get; set; }
 
     public string Metadata { get; set; }
-
-    public string KnowledgeItem1 { get; set; }
 
     public virtual ICollection<ActivityLog> ActivityLogs { get; set; } = new List<ActivityLog>();
 

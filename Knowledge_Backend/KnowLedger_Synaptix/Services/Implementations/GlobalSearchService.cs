@@ -2,10 +2,6 @@
 using KnowLedger_Synaptix.Models;
 using KnowLedger_Synaptix.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace KnowLedger_Synaptix.Services.Implementations
 {
@@ -17,37 +13,50 @@ namespace KnowLedger_Synaptix.Services.Implementations
         {
             _context = context;
         }
-
-        public async Task<List<GlobalSearchResultDto>> GlobalSearchAsync(string keyword)
+        public async Task<List<KnowledgeItemDto>> GlobalSearchAsync(string keyword)
         {
             if (string.IsNullOrWhiteSpace(keyword))
-                return new List<GlobalSearchResultDto>();
+                return new List<KnowledgeItemDto>();
 
             keyword = keyword.ToLower();
 
-            // Unified search: KnowledgeItems, Domains, Categories, Attachments, Tags
-            var query = from k in _context.KnowledgeItems
-                        join d in _context.Domains on k.DomainId equals d.DomainId into kd
-                        from domain in kd.DefaultIfEmpty()
-                        join c in _context.Categories on k.CategoryId equals c.CategoryId into kc
-                        from category in kc.DefaultIfEmpty()
-                        where k.Title.ToLower().Contains(keyword)
-                              || k.Description.ToLower().Contains(keyword)
-                              || _context.KnowledgeTags.Any(t => t.ItemId == k.ItemId && t.TagName.ToLower().Contains(keyword))
-                              || _context.Attachments.Any(a => a.ItemId == k.ItemId && a.FileName.ToLower().Contains(keyword))
-                              || (domain != null && domain.DomainName.ToLower().Contains(keyword))
-                              || (category != null && category.CategoryName.ToLower().Contains(keyword))
-                        select new GlobalSearchResultDto
-                        {
-                            //Type = "KnowledgeItem",
-                            Id = k.ItemId,
-                            Name = k.Title,
-                            Snippet = k.Description.Length > 200 ? k.Description.Substring(0, 200) + "..." : k.Description,
-                        };
+            var results = await _context.KnowledgeItems
+                .Include(k => k.Domain)
+                .Include(k => k.Category)
+                .Include(k => k.Owner)
+                .Include(k => k.KnowledgeTags)
+                .Where(k =>
+                    k.Title.ToLower().Contains(keyword) ||
+                    k.Description.ToLower().Contains(keyword) ||
+                    (k.Domain != null && k.Domain.DomainName.ToLower().Contains(keyword)) ||
+                    (k.Category != null && k.Category.CategoryName.ToLower().Contains(keyword)) ||
+                    k.KnowledgeTags.Any(t => t.TagName.ToLower().Contains(keyword)) ||
+                    _context.Attachments.Any(a => a.ItemId == k.ItemId && a.FileName.ToLower().Contains(keyword))
+                )
+                .OrderByDescending(k => k.CreatedOn)
+                .Select(k => new KnowledgeItemDto
+                {
+                    ItemId = k.ItemId,
+                    Title = k.Title,
+                    Description = k.Description,
+                    DomainId = k.DomainId,
+                    DomainName = k.Domain != null ? k.Domain.DomainName : string.Empty,
+                    CategoryId = k.CategoryId,
+                    CategoryName = k.Category != null ? k.Category.CategoryName : string.Empty,
+                    OwnerId = k.OwnerId,
+                    SubmittedBy = k.Owner != null ? k.Owner.Name : "Unknown",
+                    Status = k.Status,
+                    Version = k.Version,
+                    Visibility = k.Visibility,
+                    IsEventItem = k.IsEventItem,
+                    Framework = k.Framework,
+                    Language = k.Language,
+                    Tags = k.KnowledgeTags.Select(t => t.TagName).ToList(),
+                    CreatedOn = k.CreatedOn ?? DateTimeOffset.UtcNow
+                })
+                .ToListAsync();
 
-            var results = await query.Distinct().ToListAsync();
-
-            return results.OrderByDescending(r => r.CreatedOn).ToList();
+            return results;
         }
     }
 }
