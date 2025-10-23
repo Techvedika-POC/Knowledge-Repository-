@@ -15,6 +15,8 @@ public partial class Attachment
 
     public string FileName { get; set; }
 
+    public string FileType { get; set; }
+
     public string FilePath { get; set; }
 
     public string Message { get; set; }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -107,11 +107,7 @@ export default function LandingPage() {
                   alt={feature.title}
                   className="w-full h-full object-cover"
                 />
-
-                {/* Overlay gradient for text readability */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-xl"></div>
-
-                {/* Text overlay with creative effect */}
                 <div className="absolute bottom-12 left-1/2 transform -translate-x-1/2 text-center px-4 md:px-0">
                   <h2
                     className={`text-2xl md:text-4xl font-extrabold text-white drop-shadow-xl transition-all duration-700 ${
@@ -159,3 +155,5 @@ export default function LandingPage() {
     </div>
   );
 }
+ 
+ 

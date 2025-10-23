@@ -7,11 +7,8 @@ namespace KnowLedger_Synaptix.Services.Interfaces
     public interface IGlobalSearchService
     {
         /// <summary>
-        /// Performs a global search across Knowledge Items and Events.
-        /// Includes Domain, Category, Tags, Attachments, and main text fields.
+        /// Searches for knowledge items matching the specified keyword.
         /// </summary>
-        /// <param name="keyword">Search keyword</param>
-        /// <returns>List of search results</returns>
-        Task<List<GlobalSearchResultDto>> GlobalSearchAsync(string keyword);
+        Task<List<KnowledgeItemDto>> GlobalSearchAsync(string keyword);
     }
 }

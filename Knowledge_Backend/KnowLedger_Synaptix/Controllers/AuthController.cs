@@ -4,6 +4,10 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace KnowLedger_Synaptix.Controllers
 {
+    /// <summary>
+    /// Handles user authentication and registration processes.
+    /// Provides endpoints for new user registration and login.
+    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     public class AuthController : ControllerBase
@@ -14,9 +18,14 @@ namespace KnowLedger_Synaptix.Controllers
         {
             _authService = authService;
         }
+
+        /// <summary>
+        /// Registers a new user in the system.
+        /// </summary>
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
+            // Validate request body
             if (dto == null)
                 return BadRequest("Invalid request.");
 
@@ -28,18 +37,24 @@ namespace KnowLedger_Synaptix.Controllers
             return Ok("User registered successfully.");
         }
 
+        /// <summary>
+        /// Authenticates a user and returns a JWT token upon successful login.
+        /// </summary>
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginDto dto)
+        public async Task<IActionResult> Login([FromBody] LoginDto request)
         {
-            if (dto == null)
-                return BadRequest("Invalid request.");
+            // Validate input
+            if (request == null || string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
+                return BadRequest(new { message = "Email and password are required" });
 
-            var authResponse = await _authService.LoginAsync(dto);
+            // Authenticate user
+            var user = await _authService.LoginAsync(request);
 
-            if (authResponse == null)
-                return Unauthorized("Invalid email or password.");
-
-            return Ok(authResponse);
+            if (user == null)
+                return Unauthorized(new { message = "Invalid email or password" });
+            return Ok(user);
         }
     }
 }
+
+

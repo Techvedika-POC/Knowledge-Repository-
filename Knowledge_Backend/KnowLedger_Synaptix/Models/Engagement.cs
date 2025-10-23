@@ -25,6 +25,8 @@ public partial class Engagement
 
     public Guid? UpdatedBy { get; set; }
 
+    public string EngagementType { get; set; }
+
     public virtual User CreatedByNavigation { get; set; }
 
     public virtual KnowledgeItem Item { get; set; }

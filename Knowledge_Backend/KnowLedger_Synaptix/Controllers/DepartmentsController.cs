@@ -14,7 +14,7 @@ namespace KnowLedger_Synaptix.Controllers
         {
             _departmentService = departmentService;
         }
-
+        //Getting the departments
         [HttpGet]
         public async Task<IActionResult> GetDepartments()
         {
