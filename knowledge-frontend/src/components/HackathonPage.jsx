@@ -25,7 +25,7 @@ export default function HackathonPage() {
     fetchEvents();
   }, []);
 
-  //  Handle submit idea click � pass eventId to upload page
+  //  Handle submit idea click  pass eventId to upload page
   const handleSubmitIdea = (eventId) => {
   navigate("/app/upload-knowledge", { state: { eventId } });
 };

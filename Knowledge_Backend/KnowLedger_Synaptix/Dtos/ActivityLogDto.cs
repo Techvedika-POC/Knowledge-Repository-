@@ -8,14 +8,12 @@
         public string Action { get; set; }
         public string Details { get; set; }
         public DateTime? CreatedOn { get; set; } = DateTime.UtcNow;
-
-        // New fields for My Contributions table
         public string Title { get; set; }
         public string Category { get; set; }
         public string Domain { get; set; }
-        public string Description { get; set; } // can be short or full
+        public string Description { get; set; } 
         public string Status { get; set; }
-        public DateTime? Date { get; set; } // mapped from KnowledgeItem.CreatedOn
+        public DateTime? Date { get; set; } 
     }
     public class PagedResult<T>
     {

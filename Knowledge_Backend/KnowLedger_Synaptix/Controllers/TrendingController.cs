@@ -19,7 +19,7 @@ namespace KnowLedger_Synaptix.Controllers
         {
             _trendingService = trendingService ?? throw new ArgumentNullException(nameof(trendingService));
         }
-
+        //Getting the most liked items (by engagement score )
         [HttpGet]
         public async Task<ActionResult<List<KnowledgeItemDto>>> GetTrending([FromQuery] int top = 5)
         {

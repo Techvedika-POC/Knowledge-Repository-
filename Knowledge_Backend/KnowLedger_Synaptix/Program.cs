@@ -101,7 +101,7 @@ builder.Services.AddAuthentication(options =>
 // Authorization & Swagger
 // ==========================
 builder.Services.AddAuthorization();
-builder.Services.AddEndpointsApiExplorer();///it will collect all the metadaa about the endpoints in controllers
+builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // ==========================
@@ -119,11 +119,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-// Serve static files (wwwroot)
 app.UseStaticFiles();
 
-// Serve uploads directory (optional)
+// Serve uploads directory 
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(
@@ -132,12 +130,8 @@ app.UseStaticFiles(new StaticFileOptions
 });
 
 app.UseRouting();
-
-// ✅ Use CORS before authentication
 app.UseCors("AllowFrontend");
-
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
 app.Run();

@@ -65,9 +65,9 @@ namespace KnowLedger_Synaptix.Controllers
                     {
                         FileName = file.FileName,
                         MimeType = file.ContentType,
-                        FilePath = $"/uploads/{fileName}", // relative path for front-end
+                        FilePath = $"/uploads/{fileName}", 
                         FileSize = file.Length,
-                        FileData = null // skip storing file bytes in memory
+                        FileData = null 
                     });
                 }
             }
@@ -93,7 +93,7 @@ namespace KnowLedger_Synaptix.Controllers
         public async Task<ActionResult<KnowledgeItemDetailsDto>> GetKnowledgeItemDetails(Guid itemId)
         {
             var details = await _service.GetKnowledgeItemDetailsAsync(itemId);
-            if (details == null) return NotFound(); // Item not found
+            if (details == null) return NotFound(); 
             return Ok(details);
         }
 
@@ -119,7 +119,6 @@ namespace KnowLedger_Synaptix.Controllers
         [HttpGet("ByDomain/{domainId}")]
         public async Task<ActionResult<IEnumerable<KnowledgeItemFilterDto>>> GetByDomain(Guid domainId)
         {
-            // Fetch domain-specific knowledge items
             var result = await _service.GetKnowledgeItemsByDomainAsync(domainId);
             return Ok(result);
         }

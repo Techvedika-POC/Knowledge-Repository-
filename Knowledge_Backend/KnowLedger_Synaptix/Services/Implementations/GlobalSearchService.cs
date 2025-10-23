@@ -13,7 +13,6 @@ namespace KnowLedger_Synaptix.Services.Implementations
         {
             _context = context;
         }
-
         public async Task<List<KnowledgeItemDto>> GlobalSearchAsync(string keyword)
         {
             if (string.IsNullOrWhiteSpace(keyword))

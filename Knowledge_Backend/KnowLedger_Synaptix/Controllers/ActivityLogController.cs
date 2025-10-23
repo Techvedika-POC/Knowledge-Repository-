@@ -25,8 +25,6 @@ namespace KnowLedger_Synaptix.Controllers
         {
             _activityLogService = activityLogService;
         }
-
-        //// GET: api/contributions/my
         [HttpGet("my")]
         public async Task<IActionResult> GetMyContributions()
         {
@@ -42,9 +40,6 @@ namespace KnowLedger_Synaptix.Controllers
 
             return Ok(contributions);
         }
-
-
-        // GET: api/contributions/preview/{itemId}
         [HttpGet("preview/{itemId}")]
         public async Task<IActionResult> GetContributionDetails(Guid itemId)
         {
@@ -67,7 +62,6 @@ namespace KnowLedger_Synaptix.Controllers
             [FromQuery] string status = null,
             [FromQuery] string date = null)
         {
-            // Parse optional date filter
             DateTime? parsedDate = null;
             if (!string.IsNullOrWhiteSpace(date) && DateTime.TryParse(date, out var dt))
                 parsedDate = dt;
@@ -83,7 +77,7 @@ namespace KnowLedger_Synaptix.Controllers
                 userId, domain, category, title, status, parsedDate);
 
             if (contributions == null || !contributions.Any())
-                return Ok(new List<ActivityLogDto>()); // return empty list instead of error
+                return Ok(new List<ActivityLogDto>()); 
 
             return Ok(contributions);
         }
@@ -140,7 +134,7 @@ namespace KnowLedger_Synaptix.Controllers
           [FromQuery] string status = null,
           [FromQuery] DateTime? date = null)
         {
-            // Get logged-in user's ID from claims
+           
             var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!Guid.TryParse(userIdStr, out var userId))
                 return Unauthorized("Invalid user.");

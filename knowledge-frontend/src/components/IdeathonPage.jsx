@@ -16,7 +16,7 @@ export default function IdeathonPage() {
       try {
         setLoading(true);
         const res = await api.get("/Events/type/Ideathon");
-        setEvent(res.data[0] || null); // Expecting one Ideathon event per month
+        setEvent(res.data[0] || null); 
       } catch (err) {
         console.error("Error fetching Ideathon event:", err);
         setError("Failed to load Ideathon event");
@@ -118,7 +118,7 @@ export default function IdeathonPage() {
       {/* Submit Idea */}
       <div className="text-center mt-6">
         <button
-          onClick={() => handleSubmitIdea(event.eventId)} // ✅ Correctly passes eventId
+          onClick={() => handleSubmitIdea(event.eventId)} 
           className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-full font-semibold text-lg"
         >
           Submit Your Idea

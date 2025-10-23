@@ -34,7 +34,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 .Include(k => k.Owner)
                 .Include(k => k.KnowledgeTags)
                 .Include(k => k.Engagements)
-                .OrderByDescending(k => k.CreatedOn) // optional: latest first
+                .OrderByDescending(k => k.CreatedOn) 
                 .ToListAsync();
 
             return items
@@ -47,7 +47,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                     DomainName = k.Domain?.DomainName,
                     CategoryId = k.CategoryId,
                     CategoryName = k.Category?.CategoryName,
-                    Language = k.Language,       // JSON string from DB
+                    Language = k.Language,      
                     Framework = k.Framework,
                     OwnerId = k.OwnerId,
                     OwnerName = k.Owner?.Name ?? "Unknown",
@@ -55,7 +55,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                     Tags = k.KnowledgeTags.Select(t => t.TagName).ToList(),
                     EngagementScore = k.Engagements.Count
                 })
-                .OrderByDescending(k => k.EngagementScore) // rank by engagement
+                .OrderByDescending(k => k.EngagementScore) 
                 .Take(top)
                 .ToList();
         }

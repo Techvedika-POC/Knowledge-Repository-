@@ -18,7 +18,7 @@ export default function Recents() {
       try {
         setLoading(true);
         setError("");
-        const res = await api.get("/FreshPicks?count=12"); // Fetch recent items
+        const res = await api.get("/FreshPicks?count=12"); 
         setRecents(res.data);
       } catch (err) {
         console.error("Error fetching recents:", err);
@@ -55,7 +55,6 @@ export default function Recents() {
             Loading recent items...
           </p>
         )}
-
         {/* Error */}
         {error && <p className="text-center text-red-500 py-10">{error}</p>}
 
@@ -65,7 +64,6 @@ export default function Recents() {
             No recent items available.
           </p>
         )}
-
         {/* Knowledge Cards */}
         {!loading && !error && recents.length > 0 && (
           <KnowledgeCardsDisplay

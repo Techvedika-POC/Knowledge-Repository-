@@ -127,8 +127,6 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 })
                 .ToListAsync();
         }
-
-
         //user uplaoded domains
         public async Task<IEnumerable<string>> GetUserDomainsAsync(Guid userId)
         {
@@ -285,8 +283,6 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 SubmittedBy = k.Owner?.Name
             }).ToList();
         }
-
-
 
     }
 }
