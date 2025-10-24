@@ -110,7 +110,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddAuthorization();
 builder.Services.AddEndpointsApiExplorer();///it will collect all the metadaa about the endpoints in controllers
 builder.Services.AddSwaggerGen();
-#endregion
+
 
 var app = builder.Build();
 
@@ -145,3 +145,4 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.Run();
+#endregion
