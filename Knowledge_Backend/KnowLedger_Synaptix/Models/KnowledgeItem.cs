@@ -25,10 +25,11 @@ public partial class KnowledgeItem
     public string Status { get; set; }
 
     public int? Version { get; set; }
+    [NotMapped]
+    public List<float> Embedding { get; set; }
 
     public string Visibility { get; set; }
-    [NotMapped] // if you don't want to store in the DB, just for runtime
-    public List<float> Embedding { get; set; } = new List<float>();
+
     public bool? IsEventItem { get; set; }
 
     public DateTime? CreatedOn { get; set; }

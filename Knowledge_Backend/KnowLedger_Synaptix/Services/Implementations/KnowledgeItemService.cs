@@ -242,82 +242,47 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 {
                     _logger.LogWarning("Failed to generate embedding for KnowledgeItem {ItemId}", knowledgeItem.ItemId);
                 }
-                // 6️⃣ Create Activity Log for Upload (Action as string)
+
+                // ----------------- 6️⃣ Create Activity Log -----------------
                 _context.ActivityLogs.Add(new ActivityLog
                 {
                     ActivityId = Guid.NewGuid(),
                     UserId = userId,
                     ItemId = knowledgeItem.ItemId,
                     EventId = dto.IsEventItem ? dto.EventId : null,
-                    Action = "Upload", // must match DB enum value
+                    Action = "Upload",
                     Details = $"Knowledge item '{knowledgeItem.Title}' uploaded successfully.",
                     CreatedOn = DateTime.UtcNow
                 });
-                // ----------------- 6️⃣ Handle Event-specific Logic -----------------
+
+                // ----------------- 7️Link Knowledge Item to Event using existing team -----------------
                 if (dto.IsEventItem && dto.EventId.HasValue)
                 {
-                    var existingEvent = await _context.Events.FindAsync(dto.EventId.Value)
-                        ?? throw new Exception($"Event {dto.EventId.Value} does not exist.");
-                    var owner = await _context.Users.FindAsync(userId)
-                        ?? throw new Exception($"User {userId} does not exist.");
+                    var team = await _context.Teams
+                        .Where(t => t.EventId == dto.EventId.Value)
+                        .Join(_context.TeamMembers, t => t.TeamId, tm => tm.TeamId, (t, tm) => new { t, tm })
+                        .Where(x => x.tm.UserId == userId)
+                        .Select(x => x.t)
+                        .FirstOrDefaultAsync();
 
-                    var teamId = Guid.NewGuid();
-                    var team = new Team
-                    {
-                        TeamId = teamId,
-                        EventId = dto.EventId.Value,
-                        TeamName = dto.TeamName ?? $"{dto.Title}_Team",
-                        CreatedBy = userId,
-                        CreatedOn = DateTime.UtcNow
-                    };
-                    _context.Teams.Add(team);
-                    await _context.SaveChangesAsync();
+                    if (team == null)
+                        throw new Exception("You are not registered in any team for this event.");
 
-                    // Team Members
-                    var emails = dto.TeamMemberEmails?
-                        .SelectMany(e => e.Split(',', StringSplitOptions.RemoveEmptyEntries))
-                        .Select(e => e.Trim())
-                        .Where(e => !string.IsNullOrEmpty(e))
-                        .Distinct()
-                        .ToList() ?? new List<string>();
-
-                    var users = await _context.Users.Where(u => emails.Contains(u.Email)).ToListAsync();
-                    var teamMembers = users.Select(u => new TeamMember
-                    {
-                        TeamMemberId = Guid.NewGuid(),
-                        TeamId = teamId,
-                        UserId = u.UserId,
-                        JoinedOn = DateTime.UtcNow
-                    }).ToList();
-
-                    if (!teamMembers.Any())
-                    {
-                        teamMembers.Add(new TeamMember
-                        {
-                            TeamMemberId = Guid.NewGuid(),
-                            TeamId = teamId,
-                            UserId = userId,
-                            JoinedOn = DateTime.UtcNow
-                        });
-                    }
-                    _context.TeamMembers.AddRange(teamMembers);
-                    await _context.SaveChangesAsync();
-
-                    // Link KnowledgeItem to Event
                     _context.EventKnowledgeItems.Add(new EventKnowledgeItem
                     {
                         EventItemId = Guid.NewGuid(),
                         EventId = dto.EventId.Value,
                         ItemId = knowledgeItem.ItemId,
-                        TeamId = teamId,
+                        TeamId = team.TeamId,
                         CreatedOn = DateTime.UtcNow,
                         CreatedBy = userId,
                         UpdatedOn = DateTime.UtcNow
                     });
-                    await _context.SaveChangesAsync();
                 }
 
+                await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
+
                 return knowledgeItem;
             }
             catch
@@ -326,6 +291,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 throw;
             }
         }
+
 
 
         #endregion

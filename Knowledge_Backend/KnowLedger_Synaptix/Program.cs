@@ -38,6 +38,7 @@ builder.Services.AddScoped<IActivityLogService, ActivityLogService>();
 builder.Services.AddScoped<IEmbeddingService, EmbeddingService>();
 builder.Services.AddScoped<IFileEmbeddingService, FileEmbeddingService>();
 builder.Services.AddScoped<IQdrantService, QdrantService>();
+builder.Services.AddScoped<IEventRegistrationService, EventRegistrationService>();
 
 // CORS Configuration 
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
