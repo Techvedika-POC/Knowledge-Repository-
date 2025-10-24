@@ -22,7 +22,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
         private readonly IConfiguration _configuration;
         private readonly ILogger<AuthService> _logger;
 
-        // ✅ Proper constructor
+        // constructor
         public AuthService(Knowledge_Repository_dbContext context, IConfiguration configuration, ILogger<AuthService> logger)
         {
             _context = context;
@@ -34,7 +34,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
         /// Registers a new user, hashes the password, assigns the default "Contributor" role, 
         /// and sets audit fields. Optionally allows creation by an admin.
         /// </summary>
-        public async Task<bool> RegisterAsync(RegisterDto dto, Guid? createdBy = null)
+        public async Task<bool> RegisterAsync(RegisterDto dto, Guid? createdBy )
         {
             // Check if a user with the same email already exists
             if (await _context.Users.AnyAsync(u => u.Email.ToLower() == dto.Email.ToLower()))

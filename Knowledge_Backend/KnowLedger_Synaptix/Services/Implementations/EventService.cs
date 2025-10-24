@@ -1,5 +1,4 @@
-﻿using KnowLedger_Synaptix.Dtos;
-using KnowLedger_Synaptix.Models;
+﻿using KnowLedger_Synaptix.Models;
 using KnowLedger_Synaptix.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -18,7 +17,9 @@ namespace KnowLedger_Synaptix.Services.Implementations
             _context = context;
         }
 
-        //Get all events Available
+        /// <summary>
+        /// Get all events with all columns of the Event table (no related entities).
+        /// </summary>
         public async Task<List<Event>> GetAllEventsAsync()
         {
             return await _context.Events
@@ -29,11 +30,29 @@ namespace KnowLedger_Synaptix.Services.Implementations
                     Description = e.Description,
                     StartDate = e.StartDate,
                     EndDate = e.EndDate,
-                    OwnerId = e.OwnerId
+                    OwnerId = e.OwnerId,
+                    CreatedOn = e.CreatedOn,
+                    UpdatedOn = e.UpdatedOn,
+                    CreatedBy = e.CreatedBy,
+                    UpdatedBy = e.UpdatedBy,
+                    EventType = e.EventType,
+                    RegistrationCloseDate = e.RegistrationCloseDate,
+                    MentorCheckpointStart = e.MentorCheckpointStart,
+                    MentorCheckpointEnd = e.MentorCheckpointEnd,
+                    FinalSubmissionDeadline = e.FinalSubmissionDeadline,
+                    IdeaPresentationStart = e.IdeaPresentationStart,
+                    IdeaPresentationEnd = e.IdeaPresentationEnd,
+                    WinnersAnnouncementDate = e.WinnersAnnouncementDate,
+                    ContactEmail = e.ContactEmail,
+                    Notes = e.Notes
                 })
+                .AsNoTracking()
                 .ToListAsync();
         }
-        //Get events by type of the event
+
+        /// <summary>
+        /// Get events filtered by type, including all Event table columns (no related entities).
+        /// </summary>
         public async Task<List<Event>> GetEventsByTypeAsync(string eventType)
         {
             if (string.IsNullOrEmpty(eventType))
@@ -49,9 +68,57 @@ namespace KnowLedger_Synaptix.Services.Implementations
                     StartDate = e.StartDate,
                     EndDate = e.EndDate,
                     OwnerId = e.OwnerId,
-                    EventType = e.EventType
+                    CreatedOn = e.CreatedOn,
+                    UpdatedOn = e.UpdatedOn,
+                    CreatedBy = e.CreatedBy,
+                    UpdatedBy = e.UpdatedBy,
+                    EventType = e.EventType,
+                    RegistrationCloseDate = e.RegistrationCloseDate,
+                    MentorCheckpointStart = e.MentorCheckpointStart,
+                    MentorCheckpointEnd = e.MentorCheckpointEnd,
+                    FinalSubmissionDeadline = e.FinalSubmissionDeadline,
+                    IdeaPresentationStart = e.IdeaPresentationStart,
+                    IdeaPresentationEnd = e.IdeaPresentationEnd,
+                    WinnersAnnouncementDate = e.WinnersAnnouncementDate,
+                    ContactEmail = e.ContactEmail,
+                    Notes = e.Notes
                 })
+                .AsNoTracking()
                 .ToListAsync();
+        }
+
+        /// <summary>
+        /// Get a single event by ID, including all Event table columns (no related entities).
+        /// </summary>
+        public async Task<Event?> GetEventByIdAsync(Guid eventId)
+        {
+            return await _context.Events
+                .Where(e => e.EventId == eventId)
+                .Select(e => new Event
+                {
+                    EventId = e.EventId,
+                    Title = e.Title,
+                    Description = e.Description,
+                    StartDate = e.StartDate,
+                    EndDate = e.EndDate,
+                    OwnerId = e.OwnerId,
+                    CreatedOn = e.CreatedOn,
+                    UpdatedOn = e.UpdatedOn,
+                    CreatedBy = e.CreatedBy,
+                    UpdatedBy = e.UpdatedBy,
+                    EventType = e.EventType,
+                    RegistrationCloseDate = e.RegistrationCloseDate,
+                    MentorCheckpointStart = e.MentorCheckpointStart,
+                    MentorCheckpointEnd = e.MentorCheckpointEnd,
+                    FinalSubmissionDeadline = e.FinalSubmissionDeadline,
+                    IdeaPresentationStart = e.IdeaPresentationStart,
+                    IdeaPresentationEnd = e.IdeaPresentationEnd,
+                    WinnersAnnouncementDate = e.WinnersAnnouncementDate,
+                    ContactEmail = e.ContactEmail,
+                    Notes = e.Notes
+                })
+                .AsNoTracking()
+                .FirstOrDefaultAsync();
         }
     }
 }

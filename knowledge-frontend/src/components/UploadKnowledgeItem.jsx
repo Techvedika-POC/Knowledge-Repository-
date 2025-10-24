@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import axios from "axios";
 import { FaLightbulb } from "react-icons/fa";
 import api from "../api";
 import toast from "react-hot-toast";
@@ -18,46 +17,49 @@ export default function UploadKnowledgeItem() {
   const [domains, setDomains] = useState([]);
   const [categories, setCategories] = useState([]);
   const [events, setEvents] = useState([]);
+  const [activeTab, setActiveTab] = useState("File");
+
+  const location = useLocation();
+
+  // Form state
   const [form, setForm] = useState({
     name: "",
     domainId: "",
     categoryId: "",
-    eventId: "",
-    teamName: "",
-    teamMemberEmails: "",
-    isEventItem: false,
+    description: "",
     languages: [],
     tags: [],
-    description: "",
+    isEventItem: false,
+    eventId: "",
+    teamId: "", // prefilled
+    teamMemberEmails: "", // prefilled
   });
-  const [activeTab, setActiveTab] = useState("File");
-  const location = useLocation();
-  const { eventId, eventTitle, eventType } = location.state || {};
 
+  // ------------------- Prefill event & team info -------------------
   useEffect(() => {
-    // If coming from an event (via state)
     if (location.state?.eventId) {
+      const userTeam = JSON.parse(localStorage.getItem("userTeam") || "{}");
       setForm((prev) => ({
         ...prev,
         isEventItem: true,
         eventId: location.state.eventId,
+        teamId: userTeam?.teamId || "",
+        teamMemberEmails: userTeam?.members
+          ?.map((m) => m.email)
+          .join(",") || "",
       }));
     }
   }, [location.state]);
-  useEffect(() => {
-    if (eventId) {
-      console.log("Prefilled Event:", { eventId, eventTitle, eventType });
-      // set form data here if needed
-    }
-  }, [eventId]);
 
+  // ------------------- Fetch domains -------------------
   useEffect(() => {
-    api.
-      get(`/domains`)
+    api
+      .get("/domains")
       .then((res) => setDomains(res.data))
       .catch((err) => console.error(err));
   }, []);
 
+  // ------------------- Fetch categories on domain change -------------------
   useEffect(() => {
     if (form.domainId) {
       api
@@ -67,13 +69,15 @@ export default function UploadKnowledgeItem() {
     }
   }, [form.domainId]);
 
+  // ------------------- Fetch events (optional) -------------------
   useEffect(() => {
     api
-      .get(`/events`)
+      .get("/events")
       .then((res) => setEvents(res.data))
       .catch((err) => console.error(err));
   }, []);
 
+  // ------------------- File handlers -------------------
   const handleFileChange = (e) => {
     setFiles([...files, ...Array.from(e.target.files)]);
   };
@@ -82,6 +86,7 @@ export default function UploadKnowledgeItem() {
     setFiles(files.filter((f) => f.name !== name));
   };
 
+  // ------------------- Input handler -------------------
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setForm((prev) => ({
@@ -90,97 +95,87 @@ export default function UploadKnowledgeItem() {
     }));
   };
 
+  // ------------------- Tab handler -------------------
   const handleTabChange = (tab) => setActiveTab(tab);
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  const token = localStorage.getItem("jwtToken");
-  if (!token) {
-    alert("You must be logged in to upload a knowledge item.");
-    return;
-  }
+  // ------------------- Submit handler -------------------
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem("jwtToken");
+    if (!token) {
+      toast.error("You must be logged in to upload a knowledge item.");
+      return;
+    }
 
-  try {
-    const formData = new FormData();
+    try {
+      const formData = new FormData();
 
-    // Basic Info
-    formData.append("Title", form.name);
-    formData.append("DomainId", form.domainId);
-    formData.append("CategoryId", form.categoryId);
-    formData.append("Description", form.description);
+      // ------------------- Basic info -------------------
+      formData.append("Title", form.name);
+      formData.append("DomainId", form.domainId);
+      formData.append("CategoryId", form.categoryId);
+      formData.append("Description", form.description);
 
-    // Languages: handle string or array safely
-      // Languages:
-    const languageList = Array.isArray(form.languages)
-      ? form.languages
-      : (form.languages || "").split(",").map((l) => l.trim()).filter(Boolean);
+      // ------------------- Languages -------------------
+      const languageList = Array.isArray(form.languages)
+        ? form.languages
+        : (form.languages || "")
+            .split(",")
+            .map((l) => l.trim())
+            .filter(Boolean);
+      languageList.forEach((lang) => formData.append("Language", lang));
 
-    languageList.forEach((lang) => formData.append("Language", lang));
+      // ------------------- Frameworks -------------------
+      const frameworkList = Array.isArray(frameworks)
+        ? frameworks
+        : (frameworks || "")
+            .split(",")
+            .map((f) => f.trim())
+            .filter(Boolean);
+      frameworkList.forEach((fw) => formData.append("Framework", fw));
 
-    // Frameworks: handle string or array safely
-      // Frameworks
-    const frameworkList = Array.isArray(frameworks)
-      ? frameworks
-      : (frameworks || "").split(",").map((f) => f.trim()).filter(Boolean);
-
-    frameworkList.forEach((fw) => formData.append("Framework", fw));
-
-      const tagInput = document.getElementById("tagInput").value.trim();
+      // ------------------- Tags -------------------
+      const tagInput = document.getElementById("tagInput")?.value.trim();
       const allTags = [...form.tags];
       if (tagInput && !allTags.includes(tagInput)) allTags.push(tagInput);
-
       allTags.forEach((tag) => formData.append("Tags", tag));
 
-    (files || []).forEach((file) => formData.append("Files", file));
+      // ------------------- Files -------------------
+      (files || []).forEach((file) => formData.append("Files", file));
 
-
-    // Event-specific fields
-    if (form.isEventItem) {
-      formData.append("IsEventItem", true);
-      formData.append("EventId", form.eventId);
-      formData.append("TeamName", form.teamName);
-
-      let emails = (form.teamMemberEmails || "")
-        .split(",")
-        .map((e) => e.trim())
-        .filter(Boolean);
-
-      const userEmail = localStorage.getItem("userEmail");
-      if (userEmail && !emails.includes(userEmail)) emails.push(userEmail);
-
-      emails.forEach((email) => formData.append("TeamMemberEmails", email));
-    }
-      console.log("FormData entries:");
-      for (let pair of formData.entries()) {
-        console.log(pair[0], ":", pair[1]);
+      // ------------------- Event-specific fields -------------------
+      if (form.isEventItem) {
+        formData.append("IsEventItem", true);
+        formData.append("EventId", form.eventId);
+        formData.append("TeamId", form.teamId); // auto-prefilled
+        formData.append("TeamMemberEmails", form.teamMemberEmails); // auto-prefilled
       }
-      // Submit the form
-      const response = await api.post(
-        `/knowledgeitem/upload`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
 
-    alert("Knowledge item uploaded successfully!");
-    console.log("Upload response:", response.data);
-  } catch (err) {
-    if (err.response) {
-      console.error("Error response:", err.response.data);
-      toast.success(`Upload failed: ${JSON.stringify(err.response.data)}`);
-    } else {
-      console.error("Error:", err.message);
-      toast.error(`Upload failed: ${err.message}`);
+      // ------------------- Submit form -------------------
+      const response = await api.post(`/knowledgeitem/upload`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      toast.success("Knowledge item uploaded successfully!");
+      console.log("Upload response:", response.data);
+    } catch (err) {
+      if (err.response) {
+        console.error("Error response:", err.response.data);
+        toast.error(`Upload failed: ${JSON.stringify(err.response.data)}`);
+      } else {
+        console.error("Error:", err.message);
+        toast.error(`Upload failed: ${err.message}`);
+      }
     }
-  }
-};
+  };
+
+  // ------------------- JSX -------------------
   return (
-    <div className="max-w-[1000px] mx-auto mt-5 p-6 bg-white rounded-[12px] shadow-[0_6px_12px_rgba(0,0,0,0.05)] font-inter text-[#1f2937]">
-      <div className="flex flex-wrap justify-between items-center mb-4 relative">
+    <div className="max-w-[1000px] mx-auto mt-5 p-6 bg-white rounded-[12px] shadow-md font-inter text-[#1f2937]">
+      <div className="flex justify-between items-center mb-4">
         <h2 className="text-[22px] font-semibold">Upload Knowledge Articles</h2>
       </div>
 
@@ -192,11 +187,12 @@ const handleSubmit = async (e) => {
       </div>
 
       <form onSubmit={handleSubmit}>
-        {/* Knowledge Item Details */}
+        {/* ------------------- Knowledge Item Details ------------------- */}
         <section className="bg-[#f9fafb] p-4 rounded-[8px] mb-6">
           <h3 className="text-[16px] font-semibold mb-4 text-[#111827]">
             Knowledge Item Details
           </h3>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-4">
             <input
               name="name"
@@ -204,14 +200,14 @@ const handleSubmit = async (e) => {
               value={form.name}
               onChange={handleInputChange}
               required
-              className="w-[96%] px-2 py-2 border border-[#d1d5db] rounded-[8px] text-[12px]"
+              className="w-full px-2 py-2 border border-[#d1d5db] rounded-[8px]"
             />
             <select
               name="domainId"
               value={form.domainId}
               onChange={handleInputChange}
               required
-              className="w-[96%] px-2 py-2 border border-[#d1d5db] rounded-[8px] text-[12px]"
+              className="w-full px-2 py-2 border border-[#d1d5db] rounded-[8px]"
             >
               <option value="">Select Domain</option>
               {domains.map((d) => (
@@ -225,7 +221,7 @@ const handleSubmit = async (e) => {
               value={form.categoryId}
               onChange={handleInputChange}
               required
-              className="w-[96%] px-2 py-2 border border-[#d1d5db] rounded-[8px] text-[12px]"
+              className="w-full px-2 py-2 border border-[#d1d5db] rounded-[8px]"
             >
               <option value="">Select Category</option>
               {categories.map((c) => (
@@ -236,98 +232,49 @@ const handleSubmit = async (e) => {
             </select>
           </div>
 
-          {/* Event Checkbox */}
-          <div className="my-2 font-medium">
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                name="isEventItem"
-                checked={form.isEventItem}
-                onChange={handleInputChange}
-              />
-              Is this submission event-related?
-            </label>
-          </div>
-
+          {/* Event checkbox (optional, just shows info) */}
           {form.isEventItem && (
-            <div className="grid gap-2 mb-4">
-              <select
-                name="eventId"
-                value={form.eventId}
-                onChange={handleInputChange}
-                required
-                className="px-2 py-2 border border-[#ccc] rounded-[6px]"
-              >
-                <option value="">Select Event</option>
-                {events.map((e) => (
-                  <option key={e.eventId} value={e.eventId}>
-                    {e.title}
-                  </option>
-                ))}
-              </select>
-              <input
-                type="text"
-                name="teamName"
-                placeholder="Team Name"
-                value={form.teamName}
-                onChange={handleInputChange}
-                required
-                className="px-2 py-2 border border-[#ccc] rounded-[6px]"
-              />
-              <input
-                type="text"
-                name="teamMemberEmails"
-                placeholder="Team Member Emails (comma-separated)"
-                value={form.teamMemberEmails}
-                onChange={handleInputChange}
-                className="px-2 py-2 border border-[#ccc] rounded-[6px]"
-              />
+            <div className="text-sm text-gray-700 mb-2">
+              This submission will be linked to the event automatically.
             </div>
           )}
         </section>
 
-      
-{/* Languages Section */}
-
-<section className="bg-[#f9fafb] p-4 rounded-[8px] mb-6">
-  <h3 className="text-[16px] font-semibold mb-2 text-[#111827]">
-    Languages (comma-separated)
-  </h3>
-  <input
-    type="text"
-    name="languages"
-    placeholder="e.g. C#, Python, Java"
-    value={form.languages}
-    onChange={(e) =>
-      setForm((prev) => ({
-        ...prev,
-        languages: e.target.value,
-      }))
-    }
-    className="w-[96%] px-2 py-2 border border-[#d1d5db] rounded-[8px]"
-  />
-</section>
-
-{/* Frameworks Section */}
-<section className="bg-[#f9fafb] p-4 rounded-[8px] mb-6">
-  <h3 className="text-[16px] font-semibold mb-2 text-[#111827]">
-    Frameworks (comma-separated)
-  </h3>
-  <input
-    type="text"
-    name="frameworks"
-    placeholder="e.g. React, .NET, Spring Boot"
-    value={frameworks}
-    onChange={(e) => setFrameworks(e.target.value)}
-    className="w-[96%] px-2 py-2 border border-[#d1d5db] rounded-[8px]"
-  />
-</section>
-
-        {/* Tags Section */}
+        {/* ------------------- Languages ------------------- */}
         <section className="bg-[#f9fafb] p-4 rounded-[8px] mb-6">
           <h3 className="text-[16px] font-semibold mb-2 text-[#111827]">
-            Tags
+            Languages (comma-separated)
           </h3>
+          <input
+            type="text"
+            name="languages"
+            placeholder="e.g. C#, Python, Java"
+            value={form.languages}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, languages: e.target.value }))
+            }
+            className="w-full px-2 py-2 border border-[#d1d5db] rounded-[8px]"
+          />
+        </section>
+
+        {/* ------------------- Frameworks ------------------- */}
+        <section className="bg-[#f9fafb] p-4 rounded-[8px] mb-6">
+          <h3 className="text-[16px] font-semibold mb-2 text-[#111827]">
+            Frameworks (comma-separated)
+          </h3>
+          <input
+            type="text"
+            name="frameworks"
+            placeholder="e.g. React, .NET, Spring Boot"
+            value={frameworks}
+            onChange={(e) => setFrameworks(e.target.value)}
+            className="w-full px-2 py-2 border border-[#d1d5db] rounded-[8px]"
+          />
+        </section>
+
+        {/* ------------------- Tags ------------------- */}
+        <section className="bg-[#f9fafb] p-4 rounded-[8px] mb-6">
+          <h3 className="text-[16px] font-semibold mb-2 text-[#111827]">Tags</h3>
           <div className="flex flex-wrap gap-2 mb-2">
             {form.tags.map((tag, index) => (
               <div
@@ -383,7 +330,7 @@ const handleSubmit = async (e) => {
           </div>
         </section>
 
-        {/* Description Section */}
+        {/* ------------------- Description ------------------- */}
         <section className="bg-[#f9fafb] p-4 rounded-[8px] mb-6">
           <h3 className="text-[16px] font-semibold mb-4 text-[#111827]">
             Description
@@ -395,11 +342,11 @@ const handleSubmit = async (e) => {
             value={form.description}
             onChange={handleInputChange}
             required
-            className="w-[96%] min-h-[100px] px-2 py-2 border border-[#d1d5db] rounded-[8px]"
+            className="w-full min-h-[100px] px-2 py-2 border border-[#d1d5db] rounded-[8px]"
           />
         </section>
 
-        {/* Upload Options */}
+        {/* ------------------- Upload Options ------------------- */}
         <section className="bg-[#f9fafb] p-4 rounded-[8px] mb-6">
           <h3 className="text-[16px] font-semibold mb-3 text-[#111827]">
             Upload Options
@@ -409,7 +356,10 @@ const handleSubmit = async (e) => {
               <button
                 type="button"
                 key={tab}
-                className={`px-2 py-1 rounded-[15px] ${activeTab === tab ? "bg-[#e4a931] text-[#0c0c0c]" : "bg-[#fef3c7]"
+                className={`px-2 py-1 rounded-[15px] ${
+                  activeTab === tab
+                    ? "bg-[#e4a931] text-[#0c0c0c]"
+                    : "bg-[#fef3c7]"
                 }`}
                 onClick={() => handleTabChange(tab)}
               >
@@ -466,17 +416,11 @@ const handleSubmit = async (e) => {
           )}
         </section>
 
-        {/* Footer Buttons */}
+        {/* ------------------- Footer Buttons ------------------- */}
         <div className="flex gap-2 justify-end mt-5">
           <button
-            type="button"
-            className="px-2 py-1 rounded-[20px] bg-[#f6e1a3] text-[#1f2937]"
-          >
-            Preview
-          </button>
-          <button
             type="submit"
-            className="px-2 py-1 rounded-[20px] bg-[#eab308] text-white"
+            className="px-4 py-2 rounded-[20px] bg-[#eab308] text-white"
           >
             Upload
           </button>

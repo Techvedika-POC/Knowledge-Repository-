@@ -88,7 +88,7 @@ namespace KnowLedger_Synaptix.Controllers
         /// <summary>
         /// Retrieves detailed information for a specific knowledge item.
         /// </summary>
-        [AllowAnonymous]
+        
         [HttpGet("{itemId}/details")]
         public async Task<ActionResult<KnowledgeItemDetailsDto>> GetKnowledgeItemDetails(Guid itemId)
         {
@@ -101,7 +101,7 @@ namespace KnowLedger_Synaptix.Controllers
         /// Retrieves knowledge item summaries optionally filtered by date
         /// and sorted by ascending or descending order.
         /// </summary>
-        [AllowAnonymous]
+   
         [HttpGet("Datewise")]
         public async Task<ActionResult<IEnumerable<KnowledgeItemFilterDto>>> GetKnowledgeItemSummaries(
             [FromQuery] string sortOrder = "desc",
@@ -115,7 +115,7 @@ namespace KnowLedger_Synaptix.Controllers
         /// <summary>
         /// Retrieves knowledge items filtered by domain ID.
         /// </summary>
-        [AllowAnonymous]
+     
         [HttpGet("ByDomain/{domainId}")]
         public async Task<ActionResult<IEnumerable<KnowledgeItemFilterDto>>> GetByDomain(Guid domainId)
         {
@@ -126,7 +126,7 @@ namespace KnowLedger_Synaptix.Controllers
         /// <summary>
         /// Retrieves knowledge items filtered by category ID.
         /// </summary>
-        [AllowAnonymous]
+      
         [HttpGet("ByCategory/{categoryId}")]
         public async Task<ActionResult<IEnumerable<KnowledgeItemFilterDto>>> GetByCategory(Guid categoryId)
         {
@@ -138,7 +138,7 @@ namespace KnowLedger_Synaptix.Controllers
         /// <summary>
         /// Retrieves all knowledge items.
         /// </summary>
-        [AllowAnonymous]
+    
         [HttpGet("All")]
         public async Task<ActionResult<IEnumerable<KnowledgeItemFilterDto>>> GetAllKnowledgeItems()
         {

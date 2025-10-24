@@ -13,7 +13,7 @@ export default function HackathonPage() {
     const fetchEvents = async () => {
       try {
         setLoadingEvents(true);
-        const res = await api.get("/Events/type/hackathon"); 
+        const res = await api.get("/Events/type/Hackathon"); 
         setEvents(res.data || []);
       } catch (err) {
         console.error("Error fetching events:", err);
@@ -25,36 +25,44 @@ export default function HackathonPage() {
     fetchEvents();
   }, []);
 
-  //  Handle submit idea click  pass eventId to upload page
-  const handleSubmitIdea = (eventId) => {
-  navigate("/app/upload-knowledge", { state: { eventId } });
-};
+  // Handle submit idea click with registration checking
+  const handleSubmitIdea = async (eventId) => {
+    try {
+      const regRes = await api.get(`/EventRegistration/is-registered/${eventId}`);
+      if (regRes.data.isRegistered) {
+        navigate("/app/upload-knowledge", { state: { eventId } });
+      } else {
+        navigate("/app/events/event-registration", { state: { eventId } });
+      }
+    } catch (err) {
+      console.error("Error checking registration:", err);
+      navigate("/app/events/event-registration", { state: { eventId } });
+    }
+  };
 
   return (
     <div className="bg-gray-50 font-sans">
       {/* Hero Section */}
-    <section
-  className="relative bg-cover bg-center h-screen"
-  style={{
+      <section
+        className="relative bg-cover bg-center h-screen"
+        style={{
           backgroundImage:
             "url('https://images.unsplash.com/photo-1518770660439-4636190af475')",
-  }}
->
-
-       <div className="absolute inset-0 bg-black opacity-50"></div>
-        <div className="relative z-10 flex items-center justify-center h-full text-center text-white px-4">
-          <div>
-            <h1 className="text-5xl md:text-6xl font-bold mb-4">Hackathon 2025</h1>
-            <p className="text-xl md:text-2xl mb-8">
-              Innovate, Collaborate, Create
-            </p>
-            <Link
-              to="/app/register"
-              className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-full text-lg"
-            >
-              Register Now
-            </Link>
-          </div>
+        }}
+      >
+        <div className="absolute inset-0 bg-black opacity-50"></div>
+        <div className="relative z-10 flex flex-col items-center justify-center h-full text-center text-white px-4">
+          <h1 className="text-5xl md:text-6xl font-bold mb-4">Hackathon 2025</h1>
+          <p className="text-xl md:text-2xl mb-8">
+            Innovate, Collaborate, Create
+          </p>
+          {/* Centralized Register Button */}
+          <Link
+            to="/app/events/event-registration"
+            className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-full text-lg"
+          >
+            Register for Events
+          </Link>
         </div>
       </section>
 
@@ -86,6 +94,14 @@ export default function HackathonPage() {
         </div>
       </section>
 
+      {/* Guidelines */}
+      <section className="py-8 px-6 text-center max-w-4xl mx-auto">
+        <p className="text-lg text-gray-700">
+          Please make sure to register for your team before submitting your idea. 
+          Clicking "Submit Idea" without registration will redirect you to the registration page.
+        </p>
+      </section>
+
       {/* Hackathon Events Section */}
       <section className="py-16 px-6 max-w-7xl mx-auto">
         <h2 className="text-3xl font-bold text-center mb-12 text-gray-800">
@@ -108,18 +124,18 @@ export default function HackathonPage() {
                 <h3 className="text-2xl font-bold text-blue-700 mb-2">{e.title}</h3>
                 <p className="text-gray-700 text-lg mb-4">{e.description}</p>
 
-                {/* Submit Idea Button passes eventId */}
+                {/* Submit Idea Button */}
                 <div className="text-center mt-4">
                   <button
                     onClick={() => handleSubmitIdea(e.eventId)}
                     className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-full font-semibold text-lg"
                   >
-                    Submit
+                    Submit Idea
                   </button>
                 </div>
               </div>
             ))}
-        </div>
+          </div>
         )}
       </section>
 

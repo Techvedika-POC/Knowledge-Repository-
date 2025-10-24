@@ -9,6 +9,8 @@ public partial class SpotlightItem
 {
     public Guid SpotlightId { get; set; }
 
+    public string Type { get; set; }
+
     public string ContentText { get; set; }
 
     public string ResourceLink { get; set; }

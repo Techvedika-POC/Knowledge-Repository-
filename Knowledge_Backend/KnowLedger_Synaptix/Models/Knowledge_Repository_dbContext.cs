@@ -388,6 +388,7 @@ public partial class Knowledge_Repository_dbContext : DbContext
             entity.Property(e => e.EventId)
                 .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("event_id");
+            entity.Property(e => e.ContactEmail).HasColumnName("contact_email");
             entity.Property(e => e.CreatedBy).HasColumnName("created_by");
             entity.Property(e => e.CreatedOn)
                 .HasDefaultValueSql("now()")
@@ -397,13 +398,21 @@ public partial class Knowledge_Repository_dbContext : DbContext
             entity.Property(e => e.EventType)
                 .IsRequired()
                 .HasColumnName("event_type");
+            entity.Property(e => e.FinalSubmissionDeadline).HasColumnName("final_submission_deadline");
+            entity.Property(e => e.IdeaPresentationEnd).HasColumnName("idea_presentation_end");
+            entity.Property(e => e.IdeaPresentationStart).HasColumnName("idea_presentation_start");
+            entity.Property(e => e.MentorCheckpointEnd).HasColumnName("mentor_checkpoint_end");
+            entity.Property(e => e.MentorCheckpointStart).HasColumnName("mentor_checkpoint_start");
+            entity.Property(e => e.Notes).HasColumnName("notes");
             entity.Property(e => e.OwnerId).HasColumnName("owner_id");
+            entity.Property(e => e.RegistrationCloseDate).HasColumnName("registration_close_date");
             entity.Property(e => e.StartDate).HasColumnName("start_date");
             entity.Property(e => e.Title)
                 .IsRequired()
                 .HasColumnName("title");
             entity.Property(e => e.UpdatedBy).HasColumnName("updated_by");
             entity.Property(e => e.UpdatedOn).HasColumnName("updated_on");
+            entity.Property(e => e.WinnersAnnouncementDate).HasColumnName("winners_announcement_date");
 
             entity.HasOne(d => d.CreatedByNavigation).WithMany(p => p.EventCreatedByNavigations)
                 .HasForeignKey(d => d.CreatedBy)
@@ -804,6 +813,7 @@ public partial class Knowledge_Repository_dbContext : DbContext
                 .HasDefaultValueSql("now()")
                 .HasColumnName("created_on");
             entity.Property(e => e.ResourceLink).HasColumnName("resource_link");
+            entity.Property(e => e.Type).HasColumnName("type");
             entity.Property(e => e.ValidDate).HasColumnName("valid_date");
 
             entity.HasOne(d => d.CreatedByNavigation).WithMany(p => p.SpotlightItems)
@@ -855,6 +865,10 @@ public partial class Knowledge_Repository_dbContext : DbContext
             entity.Property(e => e.JoinedOn)
                 .HasDefaultValueSql("now()")
                 .HasColumnName("joined_on");
+            entity.Property(e => e.Role)
+                .IsRequired()
+                .HasDefaultValueSql("'Member'::text")
+                .HasColumnName("role");
             entity.Property(e => e.TeamId).HasColumnName("team_id");
             entity.Property(e => e.UserId).HasColumnName("user_id");
 

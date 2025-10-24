@@ -106,7 +106,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 };
                 _context.KnowledgeItems.Add(knowledgeItem);
 
-                // Create Initial Version
+                // ----------------- 2️ Create Initial Version -----------------
                 var version = new KnowledgeVersion
                 {
                     VersionId = Guid.NewGuid(),
@@ -119,7 +119,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 _context.KnowledgeVersions.Add(version);
                 await _context.SaveChangesAsync();
 
-                // Handle Attachments
+                // ----------------- 3️Handle Attachments -----------------
                 var uploadsRoot = Path.Combine(_env.WebRootPath ?? Path.Combine(AppContext.BaseDirectory, "wwwroot"), "uploads");
                 Directory.CreateDirectory(uploadsRoot);
 
@@ -154,7 +154,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                     await _context.SaveChangesAsync();
                 }
 
-                // Add Tags
+                // ----------------- 4️ Add Tags -----------------
                 foreach (var tag in dto.Tags ?? new List<string>())
                 {
                     _context.KnowledgeTags.Add(new KnowledgeTag
@@ -171,55 +171,27 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 }
                 await _context.SaveChangesAsync();
 
-                // Handle Event & Team (if applicable)
-                if (dto.IsEventItem && dto.EventId.HasValue)
+                // ----------------- 5️ Generate Knowledge Item Embedding -----------------
+                try
                 {
-                    var team = new Team
+                    var textEmbedding = await _embeddingService.GetEmbeddingAsync(knowledgeItem.Description ?? knowledgeItem.Title ?? "");
+                    if (textEmbedding?.Length == ExpectedEmbeddingSize)
                     {
-                        TeamId = Guid.NewGuid(),
-                        EventId = dto.EventId,
-                        TeamName = dto.TeamName ?? "Default Team",
-                        CreatedBy = userId,
-                        CreatedOn = DateTime.UtcNow
-                    };
-                    _context.Teams.Add(team);
-                    await _context.SaveChangesAsync();
-
-                    if (dto.TeamMemberEmails != null)
-                    {
-                        foreach (var email in dto.TeamMemberEmails)
-                        {
-                            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
-                            if (user != null)
-                            {
-                                _context.TeamMembers.Add(new TeamMember
-                                {
-                                    TeamMemberId = Guid.NewGuid(),
-                                    TeamId = team.TeamId,
-                                    UserId = user.UserId,
-                                    JoinedOn = DateTime.UtcNow
-                                });
-                            }
-                        }
-                        await _context.SaveChangesAsync();
+                        knowledgeItem.Embedding = textEmbedding.ToList();
+                        await _qdrantService.SaveToQdrantAsync(
+                            knowledgeItem.ItemId.ToString(),
+                            knowledgeItem.Embedding.ToArray(),
+                            knowledgeItem.Title,
+                            knowledgeItem.Description ?? ""
+                        );
                     }
-
-                    var eventKnowledgeItem = new EventKnowledgeItem
-                    {
-                        EventItemId = Guid.NewGuid(),
-                        EventId = dto.EventId,
-                        ItemId = knowledgeItem.ItemId,
-                        TeamId = team.TeamId,
-                        CreatedBy = userId,
-                        CreatedOn = DateTime.UtcNow,
-                        UpdatedBy = userId,
-                        UpdatedOn = DateTime.UtcNow
-                    };
-                    _context.EventKnowledgeItems.Add(eventKnowledgeItem);
-                    await _context.SaveChangesAsync();
+                }
+                catch
+                {
+                    _logger.LogWarning("Failed to generate embedding for KnowledgeItem {ItemId}", knowledgeItem.ItemId);
                 }
 
-                // Log upload activity
+                // ----------------- 6️ Create Activity Log -----------------
                 _context.ActivityLogs.Add(new ActivityLog
                 {
                     ActivityId = Guid.NewGuid(),
@@ -230,6 +202,31 @@ namespace KnowLedger_Synaptix.Services.Implementations
                     Details = $"Knowledge item '{knowledgeItem.Title}' uploaded successfully.",
                     CreatedOn = DateTime.UtcNow
                 });
+
+                // ----------------- 7️Link Knowledge Item to Event using existing team -----------------
+                if (dto.IsEventItem && dto.EventId.HasValue)
+                {
+                    var team = await _context.Teams
+                        .Where(t => t.EventId == dto.EventId.Value)
+                        .Join(_context.TeamMembers, t => t.TeamId, tm => tm.TeamId, (t, tm) => new { t, tm })
+                        .Where(x => x.tm.UserId == userId)
+                        .Select(x => x.t)
+                        .FirstOrDefaultAsync();
+
+                    if (team == null)
+                        throw new Exception("You are not registered in any team for this event.");
+
+                    _context.EventKnowledgeItems.Add(new EventKnowledgeItem
+                    {
+                        EventItemId = Guid.NewGuid(),
+                        EventId = dto.EventId,
+                        ItemId = knowledgeItem.ItemId,
+                        TeamId = team.TeamId,
+                        CreatedOn = DateTime.UtcNow,
+                        UpdatedBy = userId,
+                        UpdatedOn = DateTime.UtcNow
+                    });
+                }
 
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
@@ -243,6 +240,8 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 throw;
             }
         }
+
+
 
         #endregion
 

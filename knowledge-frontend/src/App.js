@@ -15,15 +15,15 @@ import AdminDashboard from "./components/AdminDashboard";
 import ApproverDashboard from "./components/ApproverDashboard";
 import Recents from "./components/Recents";
 import FavouritesPage from "./components/FavouritesPage";
+import EventRegistration from "./components/EventRegistration";
 // Event Pages
 import IdeathonPage from "./components/IdeathonPage";
 import HackathonPage from "./components/HackathonPage";
 import CodingChallengePage from "./components/CodingChallengePage";
 import KnowledgeQuestPage from "./components/KnowledgeQuestPage";
 
-// ===============================
 // Protected App Shell
-// ===============================
+
 function AppShell() {
 
   return (
@@ -42,6 +42,7 @@ function AppShell() {
           <Route path="events/hackathon" element={<HackathonPage />} />
           <Route path="events/coding-challenge" element={<CodingChallengePage />} />
           <Route path="events/knowledge-quest" element={<KnowledgeQuestPage />} />
+          <Route path="events/event-registration" element={<EventRegistration/>}/>
 
           {/* Upload & Contributions */}
           <Route path="upload-knowledge" element={<UploadKnowledgeItem />} />

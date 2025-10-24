@@ -12,12 +12,16 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-#region ----------------- Database Context -----------------
+
+// Database Context
+
 builder.Services.AddDbContext<Knowledge_Repository_dbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 #endregion
 
-#region ----------------- Application Services -----------------
+
+// Dependency Injection
+
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IKnowledgeItemService, KnowledgeItemService>();
 builder.Services.AddScoped<IDomainService, DomainService>();
@@ -35,7 +39,7 @@ builder.Services.AddScoped<IActivityLogService, ActivityLogService>();
 builder.Services.AddScoped<IEmbeddingService, EmbeddingService>();
 builder.Services.AddScoped<IFileEmbeddingService, FileEmbeddingService>();
 builder.Services.AddScoped<IQdrantService, QdrantService>();
-#endregion
+builder.Services.AddScoped<IEventRegistrationService, EventRegistrationService>();
 
 #region ----------------- HttpClient Services -----------------
 // For EmbeddingService (allow self-signed certs)
@@ -48,7 +52,9 @@ builder.Services.AddHttpClient<IEmbeddingService, EmbeddingService>()
     .SetHandlerLifetime(TimeSpan.FromMinutes(5))
     .ConfigureHttpClient(client => client.Timeout = TimeSpan.FromMinutes(2));
 
-// For Qdrant
+
+// Named HttpClient for Qdrant
+
 builder.Services.AddHttpClient("QdrantClient", client =>
 {
     client.BaseAddress = new Uri("http://localhost:6333/");
@@ -75,13 +81,17 @@ builder.Services.AddCors(options =>
 });
 #endregion
 
-#region ----------------- Controllers & JSON Settings -----------------
+
+// Controllers
+
 builder.Services.AddControllers()
     .AddNewtonsoftJson(options =>
         options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
 #endregion
 
-#region ----------------- JWT Authentication -----------------
+
+// JWT Authentication
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -104,17 +114,20 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization();
 #endregion
 
-// ==========================
-// Authorization & Swagger
-// ==========================
+
+// Authorization & Swaggerui
+
 builder.Services.AddAuthorization();
 builder.Services.AddEndpointsApiExplorer();///it will collect all the metadaa about the endpoints in controllers
 builder.Services.AddSwaggerGen();
 
 
+// Build Application
+
 var app = builder.Build();
 
-#region ----------------- Middleware -----------------
+// Middleware
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

@@ -13,6 +13,8 @@ public partial class TeamMember
 
     public Guid UserId { get; set; }
 
+    public string Role { get; set; }
+
     public DateTime? JoinedOn { get; set; }
 
     public virtual Team Team { get; set; }
