@@ -12,7 +12,7 @@ namespace KnowLedger_Synaptix.Controllers
     /// Controller for managing event registrations and team management.
     /// </summary>
     [Route("api/[controller]")]
-    [Authorize] // Only authenticated users can register for events
+    [Authorize] // Only authenticated users can register for the events
     [ApiController]
     public class EventRegistrationController : ControllerBase
     {

@@ -8,7 +8,7 @@ namespace KnowLedger_Synaptix.Dtos
     {
         public Guid EventId { get; set; }
         public string TeamName { get; set; }
-        public Guid CreatedBy { get; set; }  // User ID of team lead
+        public Guid CreatedBy { get; set; }  // User ID  of the team lead
         public List<string> TeamMemberEmails { get; set; } = new List<string>();
     }
 }

@@ -25,7 +25,7 @@ export default function HackathonPage() {
     fetchEvents();
   }, []);
 
-  // Handle submit idea click with registration check
+  // Handle submit idea click with registration checking
   const handleSubmitIdea = async (eventId) => {
     try {
       const regRes = await api.get(`/EventRegistration/is-registered/${eventId}`);

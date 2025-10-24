@@ -143,7 +143,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 };
                 _context.KnowledgeItems.Add(knowledgeItem);
 
-                // ----------------- 2️⃣ Create Initial Version -----------------
+                // ----------------- 2️ Create Initial Version -----------------
                 var version = new KnowledgeVersion
                 {
                     VersionId = Guid.NewGuid(),
@@ -156,7 +156,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 _context.KnowledgeVersions.Add(version);
                 await _context.SaveChangesAsync();
 
-                // ----------------- 3️⃣ Handle Attachments -----------------
+                // ----------------- 3️Handle Attachments -----------------
                 var uploadsRoot = Path.Combine(_env.WebRootPath ?? Path.Combine(AppContext.BaseDirectory, "wwwroot"), "uploads");
                 Directory.CreateDirectory(uploadsRoot);
 
@@ -206,7 +206,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                     }
                 }
 
-                // ----------------- 4️⃣ Add Tags -----------------
+                // ----------------- 4️ Add Tags -----------------
                 foreach (var tag in dto.Tags ?? new List<string>())
                 {
                     _context.KnowledgeTags.Add(new KnowledgeTag
@@ -223,7 +223,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 }
                 await _context.SaveChangesAsync();
 
-                // ----------------- 5️⃣ Generate Knowledge Item Embedding -----------------
+                // ----------------- 5️ Generate Knowledge Item Embedding -----------------
                 try
                 {
                     var textEmbedding = await _embeddingService.GetEmbeddingAsync(knowledgeItem.Description ?? knowledgeItem.Title ?? "");
@@ -243,7 +243,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                     _logger.LogWarning("Failed to generate embedding for KnowledgeItem {ItemId}", knowledgeItem.ItemId);
                 }
 
-                // ----------------- 6️⃣ Create Activity Log -----------------
+                // ----------------- 6️ Create Activity Log -----------------
                 _context.ActivityLogs.Add(new ActivityLog
                 {
                     ActivityId = Guid.NewGuid(),

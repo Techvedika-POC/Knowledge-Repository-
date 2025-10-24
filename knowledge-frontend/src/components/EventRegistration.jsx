@@ -98,7 +98,7 @@ export default function EventRegistration() {
             </select>
           </div>
 
-          {/* Team Name */}
+          {/* TeamName */}
           <div>
             <label className="block text-sm font-medium text-gray-800 mb-1">
               Team Name <span className="text-red-500">*</span>

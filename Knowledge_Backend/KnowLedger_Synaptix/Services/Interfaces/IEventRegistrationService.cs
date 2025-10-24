@@ -9,7 +9,7 @@ namespace KnowLedger_Synaptix.Services.Interfaces
     public interface IEventRegistrationService
     {
         /// <summary>
-        /// Registers a user and their team for a specific event.
+        /// Registers a user and their team for a specific events.
         /// </summary>
         /// <param name="dto">Team registration details (team name, members, etc.)</param>
         /// <param name="userId">Logged-in user who initiates registration</param>

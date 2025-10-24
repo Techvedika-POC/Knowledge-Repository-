@@ -45,7 +45,7 @@ namespace KnowLedger_Synaptix.Controllers
         [HttpGet("byname/{name}")]
         public async Task<ActionResult<Category>> GetCategoryByName(string name)
         {
-            // Fetch category by name (case-insensitive)
+            // Fetch category by name
             var category = await _categoryService.GetCategoryByNameAsync(name);
 
             if (category == null)

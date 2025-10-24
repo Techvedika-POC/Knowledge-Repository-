@@ -20,7 +20,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
 
         public async Task<Team> RegisterTeamForEventAsync(EventRegistrationDto dto, Guid userId)
         {
-            // 1️ Validate Event
+            // 1️ Validate the Event
             var eventEntity = await _context.Events.FindAsync(dto.EventId)
                 ?? throw new Exception("Invalid event selected.");
 

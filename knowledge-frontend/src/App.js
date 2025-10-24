@@ -22,9 +22,8 @@ import HackathonPage from "./components/HackathonPage";
 import CodingChallengePage from "./components/CodingChallengePage";
 import KnowledgeQuestPage from "./components/KnowledgeQuestPage";
 
-// ===============================
 // Protected App Shell
-// ===============================
+
 function AppShell() {
 
   return (

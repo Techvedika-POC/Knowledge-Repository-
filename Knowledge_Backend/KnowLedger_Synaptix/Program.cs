@@ -12,15 +12,15 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ==========================
+
 // Database Context
-// ==========================
+
 builder.Services.AddDbContext<Knowledge_Repository_dbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// ==========================
+
 // Dependency Injection
-// ==========================
+
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IKnowledgeItemService, KnowledgeItemService>();
 builder.Services.AddScoped<IDomainService, DomainService>();
@@ -48,26 +48,26 @@ builder.Services.AddCors(options =>
 
 });
 
-// ==========================
+
 // Named HttpClient for Qdrant
-// ==========================
+
 builder.Services.AddHttpClient("QdrantClient", client =>
 {
     client.BaseAddress = new Uri("http://localhost:6333/");
     client.Timeout = TimeSpan.FromMinutes(2);
 });
 
-// ==========================
+
 // Controllers
-// ==========================
+
 builder.Services.AddControllers()
     .AddNewtonsoftJson(options =>
         options.SerializerSettings.ReferenceLoopHandling =
             Newtonsoft.Json.ReferenceLoopHandling.Ignore);
 
-// ==========================
+
 // JWT Authentication
-// ==========================
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -88,21 +88,20 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// ==========================
-// Authorization & Swagger
-// ==========================
+
+// Authorization & Swaggerui
+
 builder.Services.AddAuthorization();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// ==========================
+
 // Build Application
-// ==========================
+
 var app = builder.Build();
 
-// ==========================
 // Middleware
-// ==========================
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
