@@ -172,25 +172,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 await _context.SaveChangesAsync();
 
                 // ----------------- 5️ Generate Knowledge Item Embedding -----------------
-                try
-                {
-                    var textEmbedding = await _embeddingService.GetEmbeddingAsync(knowledgeItem.Description ?? knowledgeItem.Title ?? "");
-                    if (textEmbedding?.Length == ExpectedEmbeddingSize)
-                    {
-                        knowledgeItem.Embedding = textEmbedding.ToList();
-                        await _qdrantService.SaveToQdrantAsync(
-                            knowledgeItem.ItemId.ToString(),
-                            knowledgeItem.Embedding.ToArray(),
-                            knowledgeItem.Title,
-                            knowledgeItem.Description ?? ""
-                        );
-                    }
-                }
-                catch
-                {
-                    _logger.LogWarning("Failed to generate embedding for KnowledgeItem {ItemId}", knowledgeItem.ItemId);
-                }
-
+        
                 // ----------------- 6️ Create Activity Log -----------------
                 _context.ActivityLogs.Add(new ActivityLog
                 {
@@ -240,8 +222,6 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 throw;
             }
         }
-
-
 
         #endregion
 

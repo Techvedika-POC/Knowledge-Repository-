@@ -813,7 +813,6 @@ public partial class Knowledge_Repository_dbContext : DbContext
                 .HasDefaultValueSql("now()")
                 .HasColumnName("created_on");
             entity.Property(e => e.ResourceLink).HasColumnName("resource_link");
-            entity.Property(e => e.Type).HasColumnName("type");
             entity.Property(e => e.ValidDate).HasColumnName("valid_date");
 
             entity.HasOne(d => d.CreatedByNavigation).WithMany(p => p.SpotlightItems)
@@ -867,7 +866,7 @@ public partial class Knowledge_Repository_dbContext : DbContext
                 .HasColumnName("joined_on");
             entity.Property(e => e.Role)
                 .IsRequired()
-                .HasDefaultValueSql("'Member'::text")
+                .HasDefaultValueSql("'Member'::team_member_role_enum")
                 .HasColumnName("role");
             entity.Property(e => e.TeamId).HasColumnName("team_id");
             entity.Property(e => e.UserId).HasColumnName("user_id");

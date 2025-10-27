@@ -17,7 +17,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<Knowledge_Repository_dbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-#endregion
+
 
 
 // Dependency Injection
@@ -87,7 +87,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddControllers()
     .AddNewtonsoftJson(options =>
         options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
-#endregion
+
 
 
 // JWT Authentication
@@ -112,7 +112,7 @@ builder.Services.AddAuthentication(options =>
     };
 });
 builder.Services.AddAuthorization();
-#endregion
+
 
 
 // Authorization & Swaggerui
@@ -158,4 +158,4 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.Run();
-#endregion
+

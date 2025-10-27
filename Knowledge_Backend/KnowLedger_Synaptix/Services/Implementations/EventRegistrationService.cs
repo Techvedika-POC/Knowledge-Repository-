@@ -31,7 +31,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
             }
 
 
-            // 2️ Check if the user already registered in a team for this event
+            // 2️ Check if the user already registered in a team for this particular event.
             bool alreadyInTeam = await _context.TeamMembers
                 .Include(tm => tm.Team)
                 .ThenInclude(tr=>tr.Event)

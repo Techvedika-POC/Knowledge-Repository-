@@ -29,8 +29,6 @@ public partial class Event
 
     public Guid? UpdatedBy { get; set; }
 
-    public string EventType { get; set; }
-
     public DateOnly? RegistrationCloseDate { get; set; }
 
     public DateOnly? MentorCheckpointStart { get; set; }
