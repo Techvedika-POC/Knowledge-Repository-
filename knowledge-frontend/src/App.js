@@ -16,6 +16,7 @@ import ApproverDashboard from "./components/ApproverDashboard";
 import Recents from "./components/Recents";
 import FavouritesPage from "./components/FavouritesPage";
 import EventRegistration from "./components/EventRegistration";
+import AppHighlights from "./components/AppHighlights";
 // Event Pages
 import IdeathonPage from "./components/IdeathonPage";
 import HackathonPage from "./components/HackathonPage";
@@ -32,7 +33,8 @@ function AppShell() {
       <Sidebar />
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto bg-[#f9fafe] p-5">
+      <main className="flex-1 overflow-y-auto bg-[#f9fafe] p-5 mt-0 pt-0">
+
         <Routes>
           {/* Default MainContent */}
           <Route path="home" element={<MainContent />} />
@@ -49,6 +51,7 @@ function AppShell() {
           <Route path="contributions" element={<MyContributions />} />
           <Route path="recents"element={<Recents/>}/>
           <Route path="favorites"element={<FavouritesPage/>}/>
+         
           {/* Admin Dashboard */}
           <Route
             path="admin"
@@ -91,7 +94,7 @@ export default function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/login" element={<Login />} />
-
+ <Route path="features" element={<AppHighlights/>}/>
         {/* Protected App Shell */}
         <Route
           path="/app/*"

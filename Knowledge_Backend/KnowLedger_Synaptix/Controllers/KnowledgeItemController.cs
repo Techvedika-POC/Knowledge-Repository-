@@ -97,56 +97,13 @@ namespace KnowLedger_Synaptix.Controllers
             return Ok(details);
         }
 
-        /// <summary>
-        /// Retrieves knowledge item summaries optionally filtered by date
-        /// and sorted by ascending or descending order.
-        /// </summary>
-   
-        [HttpGet("Datewise")]
-        public async Task<ActionResult<IEnumerable<KnowledgeItemFilterDto>>> GetKnowledgeItemSummaries(
-            [FromQuery] string sortOrder = "desc",
-            [FromQuery] DateTime? filterDate = null)
-        {
-            // Fetch summaries from service
-            var result = await _service.GetKnowledgeItemSummariesAsync(sortOrder, filterDate);
-            return Ok(result);
-        }
 
-        /// <summary>
-        /// Retrieves knowledge items filtered by domain ID.
-        /// </summary>
-     
-        [HttpGet("ByDomain/{domainId}")]
-        public async Task<ActionResult<IEnumerable<KnowledgeItemFilterDto>>> GetByDomain(Guid domainId)
+        [HttpGet]
+        public async Task<IActionResult> GetKnowledgeItems([FromQuery] Guid? domainId, [FromQuery] Guid? categoryId)
         {
-            var result = await _service.GetKnowledgeItemsByDomainAsync(domainId);
-            return Ok(result);
+            var items = await _service.GetKnowledgeItemsAsync(domainId, categoryId);
+            return Ok(items);
         }
-
-        /// <summary>
-        /// Retrieves knowledge items filtered by category ID.
-        /// </summary>
-      
-        [HttpGet("ByCategory/{categoryId}")]
-        public async Task<ActionResult<IEnumerable<KnowledgeItemFilterDto>>> GetByCategory(Guid categoryId)
-        {
-            // Fetch category-specific knowledge items
-            var result = await _service.GetKnowledgeItemsByCategoryAsync(categoryId);
-            return Ok(result);
-        }
-
-        /// <summary>
-        /// Retrieves all knowledge items.
-        /// </summary>
-    
-        [HttpGet("All")]
-        public async Task<ActionResult<IEnumerable<KnowledgeItemFilterDto>>> GetAllKnowledgeItems()
-        {
-            // Fetch all knowledge items from the service
-            var result = await _service.GetAllKnowledgeItemsAsync();
-            return Ok(result);
-        }
-
 
     }
 }

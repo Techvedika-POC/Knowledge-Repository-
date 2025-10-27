@@ -292,104 +292,24 @@ namespace KnowLedger_Synaptix.Services.Implementations
             }
         }
 
-
-
-        #endregion
-
-        #region Knowledge Item Listing & Filtering
-
-        /// <summary>
-        /// Retrieves a list of knowledge items with optional filtering by date and sorting.
-        /// Returns summarized DTOs for listing in UI or API endpoints.
-        /// </summary>
-        public async Task<IEnumerable<KnowledgeItemFilterDto>> GetKnowledgeItemSummariesAsync(string sortOrder = "desc", DateTime? filterDate = null)
+     //Get all the knowledge articles based on the domain,catgeory and if no filter all items
+        public async Task<IEnumerable<KnowledgeItemDto>> GetKnowledgeItemsAsync(Guid? domainId = null, Guid? categoryId = null)
         {
-            DateTime? utcFilterDate = filterDate?.Date.ToUniversalTime();
-            var query = _context.KnowledgeItems.Include(k => k.Domain).Include(k => k.Category).AsQueryable();
+            var query = _context.KnowledgeItems
+                .Include(k => k.Domain)
+                .Include(k => k.Category)
+                .Include(k => k.Owner)
+                .AsQueryable();
 
-            if (utcFilterDate.HasValue)
-            {
-                var startUtc = utcFilterDate.Value;
-                var endUtc = startUtc.AddDays(1);
-                query = query.Where(k => k.CreatedOn.HasValue && k.CreatedOn.Value >= startUtc && k.CreatedOn.Value < endUtc);
-            }
+            if (domainId.HasValue)
+                query = query.Where(k => k.DomainId == domainId.Value);
 
-            query = sortOrder.ToLower() == "asc" ? query.OrderBy(k => k.CreatedOn) : query.OrderByDescending(k => k.CreatedOn);
+            if (categoryId.HasValue)
+                query = query.Where(k => k.CategoryId == categoryId.Value);
 
             return await query
-                .Select(k => new KnowledgeItemFilterDto
-                {
-                    Title = k.Title,
-                    DomainName = k.Domain.DomainName,
-                    ItemId = k.ItemId,
-                    CategoryName = k.Category.CategoryName,
-                    Description = k.Description,
-                    CreatedOn = k.CreatedOn ?? DateTime.MinValue
-                })
-                .ToListAsync();
-        }
-
-        /// <summary>
-        /// Retrieves knowledge items for a specific domain.
-        /// </summary>
-        public async Task<IEnumerable<KnowledgeItemFilterDto>> GetKnowledgeItemsByDomainAsync(Guid domainId)
-        {
-            return await _context.KnowledgeItems
-                .Include(k => k.Domain)
-                .Include(k => k.Category)
-                    .Include(k => k.Owner)
-                .Where(k => k.DomainId == domainId)
-                .Select(k => new KnowledgeItemFilterDto
-                {
-                    Title = k.Title,
-                    ItemId = k.ItemId,
-                    DomainName = k.Domain.DomainName,
-                    CategoryName = k.Category.CategoryName,
-                    Description = k.Description,
-                    SubmittedBy = k.Owner != null
-                ? (k.Owner.Name ?? k.Owner.Email ?? "Unknown")
-                : "Unknown",
-                    CreatedOn = k.CreatedOn ?? DateTime.MinValue
-                })
-                .ToListAsync();
-        }
-
-        /// <summary>
-        /// Retrieves knowledge items for a specific category.
-        /// </summary>
-        public async Task<IEnumerable<KnowledgeItemFilterDto>> GetKnowledgeItemsByCategoryAsync(Guid categoryId)
-        {
-            return await _context.KnowledgeItems
-                .Include(k => k.Domain)
-                .Include(k => k.Category)
-                .Include(k => k.Owner)
-                .Where(k => k.CategoryId == categoryId)
-                .Select(k => new KnowledgeItemFilterDto
-                {
-                    Title = k.Title,
-                    ItemId = k.ItemId,
-                    DomainName = k.Domain.DomainName,
-                    CategoryName = k.Category.CategoryName,
-                    Description = k.Description,
-                    SubmittedBy = k.Owner != null
-                ? (k.Owner.Name ?? k.Owner.Email ?? "Unknown")
-                : "Unknown",
-                    CreatedOn = k.CreatedOn ?? DateTime.MinValue
-                })
-                .ToListAsync();
-        }
-
-        /// <summary>
-        /// Retrieves all knowledge items, sorted by creation date descending.
-        /// </summary>
-        public async Task<IEnumerable<KnowledgeItemFilterDto>> GetAllKnowledgeItemsAsync()
-        {
-            return await _context.KnowledgeItems
-                .Include(k => k.Domain)
-                .Include(k => k.Category)
-                .Include(k => k.Owner)
                 .OrderByDescending(k => k.CreatedOn)
-                .Select(k => new KnowledgeItemFilterDto
+                .Select(k => new KnowledgeItemDto
                 {
                     Title = k.Title,
                     ItemId = k.ItemId,
@@ -397,12 +317,15 @@ namespace KnowLedger_Synaptix.Services.Implementations
                     DomainName = k.Domain.DomainName,
                     CategoryName = k.Category.CategoryName,
                     SubmittedBy = k.Owner != null
-                ? (k.Owner.Name ?? k.Owner.Email ?? "Unknown")
-                : "Unknown",
-                    CreatedOn = k.CreatedOn ?? DateTime.MinValue
+                        ? (k.Owner.Name ?? k.Owner.Email ?? "Unknown")
+                        : "Unknown",
+                    CreatedOn = k.CreatedOn ?? DateTime.MinValue,
+                    Framework=k.Framework,
+                    Language=k.Language
                 })
                 .ToListAsync();
         }
+
 
         #endregion
     }

@@ -18,30 +18,14 @@ namespace KnowLedger_Synaptix.Services.Interfaces
         /// </summary>
         Task<KnowledgeItemDetailsDto> GetKnowledgeItemDetailsAsync(Guid itemId);
 
-
         /// <summary>
-        /// Retrieves a summarized list of knowledge items, optionally filtered by date and sorted by creation order.
-        /// </summary>
-
-        Task<IEnumerable<KnowledgeItemFilterDto>> GetKnowledgeItemSummariesAsync(
-      string sortOrder = "desc",
-      DateTime? filterDate = null
-        );
-
-        /// <summary>
-        /// Retrieves all knowledge items that belong to a specific domain.
-        /// </summary>
-        Task<IEnumerable<KnowledgeItemFilterDto>> GetKnowledgeItemsByDomainAsync(Guid domainId);
-
-        /// <summary>
+        ///Retrieves all knowledge items that belong to a specific domain.
         /// Retrieves all knowledge items that belong to a specific category.
+        /// Retrieves knowledge items with optional filters for domain and category.
+        /// If no filter is provided, returns all items.
         /// </summary>
-        Task<IEnumerable<KnowledgeItemFilterDto>> GetKnowledgeItemsByCategoryAsync(Guid categoryId);
+        Task<IEnumerable<KnowledgeItemDto>> GetKnowledgeItemsAsync(Guid? domainId = null, Guid? categoryId = null);
 
-        /// <summary>
-        /// Retrieves all knowledge items available in the system.
-        /// </summary>
-        Task<IEnumerable<KnowledgeItemFilterDto>> GetAllKnowledgeItemsAsync();
 
     }
 }
