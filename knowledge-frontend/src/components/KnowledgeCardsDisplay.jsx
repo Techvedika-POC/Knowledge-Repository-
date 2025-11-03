@@ -77,7 +77,7 @@ export default function KnowledgeCardsDisplay({ items = [], title, onPreview, us
       console.error("Error adding comment", error);
     }
   };
-  
+
 
   return (
     <div className="pb-16 p-6">

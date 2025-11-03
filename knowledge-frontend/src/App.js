@@ -79,14 +79,11 @@ function AppShell() {
     </div>
   );
 }
-
-// ===============================
 // Main App Component
-// ===============================
 export default function App() {
   return (
     <Router>
-      {/* ✅ Toaster is added globally here */}
+      {/*  Toaster is added globally here */}
       <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
 
       <Routes>
