@@ -15,9 +15,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="Controllers\VLearnTestController.cs" />
     <Compile Remove="Dtos\FreshPickDto.cs" />
     <Compile Remove="Dtos\KnowledgeItemUploadRequest.cs" />
     <Compile Remove="Dtos\MyContributionDto.cs" />
+    <Compile Remove="Services\Implementations\VLearnTestService.cs" />
+    <Compile Remove="Services\Interfaces\IVLearnTestService.cs" />
   </ItemGroup>
 
   <ItemGroup>

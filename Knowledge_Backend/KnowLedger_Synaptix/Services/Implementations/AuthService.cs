@@ -40,7 +40,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
             if (await _context.Users.AnyAsync(u => u.Email.ToLower() == dto.Email.ToLower()))
                 return false;
 
-            // Retrieve department by name (optional)
+            // Retrieve department by name 
             var department = await _context.Departments
                 .FirstOrDefaultAsync(d => d.DepartmentName.ToLower() == dto.DepartmentName.ToLower());
 

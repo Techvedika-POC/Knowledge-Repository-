@@ -20,7 +20,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
 
         public async Task<Team> RegisterTeamForEventAsync(EventRegistrationDto dto, Guid userId)
         {
-            // 1️ Validate the Event
+            // Validate the Event
             var eventEntity = await _context.Events.FindAsync(dto.EventId)
                 ?? throw new Exception("Invalid event selected.");
 
@@ -31,23 +31,22 @@ namespace KnowLedger_Synaptix.Services.Implementations
             }
 
 
-            // 2️ Check if the user already registered in a team for this event
+            // Check if the user already registered in a team for this event
             bool alreadyInTeam = await _context.TeamMembers
                 .Include(tm => tm.Team)
-                .ThenInclude(tr=>tr.Event)
                 .AnyAsync(tm => tm.UserId == userId && tm.Team.EventId == dto.EventId);
 
             if (alreadyInTeam)
                 throw new Exception("You are already part of a team for this event.");
 
-            // 3️ Check if team name is already taken for this event
+            // Check if team name is already taken for this event
             bool duplicateTeam = await _context.Teams
                 .AnyAsync(t => t.EventId == dto.EventId && t.TeamName.ToLower() == dto.TeamName.ToLower());
 
             if (duplicateTeam)
                 throw new Exception("A team with this name already exists for this event.");
 
-            // 4️ Create new Team
+            // Create new Team
             var team = new Team
             {
                 TeamId = Guid.NewGuid(),
@@ -59,7 +58,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
             _context.Teams.Add(team);
             await _context.SaveChangesAsync();
 
-            // 5️ Collect all member emails (including leader)
+            // Collect all member emails
             var memberEmails = dto.TeamMemberEmails?
                 .SelectMany(e => e.Split(',', StringSplitOptions.RemoveEmptyEntries))
                 .Select(e => e.Trim().ToLower())

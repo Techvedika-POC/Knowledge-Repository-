@@ -97,6 +97,10 @@ public partial class User
 
     public virtual ICollection<Mentor> Mentors { get; set; } = new List<Mentor>();
 
+    public virtual ICollection<Module> ModuleCreatedByNavigations { get; set; } = new List<Module>();
+
+    public virtual ICollection<Module> ModuleUpdatedByNavigations { get; set; } = new List<Module>();
+
     public virtual ICollection<Role> RoleCreatedByNavigations { get; set; } = new List<Role>();
 
     public virtual ICollection<Role> RoleUpdatedByNavigations { get; set; } = new List<Role>();
@@ -107,6 +111,10 @@ public partial class User
 
     public virtual ICollection<Team> Teams { get; set; } = new List<Team>();
 
+    public virtual ICollection<Topic> TopicCreatedByNavigations { get; set; } = new List<Topic>();
+
+    public virtual ICollection<Topic> TopicUpdatedByNavigations { get; set; } = new List<Topic>();
+
     public virtual User UpdatedByNavigation { get; set; }
 
     public virtual ICollection<UserBadge> UserBadgeAwardedByNavigations { get; set; } = new List<UserBadge>();
@@ -116,6 +124,8 @@ public partial class User
     public virtual ICollection<UserBadge> UserBadgeUpdatedByNavigations { get; set; } = new List<UserBadge>();
 
     public virtual ICollection<UserBadge> UserBadgeUsers { get; set; } = new List<UserBadge>();
+
+    public virtual ICollection<UserModuleProgress> UserModuleProgresses { get; set; } = new List<UserModuleProgress>();
 
     public virtual ICollection<UserRole> UserRoleCreatedByNavigations { get; set; } = new List<UserRole>();
 

@@ -1,6 +1,7 @@
 using KnowLedger_Synaptix.Models;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace KnowLedger_Synaptix.Dtos
 {
@@ -19,6 +20,8 @@ namespace KnowLedger_Synaptix.Dtos
         public string Description { get; set; }
         public string KnowledgeItem1 { get; set; }
         public Guid? DomainId { get; set; }
+        [NotMapped]
+        public List<float> Embedding { get; set; }
         public string DomainName { get; set; }
         public Guid? CategoryId { get; set; }
         public string CategoryName { get; set; }

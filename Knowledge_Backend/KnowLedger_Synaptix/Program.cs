@@ -39,18 +39,20 @@ builder.Services.AddScoped<IEmbeddingService, EmbeddingService>();
 builder.Services.AddScoped<IFileEmbeddingService, FileEmbeddingService>();
 builder.Services.AddScoped<IQdrantService, QdrantService>();
 builder.Services.AddScoped<IEventRegistrationService, EventRegistrationService>();
-
+builder.Services.AddScoped<IVLearnTopicService, VLearnTopicService>();
+builder.Services.AddScoped<IVLearnModuleService, VLearnModuleService>();
 // CORS Configuration 
+
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:3000")
+        policy.WithOrigins(allowedOrigins ?? Array.Empty<string>())
               .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
+              .AllowAnyMethod();
+  
     });
 });
 
@@ -107,7 +109,6 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Middleware
 
 if (app.Environment.IsDevelopment())
 {
@@ -125,9 +126,6 @@ app.UseStaticFiles(new StaticFileOptions
         Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads")),
     RequestPath = "/uploads"
 });
-app.UseRouting();
-// Use CORS
-app.UseCors("AllowFrontend");
 
 app.UseRouting();
 app.UseCors("AllowFrontend");

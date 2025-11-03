@@ -54,7 +54,7 @@ export default function AppHighlights() {
     <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 font-sans pt-0 mt-0">
       <div className="max-w-7xl mx-auto px-4 pt-5">
 
-        {/* ---------------- FEATURES SECTION (Moved to Top) ---------------- */}
+        {/* ---------------- FEATURES SECTION ---------------- */}
         <section className="mb-12">
           <h2 className="text-[22px] font-bold text-center text-black mb-2">
             KnowLedger Synaptix Features
@@ -105,15 +105,17 @@ export default function AppHighlights() {
               </SwiperSlide>
             ))}
 
-            <div className="swiper-button-prev !w-6 !h-6 !text-blue-600 hover:!text-blue-800"></div>
-            <div className="swiper-button-next !w-6 !h-6 !text-blue-600 hover:!text-blue-800"></div>
+          <div className="swiper-button-prev !w-4 !h-4 after:!text-[12px] !text-blue-600 hover:!text-blue-800 transition-transform hover:scale-110"></div>
+<div className="swiper-button-next !w-4 !h-4 after:!text-[12px] !text-blue-600 hover:!text-blue-800 transition-transform hover:scale-110"></div>
+
           </Swiper>
         </section>
 
         {/* ---------------- ABOUT SECTION ---------------- */}
         <section className="text-center mb-14">
-          <h2 className="text-3xl font-bold text-indigo-800 mb-4">
-            About KnowLedger Synaptix
+         
+           <h2 className="text-[22px] font-bold text-center text-black mb-2">
+          About KnowLedger Synaptix
           </h2>
           <p className="text-gray-700 text-lg leading-relaxed max-w-4xl mx-auto">
             We’re redefining how knowledge flows within organizations — combining

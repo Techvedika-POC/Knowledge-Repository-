@@ -84,6 +84,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "public.modules",
+         "ObjectType": 0
+      },
+      {
          "Name": "public.presentations",
          "ObjectType": 0
       },
@@ -104,7 +108,15 @@
          "ObjectType": 0
       },
       {
+         "Name": "public.topics",
+         "ObjectType": 0
+      },
+      {
          "Name": "public.user_badges",
+         "ObjectType": 0
+      },
+      {
+         "Name": "public.user_module_progress",
          "ObjectType": 0
       },
       {

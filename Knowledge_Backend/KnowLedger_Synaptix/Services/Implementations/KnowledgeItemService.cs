@@ -122,7 +122,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
 
             try
             {
-                // ----------------- 1️⃣ Create Knowledge Item -----------------
+                // ----------------- 1️ Create Knowledge Item -----------------
                 var knowledgeItem = new KnowledgeItem
                 {
                     ItemId = Guid.NewGuid(),
@@ -143,7 +143,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 };
                 _context.KnowledgeItems.Add(knowledgeItem);
 
-                // ----------------- 2️ Create Initial Version -----------------
+                // -----------------  Create  Versions -----------------
                 var version = new KnowledgeVersion
                 {
                     VersionId = Guid.NewGuid(),
@@ -156,7 +156,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 _context.KnowledgeVersions.Add(version);
                 await _context.SaveChangesAsync();
 
-                // ----------------- 3️Handle Attachments -----------------
+                // ----------------- Handle Attachments -----------------
                 var uploadsRoot = Path.Combine(_env.WebRootPath ?? Path.Combine(AppContext.BaseDirectory, "wwwroot"), "uploads");
                 Directory.CreateDirectory(uploadsRoot);
 
@@ -206,7 +206,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                     }
                 }
 
-                // ----------------- 4️ Add Tags -----------------
+                // ----------------- Add Tags -----------------
                 foreach (var tag in dto.Tags ?? new List<string>())
                 {
                     _context.KnowledgeTags.Add(new KnowledgeTag
@@ -223,7 +223,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 }
                 await _context.SaveChangesAsync();
 
-                // ----------------- 5️ Generate Knowledge Item Embedding -----------------
+                // ----------------- Generate Knowledge Item Embedding -----------------
                 try
                 {
                     var textEmbedding = await _embeddingService.GetEmbeddingAsync(knowledgeItem.Description ?? knowledgeItem.Title ?? "");
@@ -243,7 +243,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                     _logger.LogWarning("Failed to generate embedding for KnowledgeItem {ItemId}", knowledgeItem.ItemId);
                 }
 
-                // ----------------- 6️ Create Activity Log -----------------
+                // -----------------  Create Activity Log -----------------
                 _context.ActivityLogs.Add(new ActivityLog
                 {
                     ActivityId = Guid.NewGuid(),
@@ -255,7 +255,7 @@ namespace KnowLedger_Synaptix.Services.Implementations
                     CreatedOn = DateTime.UtcNow
                 });
 
-                // ----------------- 7️Link Knowledge Item to Event using existing team -----------------
+                // ----------------- Link Knowledge Item to Event using existing team -----------------
                 if (dto.IsEventItem && dto.EventId.HasValue)
                 {
                     var team = await _context.Teams

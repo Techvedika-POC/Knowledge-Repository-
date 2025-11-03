@@ -146,10 +146,6 @@ namespace KnowLedger_Synaptix.Services.Implementations
                 .ToListAsync();
         }
         //user uploade titles
-
-        /// <summary>
-        /// Retrieve all unique titles for a specific user.
-        /// </summary>
         public async Task<IEnumerable<string>> GetUserTitlesAsync(Guid userId)
         {
             return await _context.KnowledgeItems

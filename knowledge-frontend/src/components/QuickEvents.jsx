@@ -10,7 +10,7 @@ const QuickEvents = ({ navigate }) => {
   ];
 
   return (
-    <div className="bg-gradient-to-r from-[#E0F7FA] to-[#E0F2FE] rounded-2xl p-6 shadow-md ">
+    <div className="bg-gradient-to-r from-[#E0F7FA] to-[#E0F2FE] rounded-2xl p-6 shadow-md mt-0">
       <h3 className="text-[20px] font-semibold text-[#0284c7] mb-4">
         Quick Events
       </h3>

@@ -47,6 +47,8 @@ public partial class Knowledge_Repository_dbContext : DbContext
 
     public virtual DbSet<Mentor> Mentors { get; set; }
 
+    public virtual DbSet<Module> Modules { get; set; }
+
     public virtual DbSet<Presentation> Presentations { get; set; }
 
     public virtual DbSet<Role> Roles { get; set; }
@@ -57,9 +59,13 @@ public partial class Knowledge_Repository_dbContext : DbContext
 
     public virtual DbSet<TeamMember> TeamMembers { get; set; }
 
+    public virtual DbSet<Topic> Topics { get; set; }
+
     public virtual DbSet<User> Users { get; set; }
 
     public virtual DbSet<UserBadge> UserBadges { get; set; }
+
+    public virtual DbSet<UserModuleProgress> UserModuleProgresses { get; set; }
 
     public virtual DbSet<UserRole> UserRoles { get; set; }
 
@@ -742,6 +748,44 @@ public partial class Knowledge_Repository_dbContext : DbContext
                 .HasConstraintName("mentors_user_id_fkey");
         });
 
+        modelBuilder.Entity<Module>(entity =>
+        {
+            entity.HasKey(e => e.ModuleId).HasName("modules_pkey");
+
+            entity.ToTable("modules");
+
+            entity.Property(e => e.ModuleId)
+                .HasDefaultValueSql("gen_random_uuid()")
+                .HasColumnName("module_id");
+            entity.Property(e => e.ContentLink).HasColumnName("content_link");
+            entity.Property(e => e.CreatedBy).HasColumnName("created_by");
+            entity.Property(e => e.CreatedOn)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("created_on");
+            entity.Property(e => e.Description).HasColumnName("description");
+            entity.Property(e => e.ModuleName)
+                .IsRequired()
+                .HasColumnName("module_name");
+            entity.Property(e => e.OrderNo).HasColumnName("order_no");
+            entity.Property(e => e.TopicId).HasColumnName("topic_id");
+            entity.Property(e => e.UpdatedBy).HasColumnName("updated_by");
+            entity.Property(e => e.UpdatedOn).HasColumnName("updated_on");
+
+            entity.HasOne(d => d.CreatedByNavigation).WithMany(p => p.ModuleCreatedByNavigations)
+                .HasForeignKey(d => d.CreatedBy)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("modules_created_by_fkey");
+
+            entity.HasOne(d => d.Topic).WithMany(p => p.Modules)
+                .HasForeignKey(d => d.TopicId)
+                .HasConstraintName("modules_topic_id_fkey");
+
+            entity.HasOne(d => d.UpdatedByNavigation).WithMany(p => p.ModuleUpdatedByNavigations)
+                .HasForeignKey(d => d.UpdatedBy)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("modules_updated_by_fkey");
+        });
+
         modelBuilder.Entity<Presentation>(entity =>
         {
             entity.HasKey(e => e.PresentationId).HasName("presentations_pkey");
@@ -887,6 +931,39 @@ public partial class Knowledge_Repository_dbContext : DbContext
                 .HasConstraintName("team_members_user_id_fkey");
         });
 
+        modelBuilder.Entity<Topic>(entity =>
+        {
+            entity.HasKey(e => e.TopicId).HasName("topics_pkey");
+
+            entity.ToTable("topics");
+
+            entity.HasIndex(e => e.TopicName, "topics_name_key").IsUnique();
+
+            entity.Property(e => e.TopicId)
+                .HasDefaultValueSql("gen_random_uuid()")
+                .HasColumnName("topic_id");
+            entity.Property(e => e.CreatedBy).HasColumnName("created_by");
+            entity.Property(e => e.CreatedOn)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("created_on");
+            entity.Property(e => e.Description).HasColumnName("description");
+            entity.Property(e => e.TopicName)
+                .IsRequired()
+                .HasColumnName("topic_name");
+            entity.Property(e => e.UpdatedBy).HasColumnName("updated_by");
+            entity.Property(e => e.UpdatedOn).HasColumnName("updated_on");
+
+            entity.HasOne(d => d.CreatedByNavigation).WithMany(p => p.TopicCreatedByNavigations)
+                .HasForeignKey(d => d.CreatedBy)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("topics_created_by_fkey");
+
+            entity.HasOne(d => d.UpdatedByNavigation).WithMany(p => p.TopicUpdatedByNavigations)
+                .HasForeignKey(d => d.UpdatedBy)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("topics_updated_by_fkey");
+        });
+
         modelBuilder.Entity<User>(entity =>
         {
             entity.HasKey(e => e.UserId).HasName("users_pkey");
@@ -981,6 +1058,52 @@ public partial class Knowledge_Repository_dbContext : DbContext
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("user_badges_user_id_fkey");
+        });
+
+        modelBuilder.Entity<UserModuleProgress>(entity =>
+        {
+            entity.HasKey(e => e.ProgressId).HasName("user_module_progress_pkey");
+
+            entity.ToTable("user_module_progress");
+
+            entity.Property(e => e.ProgressId)
+                .HasDefaultValueSql("gen_random_uuid()")
+                .HasColumnName("progress_id");
+            entity.Property(e => e.CompletedOn).HasColumnName("completed_on");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnName("created_at");
+            entity.Property(e => e.LastAccessed)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnName("last_accessed");
+            entity.Property(e => e.ModuleId).HasColumnName("module_id");
+            entity.Property(e => e.StartedOn)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnName("started_on");
+            entity.Property(e => e.Status)
+                .HasDefaultValueSql("'Not Started'::text")
+                .HasColumnName("status");
+            entity.Property(e => e.TestAttemptedOn).HasColumnName("test_attempted_on");
+            entity.Property(e => e.TestStatus)
+                .HasDefaultValueSql("'Not Started'::text")
+                .HasColumnName("test_status");
+            entity.Property(e => e.TopicId).HasColumnName("topic_id");
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnName("updated_at");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+
+            entity.HasOne(d => d.Module).WithMany(p => p.UserModuleProgresses)
+                .HasForeignKey(d => d.ModuleId)
+                .HasConstraintName("user_module_progress_module_id_fkey");
+
+            entity.HasOne(d => d.Topic).WithMany(p => p.UserModuleProgresses)
+                .HasForeignKey(d => d.TopicId)
+                .HasConstraintName("user_module_progress_topic_id_fkey");
+
+            entity.HasOne(d => d.User).WithMany(p => p.UserModuleProgresses)
+                .HasForeignKey(d => d.UserId)
+                .HasConstraintName("user_module_progress_user_id_fkey");
         });
 
         modelBuilder.Entity<UserRole>(entity =>

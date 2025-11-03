@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import api from "../api"; 
+import api from "../api";
 
 export default function HackathonPage() {
   const [events, setEvents] = useState([]);
@@ -8,12 +8,11 @@ export default function HackathonPage() {
   const [errorEvents, setErrorEvents] = useState("");
   const navigate = useNavigate();
 
-  // Fetch Hackathon Events
   useEffect(() => {
     const fetchEvents = async () => {
       try {
         setLoadingEvents(true);
-        const res = await api.get("/Events/type/Hackathon"); 
+        const res = await api.get("/Events/type/Hackathon");
         setEvents(res.data || []);
       } catch (err) {
         console.error("Error fetching events:", err);
@@ -25,7 +24,6 @@ export default function HackathonPage() {
     fetchEvents();
   }, []);
 
-  // Handle submit idea click with registration checking
   const handleSubmitIdea = async (eventId) => {
     try {
       const regRes = await api.get(`/EventRegistration/is-registered/${eventId}`);
@@ -44,7 +42,7 @@ export default function HackathonPage() {
     <div className="bg-gray-50 font-sans">
       {/* Hero Section */}
       <section
-        className="relative bg-cover bg-center h-screen"
+        className="relative bg-cover bg-center h-[80vh]"
         style={{
           backgroundImage:
             "url('https://images.unsplash.com/photo-1518770660439-4636190af475')",
@@ -52,83 +50,76 @@ export default function HackathonPage() {
       >
         <div className="absolute inset-0 bg-black opacity-50"></div>
         <div className="relative z-10 flex flex-col items-center justify-center h-full text-center text-white px-4">
-          <h1 className="text-5xl md:text-6xl font-bold mb-4">Hackathon 2025</h1>
-          <p className="text-xl md:text-2xl mb-8">
-            Innovate, Collaborate, Create
-          </p>
-          {/* Centralized Register Button */}
+          <h1 className="text-4xl md:text-5xl font-bold mb-3">Hackathon 2025</h1>
+          <p className="text-lg md:text-xl mb-6">Innovate • Collaborate • Create</p>
           <Link
             to="/app/events/event-registration"
-            className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-full text-lg"
+            className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-5 rounded-full text-base"
           >
-            Register for Events
+            Register Now
           </Link>
         </div>
       </section>
 
       {/* About Section */}
-      <section className="py-16 px-6 text-center">
-        <h2 className="text-3xl font-semibold mb-4">About the Hackathon</h2>
-        <p className="text-lg max-w-3xl mx-auto text-gray-700">
-          Join us for an exciting 48-hour hackathon where developers, designers,
-          and innovators come together to solve real-world problems.
+      <section className="py-10 px-6 text-center">
+        <h2 className="text-2xl font-semibold mb-3">About the Hackathon</h2>
+        <p className="text-base max-w-2xl mx-auto text-gray-700">
+          Join an exciting 48-hour hackathon where developers, designers, and innovators
+          collaborate to solve real-world problems.
         </p>
       </section>
 
       {/* Timeline Section */}
-      <section className="bg-gray-100 py-16 px-6">
-        <h2 className="text-3xl font-semibold text-center mb-8">Event Timeline</h2>
-        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          <div className="text-center bg-white shadow-lg rounded-xl p-6">
-            <h3 className="text-xl font-semibold mb-2 text-blue-700">Day 1</h3>
-            <p>Kickoff & Team Formation</p>
-          </div>
-          <div className="text-center bg-white shadow-lg rounded-xl p-6">
-            <h3 className="text-xl font-semibold mb-2 text-blue-700">Day 2</h3>
-            <p>Development & Mentorship</p>
-          </div>
-          <div className="text-center bg-white shadow-lg rounded-xl p-6">
-            <h3 className="text-xl font-semibold mb-2 text-blue-700">Day 3</h3>
-            <p>Final Presentations & Judging</p>
-          </div>
+      <section className="bg-gray-100 py-10 px-6">
+        <h2 className="text-2xl font-semibold text-center mb-6">Event Timeline</h2>
+        <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          {[
+            { day: "Day 1", desc: "Kickoff & Team Formation" },
+            { day: "Day 2", desc: "Development & Mentorship" },
+            { day: "Day 3", desc: "Final Presentations & Judging" },
+          ].map((item, i) => (
+            <div key={i} className="text-center bg-white shadow-md rounded-xl p-5">
+              <h3 className="text-lg font-semibold mb-1 text-blue-700">{item.day}</h3>
+              <p className="text-gray-600 text-sm">{item.desc}</p>
+            </div>
+          ))}
         </div>
       </section>
 
       {/* Guidelines */}
-      <section className="py-8 px-6 text-center max-w-4xl mx-auto">
-        <p className="text-lg text-gray-700">
-          Please make sure to register for your team before submitting your idea. 
-          Clicking "Submit Idea" without registration will redirect you to the registration page.
+      <section className="py-6 px-6 text-center max-w-3xl mx-auto">
+        <p className="text-base text-gray-700">
+          Please register your team before submitting an idea. If not registered, you'll
+          be redirected to the registration page.
         </p>
       </section>
 
-      {/* Hackathon Events Section */}
-      <section className="py-16 px-6 max-w-7xl mx-auto">
-        <h2 className="text-3xl font-bold text-center mb-12 text-gray-800">
+      {/* Hackathon Events */}
+      <section className="py-10 px-6 max-w-6xl mx-auto">
+        <h2 className="text-2xl font-bold text-center mb-8 text-gray-800">
           Hackathon Events
         </h2>
 
         {loadingEvents ? (
-          <p className="text-center text-gray-600">Loading events...</p>
+          <p className="text-center text-gray-600 text-sm">Loading events...</p>
         ) : errorEvents ? (
-          <p className="text-center text-red-500">{errorEvents}</p>
+          <p className="text-center text-red-500 text-sm">{errorEvents}</p>
         ) : events.length === 0 ? (
-          <p className="text-center text-gray-600">No events available currently.</p>
+          <p className="text-center text-gray-600 text-sm">No events available currently.</p>
         ) : (
-          <div className="space-y-6 max-w-3xl mx-auto">
+          <div className="space-y-5 max-w-3xl mx-auto">
             {events.map((e, i) => (
               <div
                 key={e.eventId || i}
-                className="bg-white shadow-lg rounded-xl p-6 border-l-4 border-blue-600"
+                className="bg-white shadow-md rounded-lg p-5 border-l-4 border-blue-600"
               >
-                <h3 className="text-2xl font-bold text-blue-700 mb-2">{e.title}</h3>
-                <p className="text-gray-700 text-lg mb-4">{e.description}</p>
-
-                {/* Submit Idea Button */}
-                <div className="text-center mt-4">
+                <h3 className="text-xl font-bold text-blue-700 mb-2">{e.title}</h3>
+                <p className="text-gray-700 text-sm mb-3">{e.description}</p>
+                <div className="text-center">
                   <button
                     onClick={() => handleSubmitIdea(e.eventId)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-full font-semibold text-lg"
+                    className="bg-blue-600 hover:bg-blue-700 text-white py-1.5 px-5 rounded-full font-medium text-sm"
                   >
                     Submit Idea
                   </button>
@@ -138,22 +129,6 @@ export default function HackathonPage() {
           </div>
         )}
       </section>
-
-      {/* Footer */}
-      <footer className="bg-gray-800 text-white py-8 text-center">
-        <p>&copy; 2025 Hackathon. All rights reserved.</p>
-        <div className="mt-4">
-          <a href="#" className="text-blue-400 mx-2">
-            Facebook
-          </a>
-          <a href="#" className="text-blue-400 mx-2">
-            Twitter
-          </a>
-          <a href="#" className="text-blue-400 mx-2">
-            LinkedIn
-          </a>
-        </div>
-      </footer>
     </div>
   );
 }

@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { Calendar } from "lucide-react";
 import { motion } from "framer-motion";
-import api from "../api";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import api from "../api";
 
 export default function IdeathonPage() {
   const [event, setEvent] = useState(null);
@@ -11,18 +12,19 @@ export default function IdeathonPage() {
   const [isRegistered, setIsRegistered] = useState(false);
   const navigate = useNavigate();
 
+  // Fetch event & registration status
   useEffect(() => {
     const fetchEvent = async () => {
       try {
         setLoading(true);
-        // 1 Fetch Ideathon event
         const res = await api.get("/Events/type/Ideathon");
         const eventData = res.data[0] || null;
         setEvent(eventData);
 
-        // 2 Check registration for current user
         if (eventData) {
-          const regRes = await api.get(`/EventRegistration/is-registered/${eventData.eventId}`);
+          const regRes = await api.get(
+            `/EventRegistration/is-registered/${eventData.eventId}`
+          );
           setIsRegistered(regRes.data.isRegistered);
         }
       } catch (err) {
@@ -35,36 +37,71 @@ export default function IdeathonPage() {
     fetchEvent();
   }, []);
 
+  // Navigate to registration page
+  const handleRegister = () => {
+    if (!event) return;
+    navigate("/app/events/event-registration", {
+      state: { eventId: event.eventId },
+    });
+  };
+
+  // Submit Idea Logic (with deadline check)
   const handleSubmitIdea = async () => {
     if (!event) return;
 
-    try {
-      // Re-check registration when button is clicked
-      const regRes = await api.get(`/EventRegistration/is-registered/${event.eventId}`);
+    // Check if submission deadline has passed
+    if (event.finalSubmissionDeadline) {
+      const deadline = new Date(event.finalSubmissionDeadline);
+      const now = new Date();
 
+      if (now > deadline) {
+        toast.error("Idea submission deadline has passed!");
+        return;
+      }
+    }
+
+    try {
+      const regRes = await api.get(
+        `/EventRegistration/is-registered/${event.eventId}`
+      );
       if (regRes.data.isRegistered) {
-        //  Registered → navigate to submit idea (leader only)
-        navigate("/app/upload-knowledge", { state: { eventId: event.eventId } });
+        navigate("/app/upload-knowledge", {
+          state: { eventId: event.eventId },
+        });
       } else {
-        //  Not registered → navigate to registration page
-        navigate("/app/events/event-registration", { state: { eventId: event.eventId } });
+        navigate("/app/events/event-registration", {
+          state: { eventId: event.eventId, fromSubmitIdea: true },
+        });
       }
     } catch (err) {
       console.error("Error checking registration:", err);
-      navigate("/app/event-registration", { state: { eventId: event.eventId } });
+      navigate("/app/events/event-registration", {
+        state: { eventId: event.eventId },
+      });
     }
   };
 
-  if (loading) return <p className="text-center text-gray-600">Loading event...</p>;
-  if (error) return <p className="text-center text-red-500">{error}</p>;
-  if (!event) return <p className="text-center text-gray-600">No Ideathon event available.</p>;
+  // Loading or error states
+  if (loading)
+    return <p className="text-center text-gray-600">Loading event...</p>;
+  if (error)
+    return <p className="text-center text-red-500">{error}</p>;
+  if (!event)
+    return <p className="text-center text-gray-600">No Ideathon event available.</p>;
 
-  // Build timeline dynamically
+  // Check if submission deadline passed
+  const isDeadlinePassed =
+    event.finalSubmissionDeadline &&
+    new Date() > new Date(event.finalSubmissionDeadline);
+
+  // Build event timeline
   const timeline = [
     event.startDate && {
       phase: "Team Formation & Registration",
       date: `${new Date(event.startDate).toLocaleDateString()} – ${
-        event.registrationCloseDate ? new Date(event.registrationCloseDate).toLocaleDateString() : ""
+        event.registrationCloseDate
+          ? new Date(event.registrationCloseDate).toLocaleDateString()
+          : ""
       }`,
     },
     event.finalSubmissionDeadline && {
@@ -105,7 +142,9 @@ export default function IdeathonPage() {
         <h2 className="text-3xl font-extrabold text-blue-700">
           Innovation Ideathon – {new Date(event.startDate).getFullYear()}
         </h2>
-        <p className="text-gray-700 text-lg leading-relaxed">{event.description}</p>
+        <p className="text-gray-700 text-lg leading-relaxed">
+          {event.description}
+        </p>
       </div>
 
       {/* Theme Section */}
@@ -114,7 +153,9 @@ export default function IdeathonPage() {
         initial={{ x: -40, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
       >
-        <h3 className="text-xl font-semibold text-blue-700 mb-1">Theme of the Month</h3>
+        <h3 className="text-xl font-semibold text-blue-700 mb-1">
+          Theme of the Month
+        </h3>
         <p className="text-blue-800 font-medium">{event.title}</p>
       </motion.div>
 
@@ -123,20 +164,24 @@ export default function IdeathonPage() {
         {event.startDate && (
           <span className="flex items-center gap-2">
             <Calendar className="w-5 h-5 text-blue-500" />
-            <strong>Start:</strong> {new Date(event.startDate).toLocaleDateString()}
+            <strong>Start:</strong>{" "}
+            {new Date(event.startDate).toLocaleDateString()}
           </span>
         )}
         {event.endDate && (
           <span className="flex items-center gap-2">
             <Calendar className="w-5 h-5 text-red-500" />
-            <strong>End:</strong> {new Date(event.endDate).toLocaleDateString()}
+            <strong>End:</strong>{" "}
+            {new Date(event.endDate).toLocaleDateString()}
           </span>
         )}
       </div>
 
       {/* Timeline */}
       <div className="mb-10">
-        <h3 className="text-2xl font-semibold text-gray-800 mb-4">Event Timeline</h3>
+        <h3 className="text-2xl font-semibold text-gray-800 mb-4">
+          Event Timeline
+        </h3>
         <div className="space-y-4">
           {timeline.map((item, index) => (
             <motion.div
@@ -153,22 +198,41 @@ export default function IdeathonPage() {
         </div>
       </div>
 
-      {/* Submit Idea Button */}
-      <div className="text-center mt-6">
+      {/* Action Buttons */}
+      <div className="text-center mt-6 space-x-4">
+        <button
+          onClick={handleRegister}
+          className="bg-green-600 hover:bg-green-700 text-white py-2 px-6 rounded-full font-semibold text-lg"
+        >
+          Register for Event
+        </button>
+
         <button
           onClick={handleSubmitIdea}
-          className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-full font-semibold text-lg"
+          disabled={isDeadlinePassed}
+          className={`${
+            isDeadlinePassed
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700"
+          } text-white py-2 px-6 rounded-full font-semibold text-lg transition`}
         >
           Submit Your Idea
         </button>
       </div>
 
-      {/* Optional: Show registration status */}
-      {!isRegistered && (
-        <div className="text-center mt-2 text-sm text-gray-500">
-          You are not registered yet. Click "Submit Your Idea" to register your team first.
-        </div>
-      )}
+      {/* Registration / Deadline Info */}
+      <div className="text-center mt-3 text-sm">
+        {!isRegistered && (
+          <p className="text-gray-500">
+            Please register before submitting your idea.
+          </p>
+        )}
+        {isDeadlinePassed && (
+          <p className="text-red-500 font-medium mt-1">
+            Idea submission deadline has passed.
+          </p>
+        )}
+      </div>
     </motion.div>
   );
 }
