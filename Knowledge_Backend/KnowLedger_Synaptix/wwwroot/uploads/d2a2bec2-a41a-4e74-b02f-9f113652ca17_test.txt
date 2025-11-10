@@ -1,3 +1,0 @@
-This is a test knowledge item for verifying embeddings.
-It contains multiple lines of text to simulate a real document.
-We are checking if the embeddings are generated and stored in Qdrant successfully.

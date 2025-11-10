@@ -1,0 +1,12 @@
+C:\Users\pujitha.lingisetti\Music\KR\Knowledge_Repository.Api\Knowledge_Repository.Domain\bin\Debug\net8.0\Knowledge_Repository.Domain.deps.json
+C:\Users\pujitha.lingisetti\Music\KR\Knowledge_Repository.Api\Knowledge_Repository.Domain\bin\Debug\net8.0\Knowledge_Repository.Domain.dll
+C:\Users\pujitha.lingisetti\Music\KR\Knowledge_Repository.Api\Knowledge_Repository.Domain\bin\Debug\net8.0\Knowledge_Repository.Domain.pdb
+C:\Users\pujitha.lingisetti\Music\KR\Knowledge_Repository.Api\Knowledge_Repository.Domain\obj\Debug\net8.0\Knowledge_Repository.Domain.csproj.AssemblyReference.cache
+C:\Users\pujitha.lingisetti\Music\KR\Knowledge_Repository.Api\Knowledge_Repository.Domain\obj\Debug\net8.0\Knowledge_Repository.Domain.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\pujitha.lingisetti\Music\KR\Knowledge_Repository.Api\Knowledge_Repository.Domain\obj\Debug\net8.0\Knowledge_Repository.Domain.AssemblyInfoInputs.cache
+C:\Users\pujitha.lingisetti\Music\KR\Knowledge_Repository.Api\Knowledge_Repository.Domain\obj\Debug\net8.0\Knowledge_Repository.Domain.AssemblyInfo.cs
+C:\Users\pujitha.lingisetti\Music\KR\Knowledge_Repository.Api\Knowledge_Repository.Domain\obj\Debug\net8.0\Knowledge_Repository.Domain.csproj.CoreCompileInputs.cache
+C:\Users\pujitha.lingisetti\Music\KR\Knowledge_Repository.Api\Knowledge_Repository.Domain\obj\Debug\net8.0\Knowledge_Repository.Domain.dll
+C:\Users\pujitha.lingisetti\Music\KR\Knowledge_Repository.Api\Knowledge_Repository.Domain\obj\Debug\net8.0\refint\Knowledge_Repository.Domain.dll
+C:\Users\pujitha.lingisetti\Music\KR\Knowledge_Repository.Api\Knowledge_Repository.Domain\obj\Debug\net8.0\Knowledge_Repository.Domain.pdb
+C:\Users\pujitha.lingisetti\Music\KR\Knowledge_Repository.Api\Knowledge_Repository.Domain\obj\Debug\net8.0\ref\Knowledge_Repository.Domain.dll
