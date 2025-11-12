@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "KEocjyHn9Ts=",
+  "dgSpecHash": "IAK/GUOwakk=",
   "success": true,
-  "projectFilePath": "C:\\Users\\prameela.sangati\\Desktop\\RepositoryManagement\\Knowledge-Repository-\\KR\\Knowledge_Repository.Api\\Knowledge_Repository.Infrastructure\\Knowledge_Repository.Infrastructure.csproj",
+  "projectFilePath": "C:\\Users\\prameela.sangati\\Desktop\\RepositoryManagement\\KR\\Knowledge_Repository.Api\\Knowledge_Repository.Infrastructure\\Knowledge_Repository.Infrastructure.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\prameela.sangati\\.nuget\\packages\\azure.core\\1.38.0\\azure.core.1.38.0.nupkg.sha512",
     "C:\\Users\\prameela.sangati\\.nuget\\packages\\azure.identity\\1.11.4\\azure.identity.1.11.4.nupkg.sha512",
