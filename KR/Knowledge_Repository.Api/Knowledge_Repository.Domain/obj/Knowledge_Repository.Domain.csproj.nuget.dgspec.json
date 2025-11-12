@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\prameela.sangati\\Desktop\\RepositoryManagement\\Knowledge-Repository-\\KR\\Knowledge_Repository.Api\\Knowledge_Repository.Domain\\Knowledge_Repository.Domain.csproj": {}
+    "C:\\Users\\prameela.sangati\\Desktop\\RepositoryManagement\\KR\\Knowledge_Repository.Api\\Knowledge_Repository.Domain\\Knowledge_Repository.Domain.csproj": {}
   },
   "projects": {
-    "C:\\Users\\prameela.sangati\\Desktop\\RepositoryManagement\\Knowledge-Repository-\\KR\\Knowledge_Repository.Api\\Knowledge_Repository.Domain\\Knowledge_Repository.Domain.csproj": {
+    "C:\\Users\\prameela.sangati\\Desktop\\RepositoryManagement\\KR\\Knowledge_Repository.Api\\Knowledge_Repository.Domain\\Knowledge_Repository.Domain.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\prameela.sangati\\Desktop\\RepositoryManagement\\Knowledge-Repository-\\KR\\Knowledge_Repository.Api\\Knowledge_Repository.Domain\\Knowledge_Repository.Domain.csproj",
+        "projectUniqueName": "C:\\Users\\prameela.sangati\\Desktop\\RepositoryManagement\\KR\\Knowledge_Repository.Api\\Knowledge_Repository.Domain\\Knowledge_Repository.Domain.csproj",
         "projectName": "Knowledge_Repository.Domain",
-        "projectPath": "C:\\Users\\prameela.sangati\\Desktop\\RepositoryManagement\\Knowledge-Repository-\\KR\\Knowledge_Repository.Api\\Knowledge_Repository.Domain\\Knowledge_Repository.Domain.csproj",
+        "projectPath": "C:\\Users\\prameela.sangati\\Desktop\\RepositoryManagement\\KR\\Knowledge_Repository.Api\\Knowledge_Repository.Domain\\Knowledge_Repository.Domain.csproj",
         "packagesPath": "C:\\Users\\prameela.sangati\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\prameela.sangati\\Desktop\\RepositoryManagement\\Knowledge-Repository-\\KR\\Knowledge_Repository.Api\\Knowledge_Repository.Domain\\obj\\",
+        "outputPath": "C:\\Users\\prameela.sangati\\Desktop\\RepositoryManagement\\KR\\Knowledge_Repository.Api\\Knowledge_Repository.Domain\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
