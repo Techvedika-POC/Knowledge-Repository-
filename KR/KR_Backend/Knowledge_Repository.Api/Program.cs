@@ -11,21 +11,16 @@ using Microsoft.OpenApi.Models;
 using System.Security.Claims;
 using System.Text;
 
-
-// Enable detailed JWT logging (PII) for debugging
 IdentityModelEventSource.ShowPII = true;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ==========================
-// 1️⃣ Configure DbContext
-// ==========================
 builder.Services.AddDbContext<Knowledge_Repository_dbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
 
 // ==========================
-// 2️⃣ Register Repositories
+// Register Repositories
 // ==========================
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserRoleRepository, UserRoleRepository>();
@@ -41,20 +36,15 @@ builder.Services.AddScoped<IKnowledgeItemRepository, KnowledgeItemRepository>();
 builder.Services.AddScoped<IActivityLogRepository, ActivityLogRepository>();
 builder.Services.AddScoped<IDaySpotlightRepository, DaySpotlightRepository>();
 builder.Services.AddScoped<IAttachmentRepository, AttachmentRepository>();
-// Register repositories
 builder.Services.AddScoped<IVLearnTopicRepository, VLearnTopicRepository>();
 builder.Services.AddScoped<IUserRoleRepository, UserRoleRepository>();
-
-// Register services
-builder.Services.AddScoped<IVLearnTopicService, VLearnTopicService>();
 builder.Services.AddScoped<IVLearnModuleRepository, VLearnModuleRepository>();
-builder.Services.AddScoped<IVLearnModuleService, VLearnModuleService>();
 builder.Services.AddScoped<IIdeathonRepository, IdeathonRepository>();
 builder.Services.AddScoped<IMentorRepository, MentorRepository>();
 
 
 // ==========================
-// 3️⃣ Register Services
+// Register Services
 // ==========================
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IDepartmentService, DepartmentService>();
@@ -77,11 +67,10 @@ builder.Services.AddScoped<IUserRoleService, UserRoleService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IIdeathonService, IdeathonService>();
 builder.Services.AddScoped<IMentorService, MentorService>();
+builder.Services.AddScoped<IVLearnTopicService, VLearnTopicService>();
+builder.Services.AddScoped<IVLearnModuleService, VLearnModuleService>();
 
 
-// ==========================
-// 4️⃣ Configure CORS
-// ==========================
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 builder.Services.AddCors(options =>
 {
@@ -94,9 +83,6 @@ builder.Services.AddCors(options =>
     });
 });
 
-// ==========================
-// 5️⃣ Add Controllers & Swagger
-// ==========================
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -130,12 +116,6 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// ==========================
-// 6️⃣ Configure JWT Authentication
-// ==========================
-
-
-// Enable detailed JWT logging (PII) for debugging
 IdentityModelEventSource.ShowPII = true;
 
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
@@ -157,7 +137,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(secretKey),
 
-            ClockSkew = TimeSpan.Zero // optional: remove default 5-min clock skew
         };
 
         options.Events = new JwtBearerEvents
@@ -177,22 +156,15 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
-
-// ==========================
-// 7️⃣ Build App
-// ==========================
 var app = builder.Build();
 
-// ==========================
-// 8️⃣ Configure HTTP pipeline
-// ==========================
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "Knowledge Repository API v1");
-        c.RoutePrefix = string.Empty; // Serve at root
+        c.RoutePrefix = string.Empty; 
     });
 }
 
@@ -202,9 +174,4 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
-
-// ==========================
-// 9️⃣ Run App
-// ==========================
 app.Run();
