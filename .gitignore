@@ -1,8 +1,46 @@
-
 # ========================
-# Visual Studio files
+# .NET / Visual Studio
 # ========================
 .vs/
+*.user
+*.suo
 *.vsp
 *.vspscc
 *.vssscc
+*.cache
+*.log
+*.pdb
+*.dbmdl
+*.tmp
+*.bak
+
+# ========================
+# Build and Publish Artifacts
+# ========================
+bin/
+obj/
+out/
+publish/
+TestResults/
+coverage/
+
+# ========================
+# IDE & Editor files
+# ========================
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ========================
+# OS-specific
+# ========================
+.DS_Store
+Thumbs.db
+
+# ========================
+# Environment & Config
+# ========================
+.env
+.env.*
+appsettings.*.local.json
