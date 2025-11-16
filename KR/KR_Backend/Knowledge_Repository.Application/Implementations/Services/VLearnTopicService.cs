@@ -83,12 +83,12 @@ namespace Knowledge_Repository.Application.Implementations.Services
         }
         public async Task<(IEnumerable<VLearnTopicDto> Items, int Total)> SearchTopicsAsync(string q, int page, int size)
         {
-            // sanitize inputs
+            
             if (page < 1) page = 1;
             if (size < 1) size = 10;
-            if (size > 100) size = 100; // guard max page size
+            if (size > 100) size = 100; 
 
-            // base query (AsNoTracking provided by repository.Query() earlier)
+            \
             var query = _topicRepository.Query();
 
             if (!string.IsNullOrWhiteSpace(q))
@@ -96,24 +96,22 @@ namespace Knowledge_Repository.Application.Implementations.Services
                 var trimmed = q.Trim();
                 var pattern = $"%{trimmed}%";
 
-                // EF.Functions.ILike works with Npgsql (Postgres) and is case-insensitive
                 query = query.Where(t =>
                     EF.Functions.ILike(t.TopicName, pattern) ||
                     EF.Functions.ILike(t.Description ?? string.Empty, pattern)
                 );
             }
 
-            // get total count before paging
+         
             var total = await query.CountAsync();
 
-            // fetch paged items
+           
             var topics = await query
                 .OrderBy(t => t.TopicName)
                 .Skip((page - 1) * size)
                 .Take(size)
                 .ToListAsync();
 
-            // map to VLearnTopicDto
             var items = topics.Select(t => new VLearnTopicDto
             {
                 TopicId = t.TopicId,
@@ -123,7 +121,7 @@ namespace Knowledge_Repository.Application.Implementations.Services
                 UpdatedOn = t.UpdatedOn,
                 CreatedBy = t.CreatedBy,
                 UpdatedBy = t.UpdatedBy,
-                // Keep navigation props null/empty — modules can be loaded on demand
+              
                 Modules = new List<Module>()
             }).ToList();
 

@@ -69,7 +69,7 @@ namespace Knowledge_Repository.Application.Implementations.Services
                 CategoryName = k.Category?.CategoryName,
                 OwnerId = k.OwnerId,
                 OwnerName = k.Owner?.Name,
-                CreatedByName = createdByName,   // <-- new field populated here
+                CreatedByName = createdByName,   
                 Status = k.Status,
                 Framework = k.Framework,
                 Language = k.Language,
