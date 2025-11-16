@@ -13,19 +13,18 @@ namespace Knowledge_Repository.Application.Implementations.Services
 {
     public class VLearnModuleService : IVLearnModuleService
     {
-        private readonly IVLearnModuleRepository _moduleRepo;
-        private readonly IVLearnTopicRepository _topicRepo;
+        private readonly IVLearnModuleRepository _moduleRepository;
+        private readonly IVLearnTopicRepository _topicRepository;
 
-        public VLearnModuleService(IVLearnModuleRepository moduleRepo, IVLearnTopicRepository topicRepo)
+        public VLearnModuleService(IVLearnModuleRepository moduleRepository, IVLearnTopicRepository topicRepository)
         {
-            _moduleRepo = moduleRepo ?? throw new ArgumentNullException(nameof(moduleRepo));
-            _topicRepo = topicRepo ?? throw new ArgumentNullException(nameof(topicRepo));
+            _moduleRepository = moduleRepository ?? throw new ArgumentNullException(nameof(moduleRepository));
+            _topicRepository = topicRepository ?? throw new ArgumentNullException(nameof(topicRepository));
         }
 
         public async Task<IEnumerable<VLearnModuleDto>> GetModulesByTopicAndUserAsync(Guid topicId, Guid userId)
         {
-            // load modules + user progress via repository Query() if available, otherwise use repo method
-            var modulesQuery = _moduleRepo.Query().Where(m => m.TopicId == topicId);
+            var modulesQuery = _moduleRepository.Query().Where(m => m.TopicId == topicId);
 
             var modules = await modulesQuery
                 .Include(m => m.UserModuleProgresses.Where(ump => ump.UserId == userId))
@@ -63,7 +62,7 @@ namespace Knowledge_Repository.Application.Implementations.Services
 
         public async Task<IEnumerable<VLearnModuleDto>> GetModulesByTopicAsync(Guid topicId)
         {
-            var modules = await _moduleRepo.GetModulesByTopicAsync(topicId);
+            var modules = await _moduleRepository.GetModulesByTopicAsync(topicId);
             var dtos = modules
                 .OrderBy(m => m.OrderNo)
                 .Select(m => new VLearnModuleDto
@@ -93,10 +92,10 @@ namespace Knowledge_Repository.Application.Implementations.Services
             if (dto == null) throw new ArgumentNullException(nameof(dto));
             if (string.IsNullOrWhiteSpace(dto.ModuleName)) throw new ArgumentException("ModuleName is required", nameof(dto.ModuleName));
 
-            var topic = await _topicRepo.GetByIdAsync(topicId);
+            var topic = await _topicRepository.GetByIdAsync(topicId);
             if (topic == null) throw new KeyNotFoundException("Topic not found");
 
-            var exists = await _moduleRepo.ModuleNameExistsInTopicAsync(topicId, dto.ModuleName);
+            var exists = await _moduleRepository.ModuleNameExistsInTopicAsync(topicId, dto.ModuleName);
             if (exists) throw new InvalidOperationException("Module with same name already exists in this topic.");
 
             var module = new Module
@@ -111,7 +110,7 @@ namespace Knowledge_Repository.Application.Implementations.Services
                 CreatedBy = createdBy == Guid.Empty ? (Guid?)null : createdBy
             };
 
-            await _moduleRepo.AddModuleAsync(module);
+            await _moduleRepository.AddModuleAsync(module);
 
             var result = new VLearnModuleDto
             {
@@ -131,7 +130,7 @@ namespace Knowledge_Repository.Application.Implementations.Services
         public async Task<bool> UpdateTestStatusAsync(VLearnTestResultDto result)
         {
             if (result == null) throw new ArgumentNullException(nameof(result));
-            return await _moduleRepo.UpdateTestStatusAsync(result.ModuleId, result.UserId, result.TestStatus == "Passed");
+            return await _moduleRepository.UpdateTestStatusAsync(result.ModuleId, result.UserId, result.TestStatus == "Passed");
         }
     }
 }
