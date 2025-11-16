@@ -27,6 +27,9 @@ namespace Knowledge_Repository.Infrastructure.Repositories
                 .Take(pageSize)
                 .Include(k => k.Domain)
                 .Include(k => k.Category)
+                 .Include(k => k.Owner)
+                .Include(k => k.KnowledgeTags)
+                .Include(k => k.Engagements)
                 .ToListAsync();
         }
 
@@ -64,19 +67,20 @@ namespace Knowledge_Repository.Infrastructure.Repositories
 
         public async Task<IEnumerable<KnowledgeItem>> GetByDomainOrCategoryAsync(Guid? domainId, Guid? categoryId)
         {
-            var query = _context.KnowledgeItems.AsQueryable();
-
-            if (domainId.HasValue)
-                query = query.Where(k => k.DomainId == domainId.Value);
-
-            if (categoryId.HasValue)
-                query = query.Where(k => k.CategoryId == categoryId.Value);
-
-            return await query
+            var q = _context.KnowledgeItems
                 .Include(k => k.Domain)
                 .Include(k => k.Category)
-                .ToListAsync();
+                .Include(k => k.Owner)        
+                .Include(k => k.KnowledgeTags)
+                .Include(k => k.Engagements)
+                .AsQueryable();
+
+            if (domainId.HasValue) q = q.Where(k => k.DomainId == domainId.Value);
+            if (categoryId.HasValue) q = q.Where(k => k.CategoryId == categoryId.Value);
+
+            return await q.AsNoTracking().ToListAsync();
         }
+
         public async Task<IEnumerable<KnowledgeItem>> GetByDomainNameAsync(string domainName)
         {
             return await _context.KnowledgeItems
@@ -96,6 +100,7 @@ namespace Knowledge_Repository.Infrastructure.Repositories
                 .Include(k => k.Domain)
                 .Include(k => k.Category)
                 .Include(k => k.Owner)
+                 .Include(k => k.KnowledgeTags)
                 .Include(k => k.Engagements)
                 .AsNoTracking()
                 .ToListAsync();
@@ -177,6 +182,35 @@ namespace Knowledge_Repository.Infrastructure.Repositories
                 .Where(k => k.Title == title && k.OwnerId == userId)
                 .FirstOrDefaultAsync();
         }
+        public async Task<List<KnowledgeVersion>> GetVersionsWithAttachmentsAsync(Guid itemId, bool onlyLatest = false)
+        {
+            // base query that will include attachments for final fetch
+            IQueryable<KnowledgeVersion> query = _context.KnowledgeVersions
+                .AsNoTracking()
+                .Where(v => v.ItemId == itemId)
+                .Include(v => v.Attachments);
+
+            if (onlyLatest)
+            {
+                // compute max version from a simple query (no Include)
+                var maxVersion = await _context.KnowledgeVersions
+                    .AsNoTracking()
+                    .Where(v => v.ItemId == itemId)
+                    .MaxAsync(v => (int?)v.VersionNumber) ?? 0;
+
+                if (maxVersion == 0)
+                    return new List<KnowledgeVersion>();
+
+                query = query.Where(v => v.VersionNumber == maxVersion);
+            }
+
+            var versions = await query
+                .OrderByDescending(v => v.VersionNumber)
+                .ToListAsync();
+
+            return versions;
+        }
+
 
     }
 }

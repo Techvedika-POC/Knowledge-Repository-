@@ -2053,6 +2053,160 @@
         }
       }
     },
+    "/api/KnowledgeItem": {
+      "put": {
+        "tags": [
+          "KnowledgeItem"
+        ],
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "Title": {
+                    "type": "string"
+                  },
+                  "Description": {
+                    "type": "string"
+                  },
+                  "DomainId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "CategoryId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "Status": {
+                    "type": "string"
+                  },
+                  "Language": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "Framework": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "Visibility": {
+                    "type": "string"
+                  },
+                  "Tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "Attachments": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/FileAttachmentDto"
+                    }
+                  },
+                  "KnowledgeText": {
+                    "type": "string"
+                  },
+                  "Embedding": {
+                    "type": "array",
+                    "items": {
+                      "type": "number",
+                      "format": "float"
+                    }
+                  },
+                  "CurrentVersion": {
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "ChangesSummary": {
+                    "type": "string"
+                  },
+                  "ReplaceAttachments": {
+                    "type": "boolean"
+                  },
+                  "Files": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  }
+                }
+              },
+              "encoding": {
+                "Title": {
+                  "style": "form"
+                },
+                "Description": {
+                  "style": "form"
+                },
+                "DomainId": {
+                  "style": "form"
+                },
+                "CategoryId": {
+                  "style": "form"
+                },
+                "Status": {
+                  "style": "form"
+                },
+                "Language": {
+                  "style": "form"
+                },
+                "Framework": {
+                  "style": "form"
+                },
+                "Visibility": {
+                  "style": "form"
+                },
+                "Tags": {
+                  "style": "form"
+                },
+                "Attachments": {
+                  "style": "form"
+                },
+                "KnowledgeText": {
+                  "style": "form"
+                },
+                "Embedding": {
+                  "style": "form"
+                },
+                "CurrentVersion": {
+                  "style": "form"
+                },
+                "ChangesSummary": {
+                  "style": "form"
+                },
+                "ReplaceAttachments": {
+                  "style": "form"
+                },
+                "Files": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/KnowledgeItem/{itemId}/details": {
       "get": {
         "tags": [
@@ -2136,6 +2290,29 @@
         "parameters": [
           {
             "name": "categoryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/KnowledgeItem/{itemId}/versions": {
+      "get": {
+        "tags": [
+          "KnowledgeItem"
+        ],
+        "parameters": [
+          {
+            "name": "itemId",
             "in": "path",
             "required": true,
             "schema": {
@@ -2831,7 +3008,7 @@
         }
       }
     },
-    "/api/VLearnModule/{topicId}/{userId}": {
+    "/api/VLearnModule/topic/{topicId}/modules": {
       "get": {
         "tags": [
           "VLearnModule"
@@ -2845,9 +3022,63 @@
               "type": "string",
               "format": "uuid"
             }
-          },
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "VLearnModule"
+        ],
+        "parameters": [
           {
-            "name": "userId",
+            "name": "topicId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateModuleDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateModuleDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateModuleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/VLearnModule/topic/{topicId}/modules/me": {
+      "get": {
+        "tags": [
+          "VLearnModule"
+        ],
+        "parameters": [
+          {
+            "name": "topicId",
             "in": "path",
             "required": true,
             "schema": {
@@ -2929,6 +3160,100 @@
       "get": {
         "tags": [
           "VLearnTopic"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/VLearnTopic/{topicId}": {
+      "get": {
+        "tags": [
+          "VLearnTopic"
+        ],
+        "parameters": [
+          {
+            "name": "topicId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/VLearnTopic": {
+      "post": {
+        "tags": [
+          "VLearnTopic"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTopicDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTopicDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTopicDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/VLearnTopic/search": {
+      "get": {
+        "tags": [
+          "VLearnTopic"
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": ""
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -3174,6 +3499,10 @@
       "AttachmentDto": {
         "type": "object",
         "properties": {
+          "attachmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
           "fileName": {
             "type": "string",
             "nullable": true
@@ -3336,6 +3665,42 @@
               "type": "string",
               "format": "uuid"
             },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateModuleDto": {
+        "type": "object",
+        "properties": {
+          "moduleName": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "contentLink": {
+            "type": "string",
+            "nullable": true
+          },
+          "orderNo": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateTopicDto": {
+        "type": "object",
+        "properties": {
+          "topicName": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
             "nullable": true
           }
         },
@@ -4061,6 +4426,24 @@
             "type": "string",
             "nullable": true
           },
+          "domainId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "categoryId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "isEventItem": {
+            "type": "boolean"
+          },
+          "eventId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
           "contributorName": {
             "type": "string",
             "nullable": true
@@ -4071,8 +4454,7 @@
           },
           "createdOn": {
             "type": "string",
-            "format": "date-time",
-            "nullable": true
+            "format": "date-time"
           },
           "tags": {
             "type": "array",

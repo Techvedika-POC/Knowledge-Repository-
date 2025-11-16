@@ -1,15 +1,18 @@
-﻿using Knowledge_Repository.Application.Interfaces.Repositories;
+﻿using Knowledge_Repository.Application.Implementations.Services;
+using Knowledge_Repository.Application.Interfaces.Repositories;
 using Knowledge_Repository.Application.Interfaces.Services;
 using Knowledge_Repository.Infrastructure.Data;
 using Knowledge_Repository.Infrastructure.Repositories;
-using Knowledge_Repository.Application.Implementations.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.Extensions.FileProviders;
+
 
 IdentityModelEventSource.ShowPII = true;
 
@@ -160,6 +163,21 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
+var uploadsPhysicalPath = Path.Combine(AppContext.BaseDirectory, "uploads");
+if (!Directory.Exists(uploadsPhysicalPath))
+{
+    Directory.CreateDirectory(uploadsPhysicalPath);
+}
+
+// Serve that same folder at the /uploads URL path
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(uploadsPhysicalPath),
+    RequestPath = "/uploads",
+    ServeUnknownFileTypes = true,            // optional; allows unknown extensions
+    DefaultContentType = "application/octet-stream"
+});
+
 
 if (app.Environment.IsDevelopment())
 {
