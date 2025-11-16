@@ -1,6 +1,14 @@
 C:\Users\pujitha.lingisetti\source\repos\Knowledge-Repository-\KR\KR_Backend\Knowledge_Repository.Api\wwwroot\uploads\a2f55a4a-d367-4b7b-9999-3b0f51ad670b_code.txt
 C:\Users\pujitha.lingisetti\source\repos\Knowledge-Repository-\KR\KR_Backend\Knowledge_Repository.Api\wwwroot\uploads\84acaef7-4eeb-427e-948f-4be798511062_code.txt
 C:\Users\pujitha.lingisetti\source\repos\Knowledge-Repository-\KR\KR_Backend\Knowledge_Repository.Api\wwwroot\uploads\5060dcb0-663c-4bd1-9927-58008b01e35d_code.txt
+wwwroot\uploads\185a1e7c-0ccf-4199-9a36-4a6ad312f33e_f54562d7-1a6d-4d39-837c-7eb300f8a8ec_UI  Functional Specification.docx
+wwwroot\uploads\270003d7-e5cf-48d8-883f-7fbbba5f9861_f54562d7-1a6d-4d39-837c-7eb300f8a8ec_UI  Functional Specification.docx
+wwwroot\uploads\2c4933ea-e584-489d-9b6a-9dc78c986552_f54562d7-1a6d-4d39-837c-7eb300f8a8ec_UI  Functional Specification.docx
+wwwroot\uploads\308d03a2-d871-45bf-b14c-7e7eb1165496_f54562d7-1a6d-4d39-837c-7eb300f8a8ec_UI  Functional Specification.docx
 wwwroot\uploads\5060dcb0-663c-4bd1-9927-58008b01e35d_code.txt
 wwwroot\uploads\84acaef7-4eeb-427e-948f-4be798511062_code.txt
+wwwroot\uploads\8b667458-14c3-4ca7-ab8f-54ed95f9c7c7_f54562d7-1a6d-4d39-837c-7eb300f8a8ec_UI  Functional Specification.docx
+wwwroot\uploads\98752594-365f-47af-8e97-8a835eb5b2c5_3c1ebb59-967a-4e90-af0d-98229e03895b_UI  Functional Specification.docx
+wwwroot\uploads\a1e36cf6-9267-4e68-ab9d-34e49913927b_f54562d7-1a6d-4d39-837c-7eb300f8a8ec_UI  Functional Specification.docx
 wwwroot\uploads\a2f55a4a-d367-4b7b-9999-3b0f51ad670b_code.txt
+wwwroot\uploads\ac35b023-b73b-4531-b180-d1e71860f39e_f54562d7-1a6d-4d39-837c-7eb300f8a8ec_UI  Functional Specification.docx

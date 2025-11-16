@@ -86,23 +86,13 @@ export default function Sidebar() {
         onClick={() => navigate("/app/contributions")}
       />
 
-      {/* Contributor */}
-      {roles.includes("Contributor") && (
-        <MenuItem
-          icon={<BookOpenCheck size={16} />}
-          label="Knowledge Progress"
-          active={location.pathname === "/app/knowledge-progress"}
-          onClick={() => navigate("/app/knowledge-progress")}
-        />
-      )}
-
       {/* Manager */}
-      {roles.includes("Manager") && (
+      {roles.includes("Mentor") && (
         <MenuItem
           icon={<Briefcase size={16} />}
           label="Mentor Dashboard"
-          active={location.pathname === "/app/manager-dashboard"}
-          onClick={() => navigate("/app/manager-dashboard")}
+          active={location.pathname === "/app/mentor-dashboard"}
+          onClick={() => navigate("/app/mentor-dashboard")}
         />
       )}
 

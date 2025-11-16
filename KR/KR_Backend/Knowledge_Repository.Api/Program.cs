@@ -41,6 +41,10 @@ builder.Services.AddScoped<IUserRoleRepository, UserRoleRepository>();
 builder.Services.AddScoped<IVLearnModuleRepository, VLearnModuleRepository>();
 builder.Services.AddScoped<IIdeathonRepository, IdeathonRepository>();
 builder.Services.AddScoped<IMentorRepository, MentorRepository>();
+builder.Services.AddScoped<IEventTeamInsightRepository, EventTeamInsightRepository>();
+builder.Services.AddScoped<IKnowledgeTagRepository, KnowledgeTagRepository>();
+builder.Services.AddScoped<IKnowledgeVersionRepository, KnowledgeVersionRepository>();
+builder.Services.AddScoped<IEventKnowledgeItemRepository, EventKnowledgeItemRepository>();
 
 
 // ==========================
@@ -69,7 +73,7 @@ builder.Services.AddScoped<IIdeathonService, IdeathonService>();
 builder.Services.AddScoped<IMentorService, MentorService>();
 builder.Services.AddScoped<IVLearnTopicService, VLearnTopicService>();
 builder.Services.AddScoped<IVLearnModuleService, VLearnModuleService>();
-
+builder.Services.AddScoped<IEventTeamInsightService, EventTeamInsightService>();
 
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 builder.Services.AddCors(options =>

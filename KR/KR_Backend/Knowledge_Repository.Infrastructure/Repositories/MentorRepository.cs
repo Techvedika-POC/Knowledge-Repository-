@@ -33,14 +33,43 @@ namespace Knowledge_Repository.Infrastructure.Repositories
         public async Task<Team> GetTeamDetailsAsync(Guid teamId)
         {
             return await _context.Teams
-                .Include(t => t.Event) 
+                .Include(t => t.Event)
+
                 .Include(t => t.TeamMembers)
                     .ThenInclude(tm => tm.User)
+
                 .Include(t => t.Mentors)
                     .ThenInclude(m => m.User)
-                .Include(t => t.Presentations)
+                .Include(t => t.TeamFeedbacks)
+                    .ThenInclude(f => f.Mentor)
+                        .ThenInclude(m => m.User)
+
+                .Include(t => t.TeamFeedbackReplies)
+                    .ThenInclude(r => r.User)
+                .Include(t => t.EventKnowledgeItems)
+                    .ThenInclude(eki => eki.Item)
+                        .ThenInclude(k => k.KnowledgeTags)
+
+                .Include(t => t.EventKnowledgeItems)
+                    .ThenInclude(eki => eki.Item)
+                        .ThenInclude(k => k.Engagements)
+
+                .Include(t => t.EventKnowledgeItems)
+                    .ThenInclude(eki => eki.Item)
+                        .ThenInclude(k => k.Owner)
+
+                .Include(t => t.EventKnowledgeItems)
+                    .ThenInclude(eki => eki.Item)
+                        .ThenInclude(k => k.Domain)
+
+                .Include(t => t.EventKnowledgeItems)
+                    .ThenInclude(eki => eki.Item)
+                        .ThenInclude(k => k.Category)
+
                 .FirstOrDefaultAsync(t => t.TeamId == teamId);
         }
+
+
 
 
         public async Task<IEnumerable<TeamFeedback>> GetTeamFeedbacksAsync(Guid teamId)
