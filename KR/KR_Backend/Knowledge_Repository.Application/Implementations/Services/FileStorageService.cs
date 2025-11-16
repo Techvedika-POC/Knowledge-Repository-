@@ -11,6 +11,7 @@ namespace Knowledge_Repository.Application.Implementations.Services
     {
         private readonly string _rootPath;
         private readonly ILogger<FileStorageService> _logger;
+     
 
         public FileStorageService(ILogger<FileStorageService> logger)
         {

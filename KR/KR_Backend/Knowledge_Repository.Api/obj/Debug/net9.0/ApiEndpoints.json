@@ -1202,6 +1202,102 @@
   },
   {
     "ContainingType": "Knowledge_Repository.Controllers.KnowledgeItemController",
+    "Method": "Update",
+    "RelativePath": "api/KnowledgeItem",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "itemId",
+        "Type": "System.Guid",
+        "IsRequired": false
+      },
+      {
+        "Name": "Title",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Description",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "DomainId",
+        "Type": "System.Nullable\u00601[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "CategoryId",
+        "Type": "System.Nullable\u00601[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "Status",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Language",
+        "Type": "System.Collections.Generic.List\u00601[[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "Framework",
+        "Type": "System.Collections.Generic.List\u00601[[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "Visibility",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Tags",
+        "Type": "System.Collections.Generic.List\u00601[[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "Attachments",
+        "Type": "System.Collections.Generic.List\u00601[[Knowledge_Repository.Application.Dtos.FileAttachmentDto, Knowledge_Repository.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "KnowledgeText",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Embedding",
+        "Type": "System.Collections.Generic.List\u00601[[System.Single, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "CurrentVersion",
+        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "ChangesSummary",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "ReplaceAttachments",
+        "Type": "System.Boolean",
+        "IsRequired": false
+      },
+      {
+        "Name": "Files",
+        "Type": "System.Collections.Generic.List\u00601[[Microsoft.AspNetCore.Http.IFormFile, Microsoft.AspNetCore.Http.Features, Version=9.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60]]",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Knowledge_Repository.Controllers.KnowledgeItemController",
     "Method": "GetKnowledgeItemDetails",
     "RelativePath": "api/KnowledgeItem/{itemId}/details",
     "HttpMethod": "GET",
@@ -1225,6 +1321,22 @@
         "StatusCode": 200
       }
     ]
+  },
+  {
+    "ContainingType": "Knowledge_Repository.Controllers.KnowledgeItemController",
+    "Method": "GetVersionsWithFiles",
+    "RelativePath": "api/KnowledgeItem/{itemId}/versions",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "itemId",
+        "Type": "System.Guid",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
   },
   {
     "ContainingType": "Knowledge_Repository.Controllers.KnowledgeItemController",
@@ -1772,9 +1884,25 @@
   },
   {
     "ContainingType": "Knowledge_Repository.Controllers.VLearnModuleController",
-    "Method": "GetModulesByTopicAndUser",
-    "RelativePath": "api/VLearnModule/{topicId}/{userId}",
+    "Method": "GetModulesByTopic",
+    "RelativePath": "api/VLearnModule/topic/{topicId}/modules",
     "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "topicId",
+        "Type": "System.Guid",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Knowledge_Repository.Controllers.VLearnModuleController",
+    "Method": "CreateModule",
+    "RelativePath": "api/VLearnModule/topic/{topicId}/modules",
+    "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
     "Parameters": [
@@ -1784,7 +1912,23 @@
         "IsRequired": true
       },
       {
-        "Name": "userId",
+        "Name": "dto",
+        "Type": "Knowledge_Repository.Application.Dtos.CreateModuleDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Knowledge_Repository.Controllers.VLearnModuleController",
+    "Method": "GetModulesByTopicForCurrentUser",
+    "RelativePath": "api/VLearnModule/topic/{topicId}/modules/me",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "topicId",
         "Type": "System.Guid",
         "IsRequired": true
       }
@@ -1825,12 +1969,70 @@
   },
   {
     "ContainingType": "Knowledge_Repository.Controllers.VLearnTopicController",
+    "Method": "CreateTopic",
+    "RelativePath": "api/VLearnTopic",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "Knowledge_Repository.Application.Dtos.CreateTopicDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Knowledge_Repository.Controllers.VLearnTopicController",
+    "Method": "GetTopicById",
+    "RelativePath": "api/VLearnTopic/{topicId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "topicId",
+        "Type": "System.Guid",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Knowledge_Repository.Controllers.VLearnTopicController",
     "Method": "GetAllTopics",
     "RelativePath": "api/VLearnTopic/all",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
     "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Knowledge_Repository.Controllers.VLearnTopicController",
+    "Method": "Search",
+    "RelativePath": "api/VLearnTopic/search",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "q",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "page",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "size",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
     "ReturnTypes": []
   }
 ]

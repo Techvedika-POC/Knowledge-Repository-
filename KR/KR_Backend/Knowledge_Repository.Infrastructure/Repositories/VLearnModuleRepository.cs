@@ -55,6 +55,25 @@ namespace Knowledge_Repository.Infrastructure.Repositories
             await _context.SaveChangesAsync();
             return true;
         }
+        public async Task<Module> AddModuleAsync(Module module)
+        {
+            await AddAsync(module);
+            return module;
+        }
 
+        public async Task<bool> ModuleNameExistsInTopicAsync(Guid topicId, string moduleName)
+        {
+            if (string.IsNullOrWhiteSpace(moduleName)) return false;
+            return await _context.Modules.AnyAsync(m => m.TopicId == topicId && m.ModuleName.ToLower() == moduleName.ToLower());
+        }
+
+        public async Task<IEnumerable<Module>> GetModulesByTopicAsync(Guid topicId)
+        {
+            return await _context.Modules
+                .Where(m => m.TopicId == topicId)
+                .OrderBy(m => m.OrderNo)
+                .AsNoTracking()
+                .ToListAsync();
+        }
     }
 }

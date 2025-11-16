@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Knowledge_Repository.Application.Interfaces.Services
 {
-    
+
     public interface IKnowledgeItemService
     {
         Task<KnowledgeItemDto> UploadKnowledgeItemAsync(KnowledgeItemUploadDto dto, Guid userId);
@@ -18,5 +18,11 @@ namespace Knowledge_Repository.Application.Interfaces.Services
         Task<IEnumerable<KnowledgeItemDto>> GetKnowledgeItemsByOwnerAsync(Guid ownerId);
 
         Task<IEnumerable<KnowledgeItemDto>> GetFreshPicksAsync(int count = 10);
+        Task<KnowledgeItemDto> UpdateKnowledgeItemAsync(
+     Guid itemId,
+     KnowledgeItemUpdateDto dto,
+     Guid userId);
+        Task<List<VersionWithAttachmentsDto>> GetVersionsWithFilesAsync(Guid itemId);
     }
+
 }

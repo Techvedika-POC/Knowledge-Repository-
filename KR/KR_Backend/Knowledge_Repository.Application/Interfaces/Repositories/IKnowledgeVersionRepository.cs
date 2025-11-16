@@ -10,5 +10,6 @@ namespace Knowledge_Repository.Application.Interfaces.Repositories
     public interface IKnowledgeVersionRepository:IGenericRepository<KnowledgeVersion>
     {
         Task<KnowledgeVersion?> GetLastVersionByItemIdAsync(Guid itemId);
+
     }
 }

@@ -4,6 +4,7 @@ namespace KnowLedger_Synaptix.Dtos
     public class VLearnModuleDto
     {
         public Guid ModuleId { get; set; }
+        public Guid TopicId { get; set; }
         public string ModuleName { get; set; }
         public string Description { get; set; }
         public string ContentLink { get; set; }
