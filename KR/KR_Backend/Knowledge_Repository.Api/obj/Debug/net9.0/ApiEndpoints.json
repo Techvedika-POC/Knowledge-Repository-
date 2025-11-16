@@ -781,6 +781,100 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "Knowledge_Repository.Api.Controllers.EventInsightController",
+    "Method": "GetEventInsight",
+    "RelativePath": "api/EventInsight/{eventId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "eventId",
+        "Type": "System.Guid",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Knowledge_Repository.Api.Controllers.EventInsightController",
+    "Method": "PostFeedbackReply",
+    "RelativePath": "api/EventInsight/feedback/{feedbackId}/reply",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "feedbackId",
+        "Type": "System.Guid",
+        "IsRequired": true
+      },
+      {
+        "Name": "userId",
+        "Type": "System.Guid",
+        "IsRequired": false
+      },
+      {
+        "Name": "replyText",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Knowledge_Repository.Api.Controllers.EventInsightController",
+    "Method": "SubmitTeamEntry",
+    "RelativePath": "api/EventInsight/team/{teamId}/event/{eventId}/submit",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "teamId",
+        "Type": "System.Guid",
+        "IsRequired": true
+      },
+      {
+        "Name": "eventId",
+        "Type": "System.Guid",
+        "IsRequired": true
+      },
+      {
+        "Name": "userId",
+        "Type": "System.Guid",
+        "IsRequired": false
+      },
+      {
+        "Name": "request",
+        "Type": "Knowledge_Repository.Application.Dtos.EventInsight.SubmissionRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Knowledge_Repository.Api.Controllers.EventInsightController",
+    "Method": "GetUserEventInsight",
+    "RelativePath": "api/EventInsight/user/{userId}/event/{eventId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "userId",
+        "Type": "System.Guid",
+        "IsRequired": true
+      },
+      {
+        "Name": "eventId",
+        "Type": "System.Guid",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "Knowledge_Repository.Controllers.EventRegistrationController",
     "Method": "IsUserRegistered",
     "RelativePath": "api/EventRegistration/is-registered/{eventId}",
@@ -843,6 +937,43 @@
       {
         "Name": "evt",
         "Type": "Knowledge_Repository.Domain.Entities.Event",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Knowledge_Repository.Controllers.EventsController",
+    "Method": "GetEventInsights",
+    "RelativePath": "api/Events/{eventId}/insights",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "eventId",
+        "Type": "System.Guid",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Knowledge_Repository.Controllers.EventsController",
+    "Method": "GetUserEventInsight",
+    "RelativePath": "api/Events/{eventId}/user/{userId}/insight",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "eventId",
+        "Type": "System.Guid",
+        "IsRequired": true
+      },
+      {
+        "Name": "userId",
+        "Type": "System.Guid",
         "IsRequired": true
       }
     ],

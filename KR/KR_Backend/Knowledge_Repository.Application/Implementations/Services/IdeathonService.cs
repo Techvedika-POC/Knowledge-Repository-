@@ -67,6 +67,7 @@ namespace Knowledge_Repository.Application.Implementations.Services
                 throw new ArgumentNullException(nameof(juryUserIds));
 
             var userList = new List<Guid>(juryUserIds);
+
             if (userList.Count == 0)
                 throw new ArgumentException("At least one jury member must be selected.", nameof(juryUserIds));
 

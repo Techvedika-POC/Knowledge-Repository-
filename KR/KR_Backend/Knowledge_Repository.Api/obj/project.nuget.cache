@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "RuUaJVSPa5c=",
+  "dgSpecHash": "ScPrHsTdl98=",
   "success": true,
   "projectFilePath": "C:\\Users\\pujitha.lingisetti\\source\\repos\\Knowledge-Repository-\\KR\\KR_Backend\\Knowledge_Repository.Api\\Knowledge_Repository.Api.csproj",
   "expectedPackageFiles": [
@@ -8,6 +8,8 @@
     "C:\\Users\\pujitha.lingisetti\\.nuget\\packages\\azure.identity\\1.11.4\\azure.identity.1.11.4.nupkg.sha512",
     "C:\\Users\\pujitha.lingisetti\\.nuget\\packages\\bcrypt.net-next\\4.0.3\\bcrypt.net-next.4.0.3.nupkg.sha512",
     "C:\\Users\\pujitha.lingisetti\\.nuget\\packages\\microsoft.aspnetcore.authentication.jwtbearer\\9.0.10\\microsoft.aspnetcore.authentication.jwtbearer.9.0.10.nupkg.sha512",
+    "C:\\Users\\pujitha.lingisetti\\.nuget\\packages\\microsoft.aspnetcore.http.abstractions\\2.3.0\\microsoft.aspnetcore.http.abstractions.2.3.0.nupkg.sha512",
+    "C:\\Users\\pujitha.lingisetti\\.nuget\\packages\\microsoft.aspnetcore.http.features\\2.3.0\\microsoft.aspnetcore.http.features.2.3.0.nupkg.sha512",
     "C:\\Users\\pujitha.lingisetti\\.nuget\\packages\\microsoft.aspnetcore.jsonpatch\\9.0.10\\microsoft.aspnetcore.jsonpatch.9.0.10.nupkg.sha512",
     "C:\\Users\\pujitha.lingisetti\\.nuget\\packages\\microsoft.aspnetcore.mvc.newtonsoftjson\\9.0.10\\microsoft.aspnetcore.mvc.newtonsoftjson.9.0.10.nupkg.sha512",
     "C:\\Users\\pujitha.lingisetti\\.nuget\\packages\\microsoft.aspnetcore.openapi\\9.0.9\\microsoft.aspnetcore.openapi.9.0.9.nupkg.sha512",
@@ -71,7 +73,7 @@
     "C:\\Users\\pujitha.lingisetti\\.nuget\\packages\\system.security.permissions\\6.0.0\\system.security.permissions.6.0.0.nupkg.sha512",
     "C:\\Users\\pujitha.lingisetti\\.nuget\\packages\\system.security.principal.windows\\5.0.0\\system.security.principal.windows.5.0.0.nupkg.sha512",
     "C:\\Users\\pujitha.lingisetti\\.nuget\\packages\\system.text.encoding.codepages\\6.0.0\\system.text.encoding.codepages.6.0.0.nupkg.sha512",
-    "C:\\Users\\pujitha.lingisetti\\.nuget\\packages\\system.text.encodings.web\\6.0.0\\system.text.encodings.web.6.0.0.nupkg.sha512",
+    "C:\\Users\\pujitha.lingisetti\\.nuget\\packages\\system.text.encodings.web\\8.0.0\\system.text.encodings.web.8.0.0.nupkg.sha512",
     "C:\\Users\\pujitha.lingisetti\\.nuget\\packages\\system.text.json\\9.0.10\\system.text.json.9.0.10.nupkg.sha512",
     "C:\\Users\\pujitha.lingisetti\\.nuget\\packages\\system.threading.tasks.extensions\\4.5.4\\system.threading.tasks.extensions.4.5.4.nupkg.sha512",
     "C:\\Users\\pujitha.lingisetti\\.nuget\\packages\\system.windows.extensions\\6.0.0\\system.windows.extensions.6.0.0.nupkg.sha512"

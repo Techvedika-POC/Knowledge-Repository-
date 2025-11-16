@@ -27,6 +27,8 @@ public partial class Team
 
     public virtual ICollection<Presentation> Presentations { get; set; } = new List<Presentation>();
 
+    public virtual ICollection<TeamFeedbackReply> TeamFeedbackReplies { get; set; } = new List<TeamFeedbackReply>();
+
     public virtual ICollection<TeamFeedback> TeamFeedbacks { get; set; } = new List<TeamFeedback>();
 
     public virtual ICollection<TeamMember> TeamMembers { get; set; } = new List<TeamMember>();

@@ -2,6 +2,7 @@
 using Knowledge_Repository.Application.Interfaces.Repositories;
 using Knowledge_Repository.Application.Interfaces.Services;
 using Knowledge_Repository.Domain.Entities;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -11,22 +12,39 @@ using System.Threading.Tasks;
 
 namespace Knowledge_Repository.Application.Implementations.Services
 {
-   
+
     public class KnowledgeItemService : IKnowledgeItemService
     {
         private readonly IKnowledgeItemRepository _knowledgeItemRepository;
+        private readonly IKnowledgeVersionRepository _knowledgeVersionRepository;
         private readonly IAttachmentRepository _attachmentRepository;
+        private readonly IKnowledgeTagRepository _knowledgeTagRepository;
+        private readonly ITeamRepository _teamRepository;
+        private readonly IEventKnowledgeItemRepository _eventKnowledgeItemRepository;
+        private readonly IUserRepository _userRepository;
         private readonly IFileStorageService _fileStorageService;
         private readonly ILogger<KnowledgeItemService> _logger;
 
+
         public KnowledgeItemService(
-            IKnowledgeItemRepository knowledgeItemRepository,
+           IKnowledgeItemRepository knowledgeItemRepository,
+            IKnowledgeVersionRepository knowledgeVersionRepository,
             IAttachmentRepository attachmentRepository,
+            IKnowledgeTagRepository knowledgeTagRepository,
+            ITeamRepository teamRepository,
+            IEventKnowledgeItemRepository eventKnowledgeItemRepository,
+            IUserRepository userRepository,
             IFileStorageService fileStorageService,
-            ILogger<KnowledgeItemService> logger)
+            ILogger<KnowledgeItemService> logger
+            )
         {
             _knowledgeItemRepository = knowledgeItemRepository;
+            _knowledgeVersionRepository = knowledgeVersionRepository;
             _attachmentRepository = attachmentRepository;
+            _knowledgeTagRepository = knowledgeTagRepository;
+            _teamRepository = teamRepository;
+            _eventKnowledgeItemRepository = eventKnowledgeItemRepository;
+            _userRepository = userRepository;
             _fileStorageService = fileStorageService;
             _logger = logger;
         }
@@ -80,59 +98,131 @@ namespace Knowledge_Repository.Application.Implementations.Services
             }
         }
 
-   
-        public async Task<KnowledgeItem> UploadKnowledgeItemAsync(KnowledgeItemUploadDto dto, Guid userId)
+
+        public async Task<KnowledgeItemDto> UploadKnowledgeItemAsync(KnowledgeItemUploadDto dto, Guid userId)
         {
-            if (string.IsNullOrWhiteSpace(dto.Title) || dto.DomainId == Guid.Empty || dto.CategoryId == Guid.Empty)
-                throw new ArgumentException("Title, Domain, and Category are required.");
+            if (string.IsNullOrWhiteSpace(dto.Title))
+                throw new ArgumentException("Title is required.");
 
-            var knowledgeItem = new KnowledgeItem
+            var knowledgeItem = await _knowledgeItemRepository.GetByTitleAndUserAsync(dto.Title, userId);
+
+            int newVersionNumber = 1;
+
+            if (knowledgeItem != null)
             {
-                ItemId = Guid.NewGuid(),
-                Title = dto.Title,
-                Description = dto.Description,
-                DomainId = dto.DomainId,
-                CategoryId = dto.CategoryId,
-                OwnerId = userId,
-                CreatedOn = DateTime.UtcNow,
-                CreatedBy = userId,
-                UpdatedOn = DateTime.UtcNow,
-                UpdatedBy = userId,
-                Status = "Pending",
-                Language = JsonSerializer.Serialize(dto.Language ?? new List<string>()),
-                Framework = JsonSerializer.Serialize(dto.Framework ?? new List<string>()),
-                Metadata = JsonSerializer.Serialize(new { Visibility = dto.Visibility ?? "Private" }),
-                IsEventItem = dto.IsEventItem
-            };
+                knowledgeItem.Description = dto.Description;
+                knowledgeItem.UpdatedOn = DateTime.UtcNow;
+                knowledgeItem.UpdatedBy = userId;
+                await _knowledgeItemRepository.UpdateAsync(knowledgeItem);
 
-            await _knowledgeItemRepository.AddAsync(knowledgeItem);
+                var lastVersion = await _knowledgeVersionRepository.GetLastVersionByItemIdAsync(knowledgeItem.ItemId);
+                newVersionNumber = (lastVersion?.VersionNumber ?? 0) + 1;
+            }
+            else
+            {
+                knowledgeItem = new KnowledgeItem
+                {
+                    ItemId = Guid.NewGuid(),
+                    Title = dto.Title,
+                    Description = dto.Description,
+                    DomainId = dto.DomainId,
+                    CategoryId = dto.CategoryId,
+                    OwnerId = userId,
+                    CreatedOn = DateTime.UtcNow,
+                    CreatedBy = userId,
+                    UpdatedOn = DateTime.UtcNow,
+                    UpdatedBy = userId,
+                    Status = "Pending",
+                    IsEventItem = dto.IsEventItem,
+                    Language = dto.Language != null ? System.Text.Json.JsonSerializer.Serialize(dto.Language) : null,
+                    Framework = dto.Framework != null ? System.Text.Json.JsonSerializer.Serialize(dto.Framework) : null,
+                    Metadata = System.Text.Json.JsonSerializer.Serialize(new { Visibility = dto.Visibility ?? "Private" })
+                };
+                await _knowledgeItemRepository.AddAsync(knowledgeItem);
+            }
+
+            var version = new KnowledgeVersion
+            {
+                VersionId = Guid.NewGuid(),
+                ItemId = knowledgeItem.ItemId,
+                VersionNumber = newVersionNumber,
+                ChangesSummary = newVersionNumber == 1 ? "Initial version" : "Updated version",
+                CreatedBy = userId,
+                CreatedOn = DateTime.UtcNow
+            };
+            await _knowledgeVersionRepository.AddAsync(version);
 
             if (dto.Attachments?.Count > 0)
             {
                 foreach (var file in dto.Attachments)
                 {
-                    var fileUrl = await _fileStorageService.SaveFileAsync(file.FileData, file.FileName);
+                    string publicPath = await _fileStorageService.SaveFileAsync(file.FileData, file.FileName);
 
                     var attachment = new Attachment
                     {
                         AttachmentId = Guid.NewGuid(),
                         ItemId = knowledgeItem.ItemId,
+                        VersionId = version.VersionId,
                         FileName = file.FileName,
-                        FilePath = fileUrl,
+                        FilePath = publicPath, 
                         MimeType = file.MimeType,
                         FileSize = file.FileSize,
                         CreatedOn = DateTime.UtcNow,
-                        CreatedBy = userId
+                        CreatedBy = userId,
+                        UpdatedOn = DateTime.UtcNow,
+                        UpdatedBy = userId
                     };
 
                     await _attachmentRepository.AddAsync(attachment);
                 }
             }
 
-            return knowledgeItem;
+            if (dto.Tags?.Count > 0)
+            {
+                var tags = dto.Tags.Select(tag => new KnowledgeTag
+                {
+                    TagId = Guid.NewGuid(),
+                    ItemId = knowledgeItem.ItemId,
+                    VersionId = version.VersionId,
+                    TagName = tag.Trim(),
+                    CreatedOn = DateTime.UtcNow,
+                    CreatedBy = userId,
+                    UpdatedOn = DateTime.UtcNow,
+                    UpdatedBy = userId
+                }).ToList();
+
+                await _knowledgeTagRepository.AddRangeAsync(tags);
+            }
+
+            if (dto.IsEventItem && dto.EventId.HasValue)
+            {
+                var team = await _teamRepository.GetTeamByEventAndUserAsync(dto.EventId.Value, userId);
+                if (team == null)
+                    throw new Exception("You are not part of any team for this event.");
+
+                var eventKnowledgeItem = new EventKnowledgeItem
+                {
+                    EventItemId = Guid.NewGuid(),
+                    EventId = dto.EventId.Value,
+                    ItemId = knowledgeItem.ItemId,
+                    TeamId = team.TeamId,
+                    CreatedOn = DateTime.UtcNow,
+                    CreatedBy = userId,
+                    UpdatedOn = DateTime.UtcNow
+                };
+                await _eventKnowledgeItemRepository.AddAsync(eventKnowledgeItem);
+            }
+
+            return new KnowledgeItemDto
+            {
+                ItemId = knowledgeItem.ItemId,
+                Title = knowledgeItem.Title,
+                Description = knowledgeItem.Description,
+                Version = newVersionNumber
+            };
         }
 
-  
+
         public async Task<IEnumerable<KnowledgeItemDto>> GetKnowledgeItemsAsync(Guid? domainId = null, Guid? categoryId = null)
         {
             var items = await _knowledgeItemRepository.GetByDomainOrCategoryAsync(domainId, categoryId);

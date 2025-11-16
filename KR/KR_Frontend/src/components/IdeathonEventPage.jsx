@@ -8,7 +8,7 @@ import debounce from "lodash.debounce";
  * - Select an Ideathon event
  * - Teams tab: shows teams list, expand to show members, lead, assigned mentors; add/remove mentors; schedule presentation (datetime input)
  * - Jury tab: add/remove jury members (uses EventJury backend)
- * - Presentations tab: shows scheduled presentations + remove
+ * - Presentations tab: shows scheduled presentations + remove (card layout)
  * - Audit tab: simple in-memory audit log
  *
  * Notes:
@@ -40,10 +40,13 @@ export default function IdeathonAdminDashboard() {
   const [mentorSelect, setMentorSelect] = useState({}); // { [teamId]: selectedMentorUserId }
   const [selectedJuryToAdd, setSelectedJuryToAdd] = useState("");
 
+  // Presentation scheduling (compact form)
+  const [presentationTeamToSchedule, setPresentationTeamToSchedule] = useState("");
+  const [presentationDatetime, setPresentationDatetime] = useState("");
+
   // -------------------- Fetch Ideathon-type events --------------------
   const fetchEvents = async () => {
     try {
-      // Backend appears to return plain array for type endpoint (based on sample). If it returns { data }, adjust here.
       const res = await api.get("/Events/type/Ideathon");
       setEvents(Array.isArray(res.data) ? res.data : res.data || []);
     } catch (err) {
@@ -64,12 +67,12 @@ export default function IdeathonAdminDashboard() {
         presentationsRes,
         allJuryUsersRes,
       ] = await Promise.all([
-        api.get(`/Events/${eventId}`), // eventRes.data
-        api.get(`/Ideathon/${eventId}/teams`), // teamsRes.data.data
-        api.get(`/Ideathon/${eventId}/mentors`), // mentorsRes.data.data
-        api.get(`/Ideathon/${eventId}/jury`), // juryRes.data.data
-        api.get(`/Ideathon/${eventId}/presentations`), // presentationsRes.data.data
-        api.get(`/Users?role=jurymember`), // allJuryUsersRes.data
+        api.get(`/Events/${eventId}`),
+        api.get(`/Ideathon/${eventId}/teams`),
+        api.get(`/Ideathon/${eventId}/mentors`), 
+        api.get(`/Ideathon/${eventId}/jury`), 
+        api.get(`/Ideathon/${eventId}/presentations`), 
+        api.get(`/Users?role=jurymember`), 
       ]);
 
       setEventData(eventRes.data || {});
@@ -80,15 +83,17 @@ export default function IdeathonAdminDashboard() {
       setJuryUsers(allJuryUsersRes.data || []);
       setPresentations((presentationsRes.data && presentationsRes.data.data) || []);
 
-      // Initialize per-team selects/inputs
       const initialScheduleInputs = {};
       const initialMentorSelect = {};
       ((teamsRes.data && teamsRes.data.data) || []).forEach((t) => {
-        initialScheduleInputs[t.teamId] = ""; // empty
+        initialScheduleInputs[t.teamId] = ""; 
         initialMentorSelect[t.teamId] = "";
       });
       setScheduleInputs(initialScheduleInputs);
       setMentorSelect(initialMentorSelect);
+
+      setPresentationTeamToSchedule(((teamsRes.data && teamsRes.data.data) || [])[0]?.teamId || "");
+      setPresentationDatetime("");
     } catch (err) {
       console.error(err);
       toast.error("Failed to load event data.");
@@ -102,7 +107,6 @@ export default function IdeathonAdminDashboard() {
   useEffect(() => {
     if (selectedEventId) fetchEventData(selectedEventId);
     else {
-      // reset when no event selected
       setEventData({});
       setTeams([]);
       setMentors([]);
@@ -113,8 +117,6 @@ export default function IdeathonAdminDashboard() {
       setExpandedTeamId(null);
     }
   }, [selectedEventId]);
-
-  // -------------------- Debounced search --------------------
   const handleSearch = useMemo(
     () =>
       debounce((query) => {
@@ -126,7 +128,12 @@ export default function IdeathonAdminDashboard() {
           teams.filter((t) => {
             const teamName = (t.teamName || "").toLowerCase();
             const members = t.teamMembers || [];
-            const matchMembers = members.some((m) => (m.name || "").toLowerCase().includes(q));
+            const matchMembers = members.some((m) => {
+              const name = (m.user?.name || "").toLowerCase();
+              const email = (m.user?.email || "").toLowerCase();
+              return name.includes(q) || email.includes(q);
+            });
+
             return teamName.includes(q) || matchMembers;
           })
         );
@@ -165,13 +172,13 @@ export default function IdeathonAdminDashboard() {
     }
   };
 
-  const removeMentor = async (teamId, mentorId) => {
+  // NOTE: removeMentor now expects mentorId (the Mentor record GUID) — UI uses am.mentorId
+  const removeMentor = async (teamId, mentorRecordId) => {
     try {
       if (!selectedEventId) throw new Error("No event selected");
-      // backend route: /Ideathon/{eventId}/teams/{teamId}/remove-mentor/{mentorId}
-      await api.delete(`/Ideathon/${selectedEventId}/teams/${teamId}/remove-mentor/${mentorId}`);
+      await api.delete(`/Ideathon/${selectedEventId}/teams/${teamId}/remove-mentor/${mentorRecordId}`);
       toast.success("Mentor removed.");
-      addAuditLog(`Removed mentor ${mentorId} from team ${teamId}.`);
+      addAuditLog(`Removed mentor record ${mentorRecordId} from team ${teamId}.`);
       await fetchEventData(selectedEventId);
     } catch (err) {
       console.error(err);
@@ -235,6 +242,35 @@ export default function IdeathonAdminDashboard() {
     }
   };
 
+  // Compact scheduler (select team + datetime)
+  const schedulePresentationCompact = async () => {
+    try {
+      if (!presentationTeamToSchedule) {
+        toast.error("Select a team to schedule.");
+        return;
+      }
+      if (!presentationDatetime) {
+        toast.error("Pick date & time.");
+        return;
+      }
+      const dt = new Date(presentationDatetime);
+      if (Number.isNaN(dt.getTime())) {
+        toast.error("Invalid date/time format.");
+        return;
+      }
+      await api.post(`/Ideathon/${selectedEventId}/teams/${presentationTeamToSchedule}/schedule-presentation`, {
+        PresentationDate: dt.toISOString(),
+      });
+      toast.success("Presentation scheduled.");
+      addAuditLog(`Scheduled presentation for team ${presentationTeamToSchedule} at ${dt.toISOString()}.`);
+      setPresentationDatetime("");
+      await fetchEventData(selectedEventId);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to schedule presentation.");
+    }
+  };
+
   const removePresentation = async (presentationId) => {
     try {
       await api.delete(`/Presentations/${presentationId}`);
@@ -249,24 +285,37 @@ export default function IdeathonAdminDashboard() {
 
   // -------------------- Helpers --------------------
   const inferTeamLead = (team) => {
-    // Try common conventions
     const members = team.teamMembers || [];
     if (!members.length) return null;
 
-    const byFlags = members.find((m) => m.isTeamLead || m.isLead || m.isLeader || m.isCaptain);
-    if (byFlags) return byFlags;
+    // Normalize each member into { name, email, role, userId }
+    const normalize = (m) => ({
+      userId: m.userId,
+      role: m.role,
+      name: m.user?.name || "",
+      email: m.user?.email || "",
+    });
 
-    // If team has teamLeadId property
+    const normalized = members.map(normalize);
+
+    // 1. If a Leader exists → use it
+    const leader = normalized.find((m) =>
+      (m.role || "").toLowerCase() === "leader"
+    );
+    if (leader) return leader;
+
+    // 2. If teamLeadId matches a member
     if (team.teamLeadId) {
-      const lead = members.find((m) => String(m.userId) === String(team.teamLeadId));
-      if (lead) return lead;
+      const match = normalized.find(
+        (m) => String(m.userId) === String(team.teamLeadId)
+      );
+      if (match) return match;
     }
 
-    // fallback: first member
-    return members[0];
+    // 3. Default → first member
+    return normalized[0];
   };
 
-  // -------------------- Render --------------------
   return (
     <div className="p-6">
       <h1 className="text-3xl font-bold mb-6">Ideathon Admin Dashboard</h1>
@@ -333,7 +382,9 @@ export default function IdeathonAdminDashboard() {
                       <div className="flex justify-between items-center">
                         <div>
                           <strong className="text-lg">{team.teamName}</strong>
-                          <div className="text-sm text-gray-600">Team ID: {team.teamId}</div>
+                          <div className="text-sm text-gray-600">
+                            Lead: {lead?.fullName || lead?.name || lead?.email || "—"}
+                          </div>
                         </div>
 
                         <div className="flex items-center gap-2">
@@ -351,23 +402,36 @@ export default function IdeathonAdminDashboard() {
                           {/* Members */}
                           <div className="col-span-1 md:col-span-1 border rounded p-3 bg-white">
                             <h4 className="font-semibold mb-2">Members</h4>
+
                             {team.teamMembers && team.teamMembers.length ? (
                               <ul className="space-y-1 text-sm">
-                                {team.teamMembers.map((m) => (
-                                  <li key={m.userId} className={`flex justify-between ${lead && String(lead.userId) === String(m.userId) ? "font-semibold" : ""}`}>
-                                    <div>
-                                      {m.name || m.email || m.userId}
-                                      {lead && String(lead.userId) === String(m.userId) && <span className="ml-2 text-xs text-blue-600">(Lead)</span>}
-                                    </div>
-                                    <div className="text-gray-500 text-xs">{m.email}</div>
-                                  </li>
-                                ))}
+                                {team.teamMembers.map((m) => {
+                                  const user = m.user || {};
+
+                                  return (
+                                    <li
+                                      key={m.teamMemberId || m.userId}
+                                      className={`flex justify-between ${lead && String(lead.userId) === String(m.userId) ? "font-semibold" : ""
+                                        }`}
+                                    >
+                                      <div>
+                                        {user.name || "Unknown User"}
+                                        {lead && String(lead.userId) === String(m.userId) && (
+                                          <span className="ml-2 text-xs text-blue-600">(Lead)</span>
+                                        )}
+                                      </div>
+
+                                      <div className="text-gray-500 text-xs">
+                                        {user.email}
+                                      </div>
+                                    </li>
+                                  );
+                                })}
                               </ul>
                             ) : (
                               <div className="text-sm text-gray-500">No members registered.</div>
                             )}
                           </div>
-
                           {/* Mentors */}
                           <div className="col-span-1 md:col-span-1 border rounded p-3 bg-white">
                             <h4 className="font-semibold mb-2">Mentors</h4>
@@ -377,11 +441,11 @@ export default function IdeathonAdminDashboard() {
                                 {assignedMentors.map((am) => (
                                   <li key={am.mentorId} className="flex justify-between items-center">
                                     <div className="text-sm">
-                                      {am.user?.name || am.user?.email || am.userId}
+                                      {am.user?.fullName || am.user?.name || am.user?.email || am.userId}
                                     </div>
                                     <div className="flex gap-2">
                                       <button
-                                        onClick={() => removeMentor(team.teamId, am.userId)}
+                                        onClick={() => removeMentor(team.teamId, am.mentorId)}
                                         className="px-2 py-1 rounded bg-red-200 hover:bg-red-300 text-xs"
                                       >
                                         Remove
@@ -406,7 +470,7 @@ export default function IdeathonAdminDashboard() {
                                   .filter((m) => !assignedMentors.some((am) => String(am.userId) === String(m.userId)))
                                   .map((m) => (
                                     <option key={m.userId} value={m.userId}>
-                                      {m.name || m.email}
+                                      {m.fullName || m.name || m.email}
                                     </option>
                                   ))}
                               </select>
@@ -566,21 +630,25 @@ export default function IdeathonAdminDashboard() {
             </div>
           )}
 
-          {/* PRESENTATIONS */}
           {activeTab === "presentations" && (
             <div>
-              <div className="space-y-2 mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 {presentations.length ? (
                   presentations.map((p) => (
-                    <div key={p.presentationId} className="flex justify-between items-center border p-3 rounded bg-white">
+                    <div key={p.presentationId} className="bg-white border rounded-lg p-4 shadow-sm flex justify-between items-start">
                       <div>
-                        <div className="font-medium">{p.teamName}</div>
-                        <div className="text-sm text-gray-600">
+                        <div className="font-semibold text-lg">{p.teamName}</div>
+                        <div className="text-sm text-gray-600 mt-1">
                           {p.presentationDate ? new Date(p.presentationDate).toLocaleString() : "Not scheduled"}
                         </div>
+                        {p.presenterName && <div className="text-sm text-gray-500 mt-1">Presenter: {p.presenterName}</div>}
+                        {p.location && <div className="text-sm text-gray-500 mt-1">Location: {p.location}</div>}
                       </div>
-                      <div className="flex gap-2">
-                        <button onClick={() => removePresentation(p.presentationId)} className="px-3 py-1 rounded bg-red-200">
+                      <div className="flex flex-col items-end gap-2">
+                        <button
+                          onClick={() => removePresentation(p.presentationId)}
+                          className="px-3 py-1 rounded bg-red-200 hover:bg-red-300 text-sm"
+                        >
                           Remove
                         </button>
                       </div>
@@ -591,32 +659,49 @@ export default function IdeathonAdminDashboard() {
                 )}
               </div>
 
-              <div className="mt-4">
-                <div className="text-sm text-gray-600 mb-2">Schedule a meeting for a team</div>
-                <div className="flex flex-wrap gap-2">
-                  {teams.map((t) => (
-                    <div key={t.teamId} className="flex items-center gap-2">
-                      <div className="text-sm">{t.teamName}</div>
-                      <input
-                        type="datetime-local"
-                        value={scheduleInputs[t.teamId] || ""}
-                        onChange={(e) => setScheduleInputs((s) => ({ ...s, [t.teamId]: e.target.value }))}
-                        className="border p-1 rounded text-sm"
-                      />
-                      <button
-                        onClick={() => schedulePresentation(t.teamId)}
-                        className="px-2 py-1 rounded bg-green-600 text-white text-sm"
-                      >
-                        Schedule
-                      </button>
-                    </div>
-                  ))}
+              <div className="bg-white border rounded-lg p-4 shadow-sm max-w-2xl">
+                <h4 className="font-semibold mb-3">Schedule Presentation</h4>
+                <div className="flex flex-col md:flex-row gap-3 items-start">
+                  <select
+                    value={presentationTeamToSchedule || ""}
+                    onChange={(e) => setPresentationTeamToSchedule(e.target.value)}
+                    className="border p-2 rounded-md w-full md:w-1/2"
+                  >
+                    <option value="">Select a team</option>
+                    {teams.map((t) => (
+                      <option key={t.teamId} value={t.teamId}>
+                        {t.teamName}
+                      </option>
+                    ))}
+                  </select>
+
+                  <input
+                    type="datetime-local"
+                    value={presentationDatetime}
+                    onChange={(e) => setPresentationDatetime(e.target.value)}
+                    className="border p-2 rounded-md w-full md:w-1/3"
+                  />
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={schedulePresentationCompact}
+                      className="px-4 py-2 rounded bg-green-600 text-white"
+                    >
+                      Schedule
+                    </button>
+                    <button
+                      onClick={() => { setPresentationTeamToSchedule(""); setPresentationDatetime(""); }}
+                      className="px-4 py-2 rounded bg-gray-200"
+                    >
+                      Clear
+                    </button>
+                  </div>
                 </div>
+                <p className="text-xs text-gray-500 mt-2">Tip: scheduled items appear above as cards.</p>
               </div>
             </div>
           )}
 
-          {/* AUDIT */}
           {activeTab === "audit" && (
             <div className="mt-6 border-t pt-4">
               <h3 className="font-semibold mb-2">Audit Log</h3>

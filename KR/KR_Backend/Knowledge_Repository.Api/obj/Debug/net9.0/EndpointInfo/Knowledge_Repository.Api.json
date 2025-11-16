@@ -1212,6 +1212,170 @@
         }
       }
     },
+    "/api/EventInsight/user/{userId}/event/{eventId}": {
+      "get": {
+        "tags": [
+          "EventInsight"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/EventInsight/{eventId}": {
+      "get": {
+        "tags": [
+          "EventInsight"
+        ],
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/EventInsight/feedback/{feedbackId}/reply": {
+      "post": {
+        "tags": [
+          "EventInsight"
+        ],
+        "parameters": [
+          {
+            "name": "feedbackId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "string"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "type": "string"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/EventInsight/team/{teamId}/event/{eventId}/submit": {
+      "post": {
+        "tags": [
+          "EventInsight"
+        ],
+        "parameters": [
+          {
+            "name": "teamId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmissionRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmissionRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmissionRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/EventRegistration/register-team": {
       "post": {
         "tags": [
@@ -1478,6 +1642,61 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/Events/{eventId}/insights": {
+      "get": {
+        "tags": [
+          "Events"
+        ],
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Events/{eventId}/user/{userId}/insight": {
+      "get": {
+        "tags": [
+          "Events"
+        ],
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
           }
         }
       }
@@ -3064,6 +3283,14 @@
       "AssignMentorDto": {
         "type": "object",
         "properties": {
+          "eventId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "teamId": {
+            "type": "string",
+            "format": "uuid"
+          },
           "mentorIds": {
             "type": "array",
             "items": {
@@ -3338,6 +3565,10 @@
       "CreateJuryDto": {
         "type": "object",
         "properties": {
+          "eventId": {
+            "type": "string",
+            "format": "uuid"
+          },
           "userIds": {
             "type": "array",
             "items": {
@@ -3878,6 +4109,10 @@
       "IdeathonTeamRegistrationDto": {
         "type": "object",
         "properties": {
+          "eventId": {
+            "type": "string",
+            "format": "uuid"
+          },
           "teamName": {
             "type": "string",
             "nullable": true
@@ -4764,6 +4999,14 @@
       "SchedulePresentationDto": {
         "type": "object",
         "properties": {
+          "eventId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "teamId": {
+            "type": "string",
+            "format": "uuid"
+          },
           "presentationDate": {
             "type": "string",
             "format": "date-time"
@@ -4803,6 +5046,48 @@
           },
           "createdByNavigation": {
             "$ref": "#/components/schemas/User"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SubmissionRequestDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "binary"
+            },
+            "nullable": true
+          },
+          "eventId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "teamId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "createdBy": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -4860,6 +5145,13 @@
             },
             "nullable": true
           },
+          "teamFeedbackReplies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TeamFeedbackReply"
+            },
+            "nullable": true
+          },
           "teamFeedbacks": {
             "type": "array",
             "items": {
@@ -4914,6 +5206,11 @@
             "format": "date-time",
             "nullable": true
           },
+          "lastReplyOn": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
           "event": {
             "$ref": "#/components/schemas/Event"
           },
@@ -4922,6 +5219,52 @@
           },
           "team": {
             "$ref": "#/components/schemas/Team"
+          },
+          "teamFeedbackReplies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TeamFeedbackReply"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "TeamFeedbackReply": {
+        "type": "object",
+        "properties": {
+          "replyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "feedbackId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "teamId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "replyText": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdOn": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "feedback": {
+            "$ref": "#/components/schemas/TeamFeedback"
+          },
+          "team": {
+            "$ref": "#/components/schemas/Team"
+          },
+          "user": {
+            "$ref": "#/components/schemas/User"
           }
         },
         "additionalProperties": false
@@ -5367,6 +5710,13 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/SpotlightItem"
+            },
+            "nullable": true
+          },
+          "teamFeedbackReplies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TeamFeedbackReply"
             },
             "nullable": true
           },

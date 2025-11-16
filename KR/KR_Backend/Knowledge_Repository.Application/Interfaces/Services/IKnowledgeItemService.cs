@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 namespace Knowledge_Repository.Application.Interfaces.Services
 {
-    
+
     public interface IKnowledgeItemService
     {
-        Task<KnowledgeItem> UploadKnowledgeItemAsync(KnowledgeItemUploadDto dto, Guid userId);
+        Task<KnowledgeItemDto> UploadKnowledgeItemAsync(KnowledgeItemUploadDto dto, Guid userId);
 
         Task<KnowledgeItemDetailsDto?> GetKnowledgeItemDetailsAsync(Guid itemId);
 

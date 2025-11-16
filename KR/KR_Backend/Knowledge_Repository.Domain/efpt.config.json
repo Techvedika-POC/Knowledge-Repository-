@@ -1,13 +1,13 @@
 ﻿{
    "CodeGenerationMode": 4,
-   "ContextClassName": "Knowledge_RepositoryContext",
+   "ContextClassName": "Knowledge_Repository_dbContext",
    "ContextNamespace": null,
    "FilterSchemas": false,
    "IncludeConnectionString": false,
    "MinimumProductVersion": "2.6.1166",
    "ModelNamespace": null,
    "OutputContextPath": null,
-   "OutputPath": "Models",
+   "OutputPath": "Entities",
    "PreserveCasingWithRegex": true,
    "ProjectRootNamespace": "Knowledge_Repository.Domain",
    "Schemas": null,
@@ -105,6 +105,10 @@
       },
       {
          "Name": "public.team_feedback",
+         "ObjectType": 0
+      },
+      {
+         "Name": "public.team_feedback_reply",
          "ObjectType": 0
       },
       {

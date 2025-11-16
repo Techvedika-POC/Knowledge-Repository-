@@ -1,4 +1,5 @@
 ﻿using Knowledge_Repository.Application.Interfaces.Services;
+using Knowledge_Repository.Application.Dtos.EventInsight;
 using Knowledge_Repository.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -12,10 +13,12 @@ namespace Knowledge_Repository.Controllers
     public class EventsController : ControllerBase
     {
         private readonly IEventService _eventService;
+        private readonly IEventTeamInsightService _insightService;
 
-        public EventsController(IEventService eventService)
+        public EventsController(IEventService eventService, IEventTeamInsightService insightService)
         {
             _eventService = eventService;
+            _insightService = insightService;
         }
 
         [HttpGet]
@@ -57,7 +60,6 @@ namespace Knowledge_Repository.Controllers
 
             try
             {
-                
                 evt.EventId = Guid.NewGuid();
                 evt.CreatedOn = DateTime.UtcNow;
                 evt.UpdatedOn = DateTime.UtcNow;
@@ -75,7 +77,6 @@ namespace Knowledge_Repository.Controllers
             }
         }
 
- 
         [HttpPut("{id:guid}")]
         public async Task<IActionResult> UpdateEvent(Guid id, [FromBody] Event evt)
         {
@@ -120,6 +121,48 @@ namespace Knowledge_Repository.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, new { success = false, message = "An error occurred while deleting the event.", details = ex.Message });
+            }
+        }
+
+        [HttpGet("{eventId:guid}/insights")]
+        public async Task<IActionResult> GetEventInsights(Guid eventId)
+        {
+            if (eventId == Guid.Empty)
+                return BadRequest(new { success = false, message = "Invalid event ID." });
+
+            try
+            {
+                var insights = await _insightService.GetEventInsightsAsync(eventId);
+                return Ok(new { success = true, data = insights });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { success = false, message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = "Failed to fetch event insights.", details = ex.Message });
+            }
+        }
+
+        [HttpGet("{eventId:guid}/user/{userId:guid}/insight")]
+        public async Task<IActionResult> GetUserEventInsight(Guid eventId, Guid userId)
+        {
+            if (eventId == Guid.Empty || userId == Guid.Empty)
+                return BadRequest(new { success = false, message = "Invalid event or user ID." });
+
+            try
+            {
+                var insight = await _insightService.GetUserEventInsightAsync(userId, eventId);
+                return Ok(new { success = true, data = insight });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { success = false, message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = "Failed to fetch user event insight.", details = ex.Message });
             }
         }
     }
