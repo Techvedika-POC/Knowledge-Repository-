@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
-import api from "../api";
+import api from "../api"; // your axios instance (should include auth header for protected endpoints)
 import { motion } from "framer-motion";
 import { Lock, PlayCircle, CheckCircle2, XCircle } from "lucide-react";
 import toast from "react-hot-toast";
@@ -20,13 +19,13 @@ export default function KnowledgeQuestPage() {
 
   const userId = localStorage.getItem("userId");
 
-  // Load Topics
   useEffect(() => {
     const fetchTopics = async () => {
       try {
         const res = await api.get("/VLearnTopic/all");
         setTopics(res.data);
-      } catch {
+      } catch (err) {
+        console.error("Fetch topics failed:", err);
         toast.error("Failed to load topics");
       }
     };
@@ -41,6 +40,7 @@ export default function KnowledgeQuestPage() {
     setTestCompleted(false);
     setActiveModule(null);
     setLoading(true);
+
 
     try {
       const res = await api.get(`/VLearnModule/topic/${topicId}/modules/me`);
@@ -61,6 +61,9 @@ export default function KnowledgeQuestPage() {
     setVideoStarted(true);
     setTestStarted(false);
     setTestCompleted(false);
+    setQuestions([]);
+    setAnswers({});
+    setScore(0);
   };
 
   const handleStartTest = async (mod) => {
@@ -74,8 +77,11 @@ export default function KnowledgeQuestPage() {
     setTestStarted(true);
     setTestCompleted(false);
     setVideoStarted(false);
+    setQuestions([]);
+    setScore(0);
 
     try {
+     
       const categoryMap = {
         javascript: "code",
         python: "code",
@@ -97,7 +103,8 @@ export default function KnowledgeQuestPage() {
         },
       });
 
-      if (res.data && res.data.length > 0) {
+      if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
+        // Ensure each question includes options array and correctOption (text)
         const formatted = res.data.map((q) => ({
           question: q.question,
           options: Object.values(q.answers).filter((opt) => opt !== null),
@@ -109,20 +116,30 @@ export default function KnowledgeQuestPage() {
         }));
         setQuestions(formatted);
       } else {
-        toast.error("No questions found for this topic.");
+        toast.error("No questions available for this topic. Ask admin to configure questions.");
+        setTestStarted(false);
       }
     } catch (err) {
-      console.error(err);
-      toast.error("Failed to load questions from QuizAPI.io.");
+      console.error("Generate test failed:", err);
+      // If backend not available, inform the user (do NOT include API keys here)
+      toast.error(
+        "Failed to load questions. Ensure backend test-generation endpoint /VLearnTest/generate is available."
+      );
+      setTestStarted(false);
     }
   };
 
   const handleAnswerChange = (qIndex, option) => {
-    setAnswers({ ...answers, [qIndex]: option });
+    setAnswers((prev) => ({ ...prev, [qIndex]: option }));
   };
 
   // FIXED: Correct API URL for progress update + reload modules
   const handleSubmitTest = async () => {
+    if (!questions.length) {
+      toast.error("No questions to submit.");
+      return;
+    }
+
     let correct = 0;
 
     questions.forEach((q, index) => {
@@ -135,7 +152,7 @@ export default function KnowledgeQuestPage() {
       }
     });
 
-    const percentage = (correct / questions.length) * 100;
+    const percentage = questions.length ? (correct / questions.length) * 100 : 0;
     setScore(percentage);
     setTestCompleted(true);
     setTestStarted(false);
@@ -144,8 +161,10 @@ export default function KnowledgeQuestPage() {
     toast.success(`You scored ${percentage.toFixed(1)}% - ${testStatus}`);
 
     try {
+      // Let server derive userId from JWT. Non-admins will have their userId overridden in controller.
       await api.post("/VLearnModule/update-test-status", {
-        userId,
+        // do not pass userId for security; controller enforces ownership if not Admin.
+        userId: userId || null,
         topicId: selectedTopic,
         moduleId: activeModule.moduleId,
         testStatus,
@@ -157,15 +176,13 @@ export default function KnowledgeQuestPage() {
       );
       setModules(res.data);
     } catch (err) {
-      console.error(err);
-      toast.error("Failed to update test progress.");
+      console.error("Update test progress failed:", err);
+      toast.error("Failed to update test progress. Try again later.");
     }
   };
 
   const extractYouTubeId = (url) => {
-    const match = url?.match(
-      /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/))([^&?/]+)/i
-    );
+    const match = url?.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/))([^&?/]+)/i);
     return match ? match[1] : null;
   };
 
@@ -279,10 +296,7 @@ export default function KnowledgeQuestPage() {
           ) : (
             <ul className="space-y-4">
               {modules.map((mod, index) => (
-                <li
-                  key={mod.moduleId}
-                  className="flex justify-between items-center bg-blue-50 hover:bg-blue-100 transition rounded-xl p-4"
-                >
+                <li key={mod.moduleId} className="flex justify-between items-center bg-blue-50 hover:bg-blue-100 transition rounded-xl p-4">
                   <div>
                     <p className="font-semibold text-blue-800">
                       {index + 1}. {mod.moduleName}
@@ -294,18 +308,12 @@ export default function KnowledgeQuestPage() {
 
                   <div className="flex items-center gap-3">
                     {mod.isLocked ? (
-                      <button
-                        disabled
-                        className="flex items-center gap-1 bg-gray-200 text-gray-500 px-4 py-2 rounded-lg cursor-not-allowed"
-                      >
+                      <button disabled className="flex items-center gap-1 bg-gray-200 text-gray-500 px-4 py-2 rounded-lg cursor-not-allowed">
                         <Lock size={16} /> Locked
                       </button>
                     ) : (
                       <>
-                        <button
-                          onClick={() => handlePlayModule(mod)}
-                          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
-                        >
+                        <button onClick={() => handlePlayModule(mod)} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
                           <PlayCircle size={18} /> Play Video
                         </button>
                         <button
@@ -326,15 +334,8 @@ export default function KnowledgeQuestPage() {
 
       {/* VIDEO PLAYER */}
       {videoStarted && activeModule && (
-        <motion.div
-          className="max-w-3xl mx-auto mt-12 bg-white rounded-2xl shadow-xl p-8 border border-blue-100"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-        >
-          <h3 className="text-2xl font-semibold text-blue-700 mb-4 text-center">
-            {activeModule.moduleName} - Video Lesson
-          </h3>
-
+        <motion.div className="max-w-3xl mx-auto mt-12 bg-white rounded-2xl shadow-xl p-8 border border-blue-100" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          <h3 className="text-2xl font-semibold text-blue-700 mb-4 text-center">{activeModule.moduleName} - Video Lesson</h3>
           {extractYouTubeId(activeModule.contentLink) ? (
             <iframe
               width="100%"
@@ -397,12 +398,7 @@ export default function KnowledgeQuestPage() {
           ))}
 
           <div className="text-center">
-            <button
-              onClick={handleSubmitTest}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
-            >
-              Submit Test
-            </button>
+            <button onClick={handleSubmitTest} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">Submit Test</button>
           </div>
         </motion.div>
       )}
@@ -422,9 +418,7 @@ export default function KnowledgeQuestPage() {
           </p>
 
           {score >= 60 ? (
-            <div className="flex justify-center items-center gap-2 text-green-600 font-semibold">
-              <CheckCircle2 size={28} /> You Passed 🎉
-            </div>
+            <div className="flex justify-center items-center gap-2 text-green-600 font-semibold"><CheckCircle2 size={28} /> You Passed 🎉</div>
           ) : (
             <div className="flex justify-center items-center gap-2 text-red-600 font-semibold">
               <XCircle size={28} /> You Failed
@@ -435,3 +429,4 @@ export default function KnowledgeQuestPage() {
     </div>
   );
 }
+
