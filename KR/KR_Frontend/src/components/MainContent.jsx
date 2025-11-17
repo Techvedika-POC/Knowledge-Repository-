@@ -9,7 +9,6 @@ import TrendingSection from "./TrendingSection";
 import TopicsSection from "./TopicsSection";
 import DaySpotlightSection from "./DaySpotlightSection";
 import QuickEvents from "./QuickEvents";
-import AppHighlights from "./AppHighlights";
 
 
 const MainContent = () => {
@@ -195,7 +194,7 @@ const MainContent = () => {
 
       {/* Navbar  */}
       <Navbar />
-      <AppHighlights />
+   
 
       {/* Section Tabs & Content */}
       <div className="px-6 mt-4">

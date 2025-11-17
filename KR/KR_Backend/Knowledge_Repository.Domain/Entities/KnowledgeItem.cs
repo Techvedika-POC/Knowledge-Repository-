@@ -25,6 +25,7 @@ public partial class KnowledgeItem
 
     public bool? IsEventItem { get; set; }
 
+
     public DateTime? CreatedOn { get; set; }
 
     public DateTime? UpdatedOn { get; set; }

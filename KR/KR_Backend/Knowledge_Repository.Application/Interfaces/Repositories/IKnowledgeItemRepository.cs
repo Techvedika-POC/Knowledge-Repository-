@@ -21,6 +21,7 @@ namespace Knowledge_Repository.Application.Interfaces.Repositories
         Task<IEnumerable<KnowledgeItem>> GetAllWithDomainAndEngagementsAsync();
         Task<List<KnowledgeItem>> GetByItemIdsAsync(IEnumerable<Guid> itemIds);
         Task<KnowledgeItem?> GetByTitleAndUserAsync(string title, Guid userId);
+        Task<List<KnowledgeVersion>> GetVersionsWithAttachmentsAsync(Guid itemId, bool onlyLatest = false);
 
     }
 }

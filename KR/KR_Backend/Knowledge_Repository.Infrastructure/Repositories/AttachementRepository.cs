@@ -24,5 +24,10 @@ namespace Knowledge_Repository.Infrastructure.Repositories
                 .Where(a => a.ItemId == itemId)
                 .ToListAsync();
         }
+        public async Task AddRangeAsync(IEnumerable<Attachment> attachments)
+        {
+            await _context.Attachments.AddRangeAsync(attachments);
+            await _context.SaveChangesAsync();
+        }
     }
 }

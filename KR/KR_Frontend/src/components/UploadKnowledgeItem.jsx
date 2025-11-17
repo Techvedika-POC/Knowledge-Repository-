@@ -1,9 +1,15 @@
+
 import React, { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { FaLightbulb } from "react-icons/fa";
 import api from "../api";
 import toast from "react-hot-toast";
+
 export default function UploadKnowledgeItem() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const editItemId = location.state?.itemId ?? null;
+
   const [frameworks, setFrameworks] = useState([
     "C#",
     "Python",
@@ -12,22 +18,24 @@ export default function UploadKnowledgeItem() {
     ".NET",
     "Spring Boot",
   ]);
-  const [files, setFiles] = useState([]);
+  const [files, setFiles] = useState([]); 
+  const [existingAttachments, setExistingAttachments] = useState([]); 
+  const [keptExistingAttachmentIds, setKeptExistingAttachmentIds] = useState([]); 
+  const [replaceAttachments, setReplaceAttachments] = useState(false);
+
   const [tags, setTags] = useState("");
   const [domains, setDomains] = useState([]);
   const [categories, setCategories] = useState([]);
   const [events, setEvents] = useState([]);
   const [activeTab, setActiveTab] = useState("File");
 
-  const location = useLocation();
-
-  // Form state
+  
   const [form, setForm] = useState({
     name: "",
     domainId: "",
     categoryId: "",
     description: "",
-    languages: [],
+    languages: [], 
     tags: [],
     isEventItem: false,
     eventId: "",
@@ -44,46 +52,76 @@ export default function UploadKnowledgeItem() {
         isEventItem: true,
         eventId: location.state.eventId,
         teamId: userTeam?.teamId || "",
-        teamMemberEmails: userTeam?.members
-          ?.map((m) => m.email)
-          .join(",") || "",
+        teamMemberEmails: userTeam?.members?.map((m) => m.email).join(",") || "",
       }));
     }
   }, [location.state]);
 
   // ------------------- Fetch domains -------------------
   useEffect(() => {
-    api
-      .get("/domains")
-      .then((res) => setDomains(res.data))
-      .catch((err) => console.error(err));
+    api.get("/domains").then((res) => setDomains(res.data)).catch((err) => console.error(err));
   }, []);
 
   // ------------------- Fetch categories on domain change -------------------
   useEffect(() => {
     if (form.domainId) {
-      api
-        .get(`/domains/${form.domainId}/categories`)
-        .then((res) => setCategories(res.data))
-        .catch((err) => console.error(err));
+      api.get(`/domains/${form.domainId}/categories`).then((res) => setCategories(res.data)).catch((err) => console.error(err));
+    } else {
+      setCategories([]);
     }
   }, [form.domainId]);
 
-  // ------------------- Fetch events (optional) -------------------
+  // ------------------- Fetch events  -------------------
   useEffect(() => {
-    api
-      .get("/events")
-      .then((res) => setEvents(res.data))
-      .catch((err) => console.error(err));
+    api.get("/events").then((res) => setEvents(res.data)).catch((err) => console.error(err));
   }, []);
+
+  // ------------------- Prefill when editing -------------------
+  useEffect(() => {
+    if (!editItemId) return;
+    const token = localStorage.getItem("jwtToken");
+    if (!token) return;
+    api.get(`/KnowledgeItem/${editItemId}/details`, { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => {
+        const d = res.data;
+        setForm((prev) => ({
+          ...prev,
+          name: d.title || "",
+          domainId: d.domainId ?? "",
+          categoryId: d.categoryId ?? "",
+          description: d.description || "",
+          languages: d.language || "",
+          tags: d.tags || [],
+          isEventItem: d.isEventItem || false,
+          eventId: d.eventId ?? "",
+          teamId: prev.teamId || "",
+          teamMemberEmails: prev.teamMemberEmails || "",
+        }));
+        setExistingAttachments(d.attachments || []);
+        setKeptExistingAttachmentIds((d.attachments || []).map((a) => a.attachmentId));
+      })
+      .catch((err) => {
+        console.error("Failed to load item details:", err);
+        toast.error("Failed to load item for edit.");
+      });
+  }, [editItemId]);
 
   // ------------------- File handlers -------------------
   const handleFileChange = (e) => {
-    setFiles([...files, ...Array.from(e.target.files)]);
+    const chosen = Array.from(e.target.files || []);
+    setFiles((prev) => [...prev, ...chosen]);
   };
 
   const handleFileRemove = (name) => {
-    setFiles(files.filter((f) => f.name !== name));
+    setFiles((prev) => prev.filter((f) => f.name !== name));
+  };
+
+  const handleRemoveExistingAttachment = (attachmentId) => {
+    setKeptExistingAttachmentIds((prev) => prev.filter((id) => id !== attachmentId));
+  };
+
+  const handleKeepExistingAttachment = (attachmentId) => {
+    setKeptExistingAttachmentIds((prev) => (prev.includes(attachmentId) ? prev : [...prev, attachmentId]));
   };
 
   // ------------------- Input handler -------------------
@@ -95,10 +133,19 @@ export default function UploadKnowledgeItem() {
     }));
   };
 
-  // ------------------- Tab handler -------------------
+  const addTag = () => {
+    const input = document.getElementById("tagInput");
+    const value = input?.value?.trim();
+    if (value && !form.tags.includes(value)) {
+      setForm((prev) => ({ ...prev, tags: [...(prev.tags || []), value] }));
+      if (input) input.value = "";
+    }
+  };
+
+
   const handleTabChange = (tab) => setActiveTab(tab);
 
-  // ------------------- Submit handler -------------------
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const token = localStorage.getItem("jwtToken");
@@ -110,73 +157,71 @@ export default function UploadKnowledgeItem() {
     try {
       const formData = new FormData();
 
-      // ------------------- Basic info -------------------
       formData.append("Title", form.name);
-      formData.append("DomainId", form.domainId);
-      formData.append("CategoryId", form.categoryId);
-      formData.append("Description", form.description);
+      formData.append("DomainId", form.domainId ?? "");
+      formData.append("CategoryId", form.categoryId ?? "");
+      formData.append("Description", form.description ?? "");
 
-      // ------------------- Languages -------------------
-      const languageList = Array.isArray(form.languages)
-        ? form.languages
-        : (form.languages || "")
-            .split(",")
-            .map((l) => l.trim())
-            .filter(Boolean);
+   
+      const languageList = Array.isArray(form.languages) ? form.languages : ((form.languages || "") + "").split(",").map((l) => l.trim()).filter(Boolean);
       languageList.forEach((lang) => formData.append("Language", lang));
 
-      // ------------------- Frameworks -------------------
-      const frameworkList = Array.isArray(frameworks)
-        ? frameworks
-        : (frameworks || "")
-            .split(",")
-            .map((f) => f.trim())
-            .filter(Boolean);
+      const frameworkList = Array.isArray(frameworks) ? frameworks : ((frameworks || "") + "").split(",").map((f) => f.trim()).filter(Boolean);
       frameworkList.forEach((fw) => formData.append("Framework", fw));
 
-      // ------------------- Tags -------------------
-      const tagInput = document.getElementById("tagInput")?.value.trim();
-      const allTags = [...form.tags];
-      if (tagInput && !allTags.includes(tagInput)) allTags.push(tagInput);
-      allTags.forEach((tag) => formData.append("Tags", tag));
 
-      // ------------------- Files -------------------
+      (form.tags || []).forEach((tag) => formData.append("Tags", tag));
+
+     
       (files || []).forEach((file) => formData.append("Files", file));
 
-      // ------------------- Event-specific fields -------------------
-      if (form.isEventItem) {
-        formData.append("IsEventItem", true);
-        formData.append("EventId", form.eventId);
-        formData.append("TeamId", form.teamId); // auto-prefilled
-        formData.append("TeamMemberEmails", form.teamMemberEmails); // auto-prefilled
+
+      if (form.isEventItem && !editItemId) {
+        formData.append("IsEventItem", "true");
+        formData.append("EventId", form.eventId || "");
+        formData.append("TeamId", form.teamId || "");
+        formData.append("TeamMemberEmails", form.teamMemberEmails || "");
       }
 
-      // ------------------- Submit form -------------------
-      const response = await api.post(`/knowledgeitem/upload`, formData, {
+
+      if (editItemId) {
+   
+        (keptExistingAttachmentIds || []).forEach((id) => formData.append("ExistingAttachmentIds", id));
+        formData.append("ReplaceAttachments", replaceAttachments ? "true" : "false");
+
+ 
+        formData.append("itemId", editItemId);
+      }
+
+      const config = {
         headers: {
-          "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${token}`,
         },
-      });
+      };
 
-      toast.success("Knowledge item uploaded successfully!");
-      console.log("Upload response:", response.data);
-    } catch (err) {
-      if (err.response) {
-        console.error("Error response:", err.response.data);
-        toast.error(`Upload failed: ${JSON.stringify(err.response.data)}`);
+      if (editItemId) {
+     
+        await api.put(`/KnowledgeItem?itemId=${encodeURIComponent(editItemId)}`, formData, config);
+        toast.success("Knowledge item updated successfully!");
+        navigate("/app/my-contributions"); 
       } else {
-        console.error("Error:", err.message);
-        toast.error(`Upload failed: ${err.message}`);
+     
+        await api.post(`/knowledgeitem/upload`, formData, config);
+        toast.success("Knowledge item uploaded successfully!");
+        navigate("/app/my-contributions");
       }
+    } catch (err) {
+      console.error("Submit error:", err);
+      const msg = err.response?.data || err.message || "Submit failed";
+      toast.error(`Submit failed: ${JSON.stringify(msg)}`);
     }
   };
 
-  // ------------------- JSX -------------------
+  // ------------------- JSX (kept structure + added existing attachments UI) -------------------
   return (
     <div className="max-w-[1000px] mx-auto mt-5 p-6 bg-white rounded-[12px] shadow-md font-inter text-[#1f2937]">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-[22px] font-semibold">Upload Knowledge Articles</h2>
+        <h2 className="text-[22px] font-semibold">{editItemId ? "Edit Knowledge Item" : "Upload Knowledge Articles"}</h2>
       </div>
 
       <div className="flex items-center gap-2 bg-[#fef3c7] p-3 rounded-[8px] text-[#92400e] text-sm mb-5">
@@ -305,25 +350,14 @@ export default function UploadKnowledgeItem() {
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
-                  const value = e.target.value.trim();
-                  if (value && !form.tags.includes(value)) {
-                    setForm((prev) => ({ ...prev, tags: [...prev.tags, value] }));
-                    e.target.value = "";
-                  }
+                  addTag();
                 }
               }}
             />
             <button
               type="button"
               className="px-2 py-1 rounded-[18px] bg-[#06b6d4] text-white"
-              onClick={() => {
-                const input = document.getElementById("tagInput");
-                const value = input.value.trim();
-                if (value && !form.tags.includes(value)) {
-                  setForm((prev) => ({ ...prev, tags: [...prev.tags, value] }));
-                  input.value = "";
-                }
-              }}
+              onClick={addTag}
             >
               Add
             </button>
@@ -357,9 +391,7 @@ export default function UploadKnowledgeItem() {
                 type="button"
                 key={tab}
                 className={`px-2 py-1 rounded-[15px] ${
-                  activeTab === tab
-                    ? "bg-[#e4a931] text-[#0c0c0c]"
-                    : "bg-[#fef3c7]"
+                  activeTab === tab ? "bg-[#e4a931] text-[#0c0c0c]" : "bg-[#fef3c7]"
                 }`}
                 onClick={() => handleTabChange(tab)}
               >
@@ -370,6 +402,36 @@ export default function UploadKnowledgeItem() {
 
           {activeTab === "File" && (
             <>
+              {/* existing attachments (prefill) */}
+              {existingAttachments.length > 0 && (
+                <div className="mb-4">
+                  <div className="text-sm mb-2">Existing attachments — keep/remove</div>
+                  <div className="flex flex-col gap-2 mb-2">
+                    {existingAttachments.map((att) => {
+                      const kept = keptExistingAttachmentIds.includes(att.attachmentId);
+                      return (
+                        <div key={att.attachmentId} className="flex items-center gap-3 p-2 border rounded-[8px] bg-white">
+                          <a href={att.fileUrl} target="_blank" rel="noreferrer" className="text-sm text-blue-600 underline">{att.fileName}</a>
+                          <span className="text-xs text-gray-500">{att.mimeType}</span>
+                          <div className="ml-auto">
+                            {kept ? (
+                              <button type="button" className="px-2 py-1 rounded bg-red-400 text-white" onClick={() => handleRemoveExistingAttachment(att.attachmentId)}>Remove</button>
+                            ) : (
+                              <button type="button" className="px-2 py-1 rounded bg-green-400 text-white" onClick={() => handleKeepExistingAttachment(att.attachmentId)}>Keep</button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <label className="inline-flex items-center gap-2 text-sm">
+                    <input type="checkbox" checked={replaceAttachments} onChange={(e) => setReplaceAttachments(e.target.checked)} />
+                    <span>Replace all existing attachments with newly uploaded files</span>
+                  </label>
+                </div>
+              )}
+
               <div
                 className="border-2 border-dashed border-[#d1d5db] rounded-[8px] p-5 text-center text-[14px] text-[#6b7280] mb-3 bg-[#f9fafb] cursor-pointer"
                 onClick={() => document.getElementById("fileInput").click()}
@@ -422,7 +484,7 @@ export default function UploadKnowledgeItem() {
             type="submit"
             className="px-4 py-2 rounded-[20px] bg-[#eab308] text-white"
           >
-            Upload
+            {editItemId ? "Update" : "Upload"}
           </button>
         </div>
       </form>

@@ -8,7 +8,7 @@ import {
   FileText,
   BookOpenCheck,
   Briefcase,
-  GraduationCap, // ✅ for Mentor Dashboard icon
+  GraduationCap, 
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 

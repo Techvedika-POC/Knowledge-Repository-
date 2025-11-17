@@ -54,6 +54,10 @@ namespace Knowledge_Repository.Application.Implementations.Services
         }
         private KnowledgeItemDto MapToDto(KnowledgeItem k)
         {
+            var createdByName = k.Owner?.Name
+                                ?? k.CreatedByNavigation?.Name
+                                ?? (k.CreatedBy.HasValue ? k.CreatedBy.Value.ToString() : "Unknown");
+
             return new KnowledgeItemDto
             {
                 ItemId = k.ItemId,
@@ -65,6 +69,7 @@ namespace Knowledge_Repository.Application.Implementations.Services
                 CategoryName = k.Category?.CategoryName,
                 OwnerId = k.OwnerId,
                 OwnerName = k.Owner?.Name,
+                CreatedByName = createdByName,   
                 Status = k.Status,
                 Framework = k.Framework,
                 Language = k.Language,
@@ -75,5 +80,6 @@ namespace Knowledge_Repository.Application.Implementations.Services
                 UpdatedOn = k.UpdatedOn
             };
         }
+
     }
 }

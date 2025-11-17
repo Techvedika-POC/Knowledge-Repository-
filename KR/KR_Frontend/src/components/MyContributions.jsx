@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Search, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { FaLightbulb } from "react-icons/fa";
 import api from "../api";
 
 export default function MyContributions() {
+
+  const navigate = useNavigate();
+
   const [contributions, setContributions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -244,9 +248,25 @@ export default function MyContributions() {
                 <td className="px-4 py-2">{c.category}</td>
                 <td className="px-4 py-2">{new Date(c.date).toLocaleDateString()}</td>
                 <td className="px-4 py-2 font-medium">{c.status}</td>
-                <td className="px-4 py-2">
-                  <button className="text-[#92400e] hover:underline font-semibold" onClick={() => openModal(c)}>Preview</button>
-                </td>
+               <td className="px-4 py-2 flex gap-3 items-center">
+  <button
+    className="text-[#92400e] hover:underline font-semibold"
+    onClick={() => openModal(c)}
+    aria-label={`Preview ${c.title}`}
+  >
+    Preview
+  </button>
+<button
+  className="px-3 py-1 rounded-[10px] bg-[#06b6d4] text-white text-[13px] hover:opacity-90"
+  onClick={() => navigate("/app/upload-knowledge", { state: { itemId: c.itemId } })}
+  aria-label={`Edit ${c.title}`}
+  title="Edit"
+>
+  Edit
+</button>
+
+</td>
+
               </tr>
             ))}
           </tbody>
