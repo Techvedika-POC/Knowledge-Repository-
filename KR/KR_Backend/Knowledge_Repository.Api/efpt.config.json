@@ -1,5 +1,5 @@
 ﻿{
-   "CodeGenerationMode": 4,
+   "CodeGenerationMode": 5,
    "ContextClassName": "Knowledge_RepositoryContext",
    "ContextNamespace": null,
    "FilterSchemas": false,
@@ -88,7 +88,7 @@
          "ObjectType": 0
       },
       {
-         "Name": "public.module",
+         "Name": "public.modules",
          "ObjectType": 0
       },
       {
@@ -112,7 +112,7 @@
          "ObjectType": 0
       },
       {
-         "Name": "public.topic",
+         "Name": "public.topics",
          "ObjectType": 0
       },
       {

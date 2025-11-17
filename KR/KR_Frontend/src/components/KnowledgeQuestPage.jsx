@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 import { Lock, PlayCircle, CheckCircle2, XCircle } from "lucide-react";
 import toast from "react-hot-toast";
 
-
 export default function KnowledgeQuestPage() {
   const [topics, setTopics] = useState([]);
   const [modules, setModules] = useState([]);
@@ -34,6 +33,7 @@ export default function KnowledgeQuestPage() {
     fetchTopics();
   }, []);
 
+  // FIXED: Correct API URL for modules
   const handleTopicSelect = async (topicId) => {
     setSelectedTopic(topicId);
     setModules([]);
@@ -41,8 +41,9 @@ export default function KnowledgeQuestPage() {
     setTestCompleted(false);
     setActiveModule(null);
     setLoading(true);
+
     try {
-      const res = await api.get(`/VLearnModule/${topicId}/${userId}`);
+      const res = await api.get(`/VLearnModule/topic/${topicId}/modules/me`);
       setModules(res.data);
     } catch {
       toast.error("Failed to load modules");
@@ -84,7 +85,8 @@ export default function KnowledgeQuestPage() {
         docker: "docker",
       };
 
-      const category = categoryMap[mod.moduleName.toLowerCase()] || "code";
+      const category =
+        categoryMap[mod.moduleName.toLowerCase()] || "code";
 
       const res = await axios.get("https://quizapi.io/api/v1/questions", {
         params: {
@@ -101,7 +103,9 @@ export default function KnowledgeQuestPage() {
           options: Object.values(q.answers).filter((opt) => opt !== null),
           correctAnswer:
             q.correct_answer ||
-            Object.keys(q.correct_answers).find((k) => q.correct_answers[k] === "true"),
+            Object.keys(q.correct_answers).find(
+              (k) => q.correct_answers[k] === "true"
+            ),
         }));
         setQuestions(formatted);
       } else {
@@ -117,10 +121,16 @@ export default function KnowledgeQuestPage() {
     setAnswers({ ...answers, [qIndex]: option });
   };
 
+  // FIXED: Correct API URL for progress update + reload modules
   const handleSubmitTest = async () => {
     let correct = 0;
+
     questions.forEach((q, index) => {
-      if (answers[index]?.toLowerCase().includes(q.correctAnswer?.slice(-1)?.toLowerCase())) {
+      if (
+        answers[index]
+          ?.toLowerCase()
+          .includes(q.correctAnswer?.slice(-1)?.toLowerCase())
+      ) {
         correct++;
       }
     });
@@ -141,7 +151,10 @@ export default function KnowledgeQuestPage() {
         testStatus,
       });
 
-      const res = await api.get(`/VLearnModule/${selectedTopic}/${userId}`);
+      // FIX: reload modules from proper endpoint
+      const res = await api.get(
+        `/VLearnModule/topic/${selectedTopic}/modules/me`
+      );
       setModules(res.data);
     } catch (err) {
       console.error(err);
@@ -156,17 +169,6 @@ export default function KnowledgeQuestPage() {
     return match ? match[1] : null;
   };
 
-  // Image Mapping Helper (Case + Space insensitive)
-  const normalize = (name) => name?.toLowerCase().replace(/\s+/g, "");
-
-  const topicImages = {
-    datascience: "/assets/datascience.png",
-    frontenddevelopment: "/assets/frontend.png",
-    backenddevelopment: "/assets/backend.png",
-    artificialintelligence: "/assets/ai.png",
-    devops: "/assets/devops.png",
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-blue-50 pb-20">
       {/*  Heading */}
@@ -175,98 +177,103 @@ export default function KnowledgeQuestPage() {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <h1 className="text-4xl font-extrabold text-blue-700 mb-4">VLearn Knowledge Progression</h1>
-       
+        <h1 className="text-4xl font-extrabold text-blue-700 mb-4">
+          VLearn Knowledge Progression
+        </h1>
+
         <p className="text-gray-600 max-w-2xl mx-auto text-lg">
-          Select a topic, watch, learn, and complete interactive tests to unlock the next module.
+          Select a topic, watch, learn, and complete interactive tests to unlock
+          the next module.
         </p>
       </motion.div>
-<div className="w-full flex justify-center gap-6 px-6 py-10">
-  {[
-    {
-      img: "/assets/lms1.png",
-      title: "Think Innovatively",
-      desc: "Unlock your learning potential through interactive modules and quizzes.",
-    },
-    {
-      img: "/assets/Assessment.png",
-      title: "Step Into the Future",
-      desc: "Experience a smarter way of learning through guided knowledge paths.",
-    },
-    {
-      img: "/assets/lms.png",
-      title: "Empower Your Skills",
-      desc: "Learn, test, and grow through structured VLearn Knowledge Quest.",
-    },
-  ].map((slide, i) => (
-    <div
-      key={i}
-      className="relative w-[30%] h-[220px] rounded-2xl overflow-hidden shadow-md bg-cover bg-center"
-      style={{ backgroundImage: `url(${slide.img})` }}
-    >
-      <div className="absolute inset-0 bg-black/40"></div>
-      <div className="absolute inset-0 flex flex-col justify-center items-center text-white px-4 text-center">
-        <h1 className="text-lg font-semibold mb-1">{slide.title}</h1>
-        <p className="text-xs sm:text-sm">{slide.desc}</p>
+
+      {/* FIXED IMAGE URLs */}
+      <div className="w-full flex justify-center gap-6 px-6 py-10">
+        {[
+          {
+            img: "/lms1.png",
+            title: "Think Innovatively",
+            desc: "Unlock your learning potential through interactive modules and quizzes.",
+          },
+          {
+            img: "/Assessment.png",
+            title: "Step Into the Future",
+            desc: "Experience a smarter way of learning through guided knowledge paths.",
+          },
+          {
+            img: "/lms.png",
+            title: "Empower Your Skills",
+            desc: "Learn, test, and grow through structured VLearn Knowledge Quest.",
+          },
+        ].map((slide, i) => (
+          <div
+            key={i}
+            className="relative w-[30%] h-[220px] rounded-2xl overflow-hidden shadow-md bg-cover bg-center"
+            style={{ backgroundImage: `url(${slide.img})` }}
+          >
+            <div className="absolute inset-0 bg-black/40"></div>
+            <div className="absolute inset-0 flex flex-col justify-center items-center text-white px-4 text-center">
+              <h1 className="text-lg font-semibold mb-1">{slide.title}</h1>
+              <p className="text-xs sm:text-sm">{slide.desc}</p>
+            </div>
+          </div>
+        ))}
       </div>
-    </div>
-  ))}
-</div>
 
- 
+      {/* TOPICS */}
+      <div className="max-w-6xl mx-auto mb-12 px-4">
+        <h2 className="text-2xl font-semibold text-center text-blue-700 mb-6">
+          Select a Topic
+        </h2>
 
-   {/*Topics Section  */}
-<div className="max-w-6xl mx-auto mb-12 px-4">
-  <h2 className="text-2xl font-semibold text-center text-blue-700 mb-6">
-    Select a Topic
-  </h2>
+        <div className="grid md:grid-cols-3 sm:grid-cols-2 gap-6">
+          {topics.map((t) => (
+            <motion.div
+              key={t.topicId}
+              onClick={() => handleTopicSelect(t.topicId)}
+              whileHover={{ scale: 1.03 }}
+              className={`cursor-pointer bg-white rounded-2xl shadow-md border transition-all 
+                ${
+                  selectedTopic === t.topicId
+                    ? "border-blue-400 ring-2 ring-blue-300"
+                    : "hover:shadow-lg"
+                }`}
+            >
+              <div className="p-6 flex flex-col justify-between h-full">
+                <div>
+                  <h3 className="text-xl font-semibold text-blue-800 mb-2">
+                    {t.topicName}
+                  </h3>
+                  <p className="text-gray-600 text-sm line-clamp-3">
+                    {t.description ||
+                      "No description available for this topic."}
+                  </p>
+                </div>
 
-  <div className="grid md:grid-cols-3 sm:grid-cols-2 gap-6">
-    {topics.map((t) => (
-      <motion.div
-        key={t.topicId}
-        onClick={() => handleTopicSelect(t.topicId)}
-        whileHover={{ scale: 1.03 }}
-        className={`cursor-pointer bg-white rounded-2xl shadow-md border transition-all 
-          ${
-            selectedTopic === t.topicId
-              ? "border-blue-400 ring-2 ring-blue-300"
-              : "hover:shadow-lg"
-          }`}
-      >
-        <div className="p-6 flex flex-col justify-between h-full">
-          <div>
-            <h3 className="text-xl font-semibold text-blue-800 mb-2">
-              {t.topicName}
-            </h3>
-            <p className="text-gray-600 text-sm line-clamp-3">
-              {t.description || "No description available for this topic."}
-            </p>
-          </div>
-
-          {/* Optional status or progress indicator */}
-          <div className="mt-4">
-            <span className="text-xs text-gray-500">
-              {t.moduleCount
-                ? `${t.moduleCount} Modules`
-                : "Explore modules inside"}
-            </span>
-          </div>
+                <div className="mt-4">
+                  <span className="text-xs text-gray-500">
+                    {t.moduleCount
+                      ? `${t.moduleCount} Modules`
+                      : "Explore modules inside"}
+                  </span>
+                </div>
+              </div>
+            </motion.div>
+          ))}
         </div>
-      </motion.div>
-    ))}
-  </div>
-</div>
+      </div>
 
-
-      {/* Modules Section */}
+      {/* MODULE LIST */}
       {selectedTopic && (
         <motion.div
           className="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-8 border border-blue-100"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
         >
-          <h2 className="text-2xl font-semibold text-blue-700 mb-6 text-center">Modules</h2>
+          <h2 className="text-2xl font-semibold text-blue-700 mb-6 text-center">
+            Modules
+          </h2>
+
           {loading ? (
             <p className="text-center text-gray-500">Loading modules...</p>
           ) : (
@@ -280,8 +287,11 @@ export default function KnowledgeQuestPage() {
                     <p className="font-semibold text-blue-800">
                       {index + 1}. {mod.moduleName}
                     </p>
-                    <p className="text-sm text-gray-600">{mod.description}</p>
+                    <p className="text-sm text-gray-600">
+                      {mod.description}
+                    </p>
                   </div>
+
                   <div className="flex items-center gap-3">
                     {mod.isLocked ? (
                       <button
@@ -302,7 +312,7 @@ export default function KnowledgeQuestPage() {
                           onClick={() => handleStartTest(mod)}
                           className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
                         >
-                           Take Test
+                          Take Test
                         </button>
                       </>
                     )}
@@ -314,7 +324,7 @@ export default function KnowledgeQuestPage() {
         </motion.div>
       )}
 
-      {/*  Video Section */}
+      {/* VIDEO PLAYER */}
       {videoStarted && activeModule && (
         <motion.div
           className="max-w-3xl mx-auto mt-12 bg-white rounded-2xl shadow-xl p-8 border border-blue-100"
@@ -329,7 +339,9 @@ export default function KnowledgeQuestPage() {
             <iframe
               width="100%"
               height="400"
-              src={`https://www.youtube.com/embed/${extractYouTubeId(activeModule.contentLink)}`}
+              src={`https://www.youtube.com/embed/${extractYouTubeId(
+                activeModule.contentLink
+              )}`}
               title="Video Player"
               frameBorder="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -338,7 +350,10 @@ export default function KnowledgeQuestPage() {
             />
           ) : (
             <video
-              src={activeModule.contentLink || "https://www.w3schools.com/html/mov_bbb.mp4"}
+              src={
+                activeModule.contentLink ||
+                "https://www.w3schools.com/html/mov_bbb.mp4"
+              }
               controls
               className="rounded-xl w-full shadow-md"
             />
@@ -346,7 +361,7 @@ export default function KnowledgeQuestPage() {
         </motion.div>
       )}
 
-      {/*  Test Section */}
+      {/* TEST SECTION */}
       {testStarted && (
         <motion.div
           className="max-w-3xl mx-auto mt-12 bg-white rounded-2xl shadow-xl p-8 border border-blue-100"
@@ -356,11 +371,13 @@ export default function KnowledgeQuestPage() {
           <h3 className="text-2xl font-semibold text-blue-700 mb-6 text-center">
             {activeModule?.moduleName} - Test
           </h3>
+
           {questions.map((q, i) => (
             <div key={i} className="mb-6">
               <p className="font-medium text-gray-800 mb-2">
                 {i + 1}. {q.question}
               </p>
+
               <div className="space-y-2">
                 {q.options.map((opt, j) => (
                   <label key={j} className="block cursor-pointer">
@@ -378,6 +395,7 @@ export default function KnowledgeQuestPage() {
               </div>
             </div>
           ))}
+
           <div className="text-center">
             <button
               onClick={handleSubmitTest}
@@ -389,18 +407,27 @@ export default function KnowledgeQuestPage() {
         </motion.div>
       )}
 
-      {/* Test Result */}
+      {/* TEST RESULT */}
       {testCompleted && (
-        <motion.div className="text-center mt-12" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-          <h3 className="text-3xl font-bold text-blue-700 mb-3">Test Completed!</h3>
-          <p className="text-lg text-gray-700 mb-3">Your Score: {score.toFixed(2)}%</p>
+        <motion.div
+          className="text-center mt-12"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          <h3 className="text-3xl font-bold text-blue-700 mb-3">
+            Test Completed!
+          </h3>
+          <p className="text-lg text-gray-700 mb-3">
+            Your Score: {score.toFixed(2)}%
+          </p>
+
           {score >= 60 ? (
             <div className="flex justify-center items-center gap-2 text-green-600 font-semibold">
               <CheckCircle2 size={28} /> You Passed 🎉
             </div>
           ) : (
             <div className="flex justify-center items-center gap-2 text-red-600 font-semibold">
-              <XCircle size={28} /> You Failed 
+              <XCircle size={28} /> You Failed
             </div>
           )}
         </motion.div>
