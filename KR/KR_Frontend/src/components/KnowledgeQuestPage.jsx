@@ -1,338 +1,346 @@
-import React, { useEffect, useState } from "react";
-import api from "../api"; // your axios instance (should include auth header for protected endpoints)
-import { motion } from "framer-motion";
-import { Lock, PlayCircle, CheckCircle2, XCircle } from "lucide-react";
-import toast from "react-hot-toast";
+import React, { useEffect, useMemo, useState } from "react";
+import debounce from "lodash.debounce";
+import { toast } from "react-hot-toast";
+import api from "../api";
 
-export default function KnowledgeQuestPage() {
+export default function ModulesTopicsManagement() {
   const [topics, setTopics] = useState([]);
-  const [modules, setModules] = useState([]);
-  const [selectedTopic, setSelectedTopic] = useState(null);
-  const [activeModule, setActiveModule] = useState(null);
-  const [questions, setQuestions] = useState([]);
-  const [answers, setAnswers] = useState({});
-  const [testStarted, setTestStarted] = useState(false);
-  const [testCompleted, setTestCompleted] = useState(false);
-  const [score, setScore] = useState(0);
+  const [topicSearch, setTopicSearch] = useState("");
+  const [filteredTopics, setFilteredTopics] = useState([]);
+  const [selectedTopicId, setSelectedTopicId] = useState("");
   const [loading, setLoading] = useState(false);
-  const [videoStarted, setVideoStarted] = useState(false);
+  const [totalTopics, setTotalTopics] = useState(0);
+  const pageSize = 10; 
 
-  const userId = localStorage.getItem("userId");
 
-  useEffect(() => {
-    const fetchTopics = async () => {
-      try {
-        const res = await api.get("/VLearnTopic/all");
-        setTopics(res.data);
-      } catch (err) {
-        console.error("Fetch topics failed:", err);
-        toast.error("Failed to load topics");
-      }
-    };
-    fetchTopics();
-  }, []);
+  const [topicForm, setTopicForm] = useState({ topicName: "", description: "" });
 
-  const handleTopicSelect = async (topicId) => {
-    setSelectedTopic(topicId);
-    setModules([]);
-    setTestStarted(false);
-    setTestCompleted(false);
-    setActiveModule(null);
+
+  const [moduleForm, setModuleForm] = useState({
+    moduleName: "",
+    description: "",
+    contentLink: "",
+    orderNo: 0,
+  });
+
+ 
+  const [modules, setModules] = useState([]); 
+  const [myModules, setMyModules] = useState([]);
+
+
+  const [topicPage, setTopicPage] = useState(1);
+
+
+  const [actionsLog, setActionsLog] = useState([]);
+
+
+  const searchTopics = async (q, page = 1) => {
     setLoading(true);
-
     try {
-      
-      const endpoint = userId
-        ? `/VLearnModule/topic/${topicId}/modules/me`
-        : `/VLearnModule/topic/${topicId}/modules`;
-
-      const res = await api.get(endpoint);
-      setModules(res.data || []);
+      const res = await api.get("/VLearnTopic/search", { params: { q: q || "", page, size: pageSize } });
+      const payload = res.data || {};
+      const items = payload.items ?? payload.items ?? [];
+      setFilteredTopics(Array.isArray(items) ? items : []);
+      setTotalTopics(Number.isFinite(payload.total) ? payload.total : payload.total ?? 0);
+      setTopicPage(page);
     } catch (err) {
-      console.error("Load modules failed:", err);
-      toast.error("Failed to load modules");
+      console.error("searchTopics:", err);
+      toast.error("Search failed");
     } finally {
       setLoading(false);
     }
   };
 
-  const handlePlayModule = (mod) => {
-    if (mod.isLocked) {
-      toast.error("This module is locked. Complete the previous one first!");
-      return;
-    }
-    setActiveModule(mod);
-    setVideoStarted(true);
-    setTestStarted(false);
-    setTestCompleted(false);
-    setQuestions([]);
-    setAnswers({});
-    setScore(0);
+  const doTopicSearch = useMemo(
+    () =>
+      debounce((q) => {
+    
+        searchTopics(q, 1);
+      }, 300),
+    []
+  );
+
+  useEffect(() => {
+    doTopicSearch(topicSearch);
+
+    return () => doTopicSearch.cancel();
+  }, [topicSearch, doTopicSearch]);
+
+  useEffect(() => {
+    searchTopics("", 1);
+
+  }, []);
+
+
+  const onTopicPageChange = (p) => {
+    if (p < 1) p = 1;
+    searchTopics(topicSearch, p);
   };
 
-  const handleStartTest = async (mod) => {
-    if (mod.isLocked) {
-      toast.error("This module is locked. Complete the previous one first!");
+  const reloadTopics = () => searchTopics(topicSearch, topicPage);
+
+  const handleCreateTopic = async (e) => {
+    e?.preventDefault?.();
+    if (!topicForm.topicName?.trim()) return toast.error("Topic name is required");
+    try {
+      const payload = { topicName: topicForm.topicName.trim(), description: topicForm.description || null };
+      const res = await api.post("/VLearnTopic", payload);
+      toast.success("Topic created");
+      addActionLog(`Created topic "${payload.topicName}"`);
+      setTopicForm({ topicName: "", description: "" });
+
+      await searchTopics("", 1);
+      const createdId = res.data?.topicId ?? res.data?.TopicId;
+      if (createdId) setSelectedTopicId(createdId);
+    } catch (err) {
+      console.error(err);
+      const msg = err?.response?.data ?? err?.message ?? "Create topic failed";
+      toast.error(String(msg));
+    }
+  };
+
+
+  const loadModulesForTopic = async (topicId) => {
+    if (!topicId) {
+      setModules([]);
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await api.get(`/VLearnModule/topic/${topicId}/modules`);
+      setModules(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to load modules for topic");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  const loadMyModulesForTopic = async (topicId) => {
+    if (!topicId) {
+      setMyModules([]);
       return;
     }
 
-    setActiveModule(mod);
-    setAnswers({});
-    setTestStarted(true);
-    setTestCompleted(false);
-    setVideoStarted(false);
-    setQuestions([]);
-    setScore(0);
-
+    setLoading(true);
     try {
-     
-      const categoryMap = {
-        javascript: "code",
-        python: "code",
-        sql: "sql",
-        linux: "linux",
-        devops: "devops",
-        docker: "docker",
-      };
-      const category = categoryMap[mod.moduleName.toLowerCase()] || "code";
-      const res = await api.post("/VLearnTest/generate", {
-        category,
-        difficulty: "Easy",
-        limit: 5,
-      });
 
-      if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
-        // Ensure each question includes options array and correctOption (text)
-        const formatted = res.data.map((q) => ({
-          question: q.question || "Untitled question",
-          options: Array.isArray(q.options) ? q.options : [],
-          correctOption: q.correctOption || null,
-        }));
-        setQuestions(formatted);
+      const res = await api.get(`/VLearnModule/topic/${topicId}/modules`);
+ 
+      setMyModules(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      console.error("loadMyModulesForTopic:", err);
+   
+      if (err?.response?.status === 401) {
+        toast.error("Please login to see your modules.");
       } else {
-        toast.error("No questions available for this topic. Ask admin to configure questions.");
-        setTestStarted(false);
+        toast.error("Failed to load modules for the selected topic.");
       }
-    } catch (err) {
-      console.error("Generate test failed:", err);
-      // If backend not available, inform the user (do NOT include API keys here)
-      toast.error(
-        "Failed to load questions. Ensure backend test-generation endpoint /VLearnTest/generate is available."
-      );
-      setTestStarted(false);
+      setMyModules([]);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleAnswerChange = (qIndex, option) => {
-    setAnswers((prev) => ({ ...prev, [qIndex]: option }));
-  };
 
-  const handleSubmitTest = async () => {
-    if (!questions.length) {
-      toast.error("No questions to submit.");
+  useEffect(() => {
+    if (!selectedTopicId) {
+      setModules([]);
+      setMyModules([]);
       return;
     }
+    loadModulesForTopic(selectedTopicId);
+    loadMyModulesForTopic(selectedTopicId);
+  }, [selectedTopicId]);
 
-    let correct = 0;
-    questions.forEach((q, index) => {
-      // Compare selected option text with stored correctOption text (case-insensitive, trimmed)
-      const selected = (answers[index] || "").toString().trim().toLowerCase();
-      const correctText = (q.correctOption || "").toString().trim().toLowerCase();
-      if (selected && correctText && selected === correctText) correct++;
-    });
 
-    const percentage = questions.length ? (correct / questions.length) * 100 : 0;
-    setScore(percentage);
-    setTestCompleted(true);
-    setTestStarted(false);
-
-    const testStatus = percentage >= 60 ? "Passed" : "Failed";
-    toast.success(`You scored ${percentage.toFixed(1)}% - ${testStatus}`);
-
+  const handleCreateModule = async (e) => {
+    e?.preventDefault?.();
+    if (!selectedTopicId) return toast.error("Select a topic first");
+    if (!moduleForm.moduleName?.trim()) return toast.error("Module name is required");
     try {
-      // Let server derive userId from JWT. Non-admins will have their userId overridden in controller.
-      await api.post("/VLearnModule/update-test-status", {
-        // do not pass userId for security; controller enforces ownership if not Admin.
-        userId: userId || null,
-        topicId: selectedTopic,
-        moduleId: activeModule.moduleId,
-        testStatus,
-      });
-
-      // refresh modules using the same logic as selection (prefer 'me' if logged)
-      const endpoint = userId
-        ? `/VLearnModule/topic/${selectedTopic}/modules/me`
-        : `/VLearnModule/topic/${selectedTopic}/modules`;
-      const res = await api.get(endpoint);
-      setModules(res.data || []);
+      const payload = {
+        moduleName: moduleForm.moduleName.trim(),
+        description: moduleForm.description || null,
+        contentLink: moduleForm.contentLink || null,
+        orderNo: Number.isNaN(Number(moduleForm.orderNo)) ? 0 : Number(moduleForm.orderNo),
+      };
+      const res = await api.post(`/VLearnModule/topic/${selectedTopicId}/modules`, payload);
+      toast.success("Module created");
+      addActionLog(`Module "${payload.moduleName}" created under topic`);
+      await loadModulesForTopic(selectedTopicId);
+      await loadMyModulesForTopic(selectedTopicId);
+      setModuleForm({ moduleName: "", description: "", contentLink: "", orderNo: 0 });
     } catch (err) {
-      console.error("Update test progress failed:", err);
-      toast.error("Failed to update test progress. Try again later.");
+      console.error(err);
+      const msg = err?.response?.data ?? err?.message ?? "Create module failed";
+      toast.error(String(msg));
     }
   };
 
-  const extractYouTubeId = (url) => {
-    const match = url?.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/))([^&?/]+)/i);
-    return match ? match[1] : null;
-  };
+  const addActionLog = (message) =>
+    setActionsLog((prev) => [{ id: Date.now(), message, ts: new Date().toLocaleString() }, ...prev].slice(0, 20));
+  const getTopicId = (t) => t.topicId ?? t.TopicId;
+  const getTopicName = (t) => t.topicName ?? t.TopicName ?? t.Topic_Name ?? "";
 
-  // Image Mapping Helper (Case + Space insensitive)
-  const normalize = (name) => name?.toLowerCase().replace(/\s+/g, "");
+  const getModuleId = (m) => m.moduleId ?? m.ModuleId;
+  const getModuleName = (m) => m.moduleName ?? m.ModuleName ?? "";
+  const getModuleOrder = (m) => m.orderNo ?? m.OrderNo ?? 0;
 
-  const topicImages = {
-    datascience: "/assets/datascience.png",
-    frontenddevelopment: "/assets/frontend.png",
-    backenddevelopment: "/assets/backend.png",
-    artificialintelligence: "/assets/ai.png",
-    devops: "/assets/devops.png",
-  };
+  const totalTopicPages = Math.max(1, Math.ceil((totalTopics || 0) / pageSize));
+  const paginatedTopics = filteredTopics; 
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-blue-50 pb-20">
-      <motion.div className="text-center mb-10" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-4xl font-extrabold text-blue-700 mb-4">VLearn Knowledge Progression</h1>
-        <p className="text-gray-600 max-w-2xl mx-auto text-lg">
-          Select a topic, watch, learn, and complete interactive tests to unlock the next module.
-        </p>
-      </motion.div>
+    <div className="bg-white p-8 rounded-xl shadow-md border border-gray-200 space-y-6">
+      <h2 className="text-2xl font-bold text-gray-800">Topics & Modules</h2>
 
-      <div className="w-full flex justify-center gap-6 px-6 py-10">
-        {[
-          { img: "/assets/lms1.png", title: "Think Innovatively", desc: "Unlock your learning potential through interactive modules and quizzes." },
-          { img: "/assets/lms2.png", title: "Step Into the Future", desc: "Experience a smarter way of learning through guided knowledge paths." },
-          { img: "/assets/lms.png", title: "Empower Your Skills", desc: "Learn, test, and grow through structured VLearn Knowledge Quest." },
-        ].map((slide, i) => (
-          <div key={i} className="relative w-[30%] h-[220px] rounded-2xl overflow-hidden shadow-md bg-cover bg-center" style={{ backgroundImage: `url(${slide.img})` }}>
-            <div className="absolute inset-0 bg-black/40"></div>
-            <div className="absolute inset-0 flex flex-col justify-center items-center text-white px-4 text-center">
-              <h1 className="text-lg font-semibold mb-1">{slide.title}</h1>
-              <p className="text-xs sm:text-sm">{slide.desc}</p>
-            </div>
-          </div>
-        ))}
+      
+      <div className="p-4 rounded-lg border bg-gray-50 shadow-sm flex items-center justify-between">
+        <div>
+          <strong>Manage topics & modules</strong>
+          <div className="text-sm text-gray-600">Create categories (topics) and modules, view public modules and your progress.</div>
+        </div>
+        <div className="text-sm text-gray-600">Status: {loading ? "Loading..." : "Ready"}</div>
       </div>
 
-      <div className="max-w-6xl mx-auto mb-12 px-4">
-        <h2 className="text-2xl font-semibold text-center text-blue-700 mb-6">Select a Topic</h2>
-        <div className="grid md:grid-cols-3 sm:grid-cols-2 gap-6">
-          {topics.map((t) => (
-            <motion.div
-              key={t.topicId}
-              onClick={() => handleTopicSelect(t.topicId)}
-              whileHover={{ scale: 1.03 }}
-              className={`cursor-pointer bg-white rounded-2xl shadow-md border transition-all ${selectedTopic === t.topicId ? "border-blue-400 ring-2 ring-blue-300" : "hover:shadow-lg"}`}
-            >
-              <div className="p-6 flex flex-col justify-between h-full">
-                <div>
-                  <h3 className="text-xl font-semibold text-blue-800 mb-2">{t.topicName}</h3>
-                  <p className="text-gray-600 text-sm line-clamp-3">{t.description || "No description available for this topic."}</p>
+      <div className="p-4 rounded-lg border bg-gray-50 shadow-sm">
+        <h3 className="text-lg font-semibold mb-3">Create Topic (Category)</h3>
+        <form onSubmit={handleCreateTopic} className="flex flex-wrap gap-3 items-center">
+          <input
+            placeholder="Topic name"
+            value={topicForm.topicName}
+            onChange={(e) => setTopicForm({ ...topicForm, topicName: e.target.value })}
+            className="border p-2 rounded-md w-72"
+          />
+          <input
+            placeholder="Description (optional)"
+            value={topicForm.description}
+            onChange={(e) => setTopicForm({ ...topicForm, description: e.target.value })}
+            className="border p-2 rounded-md w-96"
+          />
+          <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-md">Create Topic</button>
+          <button type="button" onClick={() => setTopicForm({ topicName: "", description: "" })} className="px-3 py-2 rounded-md border">
+            Reset
+          </button>
+        </form>
+      </div>
+
+
+      <div className="p-4 rounded-lg border bg-gray-50 shadow-sm">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-lg font-semibold">Topics</h3>
+          <div className="flex gap-2">
+            <input
+              placeholder="Search topics..."
+              value={topicSearch}
+              onChange={(e) => setTopicSearch(e.target.value)}
+              className="border p-2 rounded-md"
+            />
+            <button onClick={() => { setTopicSearch(""); searchTopics("", 1); }} className="px-3 py-1 border rounded">Reset</button>
+            <button onClick={() => reloadTopics()} className="px-3 py-1 border rounded">Reload</button>
+          </div>
+        </div>
+
+        {paginatedTopics.length === 0 ? (
+          <p className="text-sm text-gray-500">No topics found.</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            {paginatedTopics.map((t) => {
+              const id = getTopicId(t);
+              return (
+                <div key={id} className={`p-3 border rounded-md ${id === selectedTopicId ? "bg-blue-50 border-blue-300" : "bg-white"}`}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-medium">{getTopicName(t)}</div>
+                      <div className="text-sm text-gray-600">{t.description ?? t.Description ?? ""}</div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={() => { setSelectedTopicId(id); }} className="px-3 py-1 bg-blue-200 rounded">Select</button>
+                    </div>
+                  </div>
                 </div>
-                <div className="mt-4">
-                  <span className="text-xs text-gray-500">{t.moduleCount ? `${t.moduleCount} Modules` : "Explore modules inside"}</span>
-                </div>
-              </div>
-            </motion.div>
+              );
+            })}
+          </div>
+        )}
+
+      
+        <div className="mt-3 flex gap-2">
+          {Array.from({ length: totalTopicPages }, (_, i) => i + 1).map((p) => (
+            <button key={p} onClick={() => onTopicPageChange(p)} className={`px-3 py-1 rounded border ${p === topicPage ? "bg-blue-200" : "bg-gray-100"}`}>{p}</button>
           ))}
         </div>
       </div>
 
-      {selectedTopic && (
-        <motion.div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-8 border border-blue-100" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-          <h2 className="text-2xl font-semibold text-blue-700 mb-6 text-center">Modules</h2>
+      
+      <div className="p-4 rounded-lg border bg-gray-50 shadow-sm">
+        <h3 className="text-lg font-semibold mb-3">
+          {selectedTopicId ? `Modules for: ${getTopicName(topics.find(t => getTopicId(t) === selectedTopicId) || {})}` : "Select a topic to view or add modules"}
+        </h3>
 
-          {loading ? (
-            <p className="text-center text-gray-500">Loading modules...</p>
-          ) : (
-            <ul className="space-y-4">
-              {modules.map((mod, index) => (
-                <li key={mod.moduleId} className="flex justify-between items-center bg-blue-50 hover:bg-blue-100 transition rounded-xl p-4">
-                  <div>
-                    <p className="font-semibold text-blue-800">{index + 1}. {mod.moduleName}</p>
-                    <p className="text-sm text-gray-600">{mod.description}</p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    {mod.isLocked ? (
-                      <button disabled className="flex items-center gap-1 bg-gray-200 text-gray-500 px-4 py-2 rounded-lg cursor-not-allowed">
-                        <Lock size={16} /> Locked
-                      </button>
-                    ) : (
-                      <>
-                        <button onClick={() => handlePlayModule(mod)} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
-                          <PlayCircle size={18} /> Play Video
-                        </button>
-                        <button onClick={() => handleStartTest(mod)} className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">
-                          Take Test
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </motion.div>
-      )}
-
-      {videoStarted && activeModule && (
-        <motion.div className="max-w-3xl mx-auto mt-12 bg-white rounded-2xl shadow-xl p-8 border border-blue-100" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-          <h3 className="text-2xl font-semibold text-blue-700 mb-4 text-center">{activeModule.moduleName} - Video Lesson</h3>
-          {extractYouTubeId(activeModule.contentLink) ? (
-            <iframe
-              width="100%"
-              height="400"
-              src={`https://www.youtube.com/embed/${extractYouTubeId(activeModule.contentLink)}`}
-              title="Video Player"
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              className="rounded-xl w-full shadow-md"
-            />
-          ) : (
-            <video src={activeModule.contentLink || "https://www.w3schools.com/html/mov_bbb.mp4"} controls className="rounded-xl w-full shadow-md" />
-          )}
-        </motion.div>
-      )}
-
-      {testStarted && (
-        <motion.div className="max-w-3xl mx-auto mt-12 bg-white rounded-2xl shadow-xl p-8 border border-blue-100" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-          <h3 className="text-2xl font-semibold text-blue-700 mb-6 text-center">{activeModule?.moduleName} - Test</h3>
-          {questions.map((q, i) => (
-            <div key={i} className="mb-6">
-              <p className="font-medium text-gray-800 mb-2">{i + 1}. {q.question}</p>
-              <div className="space-y-2">
-                {q.options.map((opt, j) => (
-                  <label key={j} className="block cursor-pointer">
-                    <input
-                      type="radio"
-                      name={`q${i}`}
-                      value={opt}
-                      checked={answers[i] === opt}
-                      onChange={() => handleAnswerChange(i, opt)}
-                      className="mr-2"
-                    />
-                    {opt}
-                  </label>
-                ))}
-              </div>
-            </div>
-          ))}
-          <div className="text-center">
-            <button onClick={handleSubmitTest} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">Submit Test</button>
+   
+        <form onSubmit={handleCreateModule} className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+          <input
+            value={moduleForm.moduleName}
+            onChange={(e) => setModuleForm({ ...moduleForm, moduleName: e.target.value })}
+            placeholder="Module name"
+            className="border p-2 rounded-md col-span-1 md:col-span-1"
+          />
+          <input
+            value={moduleForm.contentLink}
+            onChange={(e) => setModuleForm({ ...moduleForm, contentLink: e.target.value })}
+            placeholder="Content link"
+            className="border p-2 rounded-md col-span-1 md:col-span-1"
+          />
+          <input
+            value={moduleForm.orderNo}
+            onChange={(e) => setModuleForm({ ...moduleForm, orderNo: e.target.value })}
+            placeholder="Order no (0)"
+            type="number"
+            className="border p-2 rounded-md col-span-1 md:col-span-1"
+          />
+          <textarea
+            value={moduleForm.description}
+            onChange={(e) => setModuleForm({ ...moduleForm, description: e.target.value })}
+            placeholder="Description"
+            className="border p-2 rounded-md col-span-1 md:col-span-3"
+          />
+          <div className="col-span-1 md:col-span-3 flex gap-2">
+            <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded-md">Create Module</button>
+            <button type="button" onClick={() => setModuleForm({ moduleName: "", description: "", contentLink: "", orderNo: 0 })} className="px-3 py-2 border rounded">Reset</button>
           </div>
-        </motion.div>
-      )}
+        </form>
 
-      {testCompleted && (
-        <motion.div className="text-center mt-12" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-          <h3 className="text-3xl font-bold text-blue-700 mb-3">Test Completed!</h3>
-          <p className="text-lg text-gray-700 mb-3">Your Score: {score.toFixed(2)}%</p>
-          {score >= 60 ? (
-            <div className="flex justify-center items-center gap-2 text-green-600 font-semibold"><CheckCircle2 size={28} /> You Passed 🎉</div>
+       
+        <div>
+          <h4 className="font-medium mb-2">Public Modules</h4>
+          {modules.length === 0 ? (
+            <p className="text-sm text-gray-500">No modules for this topic.</p>
           ) : (
-            <div className="flex justify-center items-center gap-2 text-red-600 font-semibold"><XCircle size={28} /> You Failed</div>
+            <div className="space-y-2">
+              {modules.map((m) => (
+                <div key={getModuleId(m)} className="p-3 border rounded-md bg-white flex items-center justify-between">
+                  <div>
+                    <div className="font-medium">{getModuleName(m)} <span className="text-xs text-gray-500">#{getModuleOrder(m)}</span></div>
+                    <div className="text-sm text-gray-600">{m.description ?? m.Description ?? ""}</div>
+                  </div>
+                  <div className="text-sm text-gray-600"></div>
+                </div>
+              ))}
+            </div>
           )}
-        </motion.div>
-      )}
+        </div>
+      </div>
+
+    
+      <div className="p-4 rounded-lg border bg-gray-50 shadow-sm">
+        <h3 className="text-lg font-semibold mb-2">Recent actions</h3>
+        <ul className="text-sm text-gray-600 max-h-48 overflow-y-auto space-y-1">
+          {actionsLog.length === 0 ? <li>No actions yet</li> : actionsLog.map((a) => <li key={a.id}>{a.ts} — {a.message}</li>)}
+        </ul>
+      </div>
     </div>
   );
 }

@@ -88,7 +88,6 @@ namespace Knowledge_Repository.Application.Implementations.Services
             if (size < 1) size = 10;
             if (size > 100) size = 100; 
 
-           
             var query = _topicRepository.Query();
 
             if (!string.IsNullOrWhiteSpace(q))

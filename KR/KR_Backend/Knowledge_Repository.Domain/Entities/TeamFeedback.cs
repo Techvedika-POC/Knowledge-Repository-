@@ -23,9 +23,13 @@ public partial class TeamFeedback
 
     public DateTime? UpdatedOn { get; set; }
 
+    public DateTime? LastReplyOn { get; set; }
+
     public virtual Event Event { get; set; }
 
     public virtual Mentor Mentor { get; set; }
 
     public virtual Team Team { get; set; }
+
+    public virtual ICollection<TeamFeedbackReply> TeamFeedbackReplies { get; set; } = new List<TeamFeedbackReply>();
 }

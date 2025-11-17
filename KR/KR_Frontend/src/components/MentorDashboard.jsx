@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { toast } from "react-hot-toast";
 import api from "../api";
+import KnowledgeCardsDisplay from "../components/KnowledgeCardsDisplay";
 
 export default function MentorDashboard() {
   const mentorId = localStorage.getItem("userId");
@@ -29,7 +30,7 @@ export default function MentorDashboard() {
     if (mentorId) fetchTeams();
   }, [mentorId]);
 
-  // Fetch specific team details
+  // Fetch specific team details including submissions
   const handleSelectTeam = async (teamId) => {
     try {
       const res = await api.get(`/Mentor/team/${teamId}`);
@@ -66,7 +67,7 @@ export default function MentorDashboard() {
       toast.success("Feedback added successfully!");
       setFeedbackText("");
       setProgressRating(0);
-      handleSelectTeam(selectedTeam.teamId); 
+      handleSelectTeam(selectedTeam.teamId); // refresh team details
     } catch (err) {
       console.error(err);
       toast.error("Failed to submit feedback.");
@@ -82,7 +83,7 @@ export default function MentorDashboard() {
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
       >
-         Mentor Dashboard
+        Mentor Dashboard
       </motion.h1>
 
       {/* Tabs */}
@@ -97,7 +98,7 @@ export default function MentorDashboard() {
                 : "text-gray-500 hover:text-blue-500"
             }`}
           >
-            {tab === "teams" ? "My Teams" : "Team Feedback"}
+            {tab === "teams" ? "My Teams" : "Team Feedback & Submissions"}
           </button>
         ))}
       </div>
@@ -138,22 +139,22 @@ export default function MentorDashboard() {
         </div>
       )}
 
-      {/* --- FEEDBACK TAB --- */}
+      {/* --- FEEDBACK & SUBMISSIONS TAB --- */}
       {activeTab === "feedbacks" && (
         <div>
           {!selectedTeam ? (
             <p className="text-gray-500 text-center mt-10">
-              Select a team from “My Teams” to view its details and feedback.
+              Select a team from “My Teams” to view its submissions and feedback.
             </p>
           ) : (
             <motion.div
               key={selectedTeam.teamId}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="max-w-4xl mx-auto"
+              className="max-w-4xl mx-auto space-y-6"
             >
               {/* Team Overview */}
-              <div className="bg-white p-6 rounded-2xl shadow mb-6">
+              <div className="bg-white p-6 rounded-2xl shadow">
                 <h2 className="text-2xl font-semibold text-gray-800 mb-1">
                   {selectedTeam.teamName}
                 </h2>
@@ -165,10 +166,10 @@ export default function MentorDashboard() {
                 </p>
               </div>
 
-              {/* Members Section */}
-              <div className="bg-white p-6 rounded-2xl shadow mb-6">
+              {/* Team Members */}
+              <div className="bg-white p-6 rounded-2xl shadow">
                 <h3 className="text-lg font-semibold mb-3 text-gray-700">
-                   Team Members
+                  Team Members
                 </h3>
                 {selectedTeam.members?.length ? (
                   <ul className="divide-y divide-gray-100">
@@ -192,37 +193,83 @@ export default function MentorDashboard() {
                 )}
               </div>
 
-              {/* Feedback History */}
-              <div className="bg-white p-6 rounded-2xl shadow mb-6">
+              {/* Team Submissions */}
+              <div className="bg-white p-6 rounded-2xl shadow">
                 <h3 className="text-lg font-semibold mb-3 text-gray-700">
-                   Previous Feedback
+                  Team Submissions
                 </h3>
-                {selectedTeam.feedbacks?.length ? (
-                  <div className="space-y-3">
-                    {selectedTeam.feedbacks.map((fb) => (
-                      <div
-                        key={fb.feedbackId}
-                        className="border border-gray-100 rounded-xl p-3 bg-gray-50"
-                      >
-                        <p className="text-gray-700 mb-1">{fb.feedbackText}</p>
-                        <p className="text-sm text-gray-500">
-                          Rating: {fb.progressRating ?? "N/A"} |{" "}
-                          {new Date(fb.createdOn).toLocaleString()}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
+                {selectedTeam.submissions?.length > 0 ? (
+                  <KnowledgeCardsDisplay
+                    items={selectedTeam.submissions.map((s) => ({
+                      itemId: s.itemId,
+                      title: s.title,
+                      description: s.description,
+                      tags: s.tags || [],
+                      ownerName: s.submittedBy || s.ownerName,
+                    }))}
+                    userId={mentorId}
+                  />
                 ) : (
-                  <p className="text-gray-500 text-sm">
-                    No feedback provided yet.
-                  </p>
+                  <p className="text-gray-500 text-sm">No submissions yet.</p>
                 )}
               </div>
+
+              {/* Feedback History */}
+             {/* Feedback History */}
+<div className="bg-white p-6 rounded-2xl shadow">
+  <h3 className="text-lg font-semibold mb-3 text-gray-700">
+    Previous Feedback
+  </h3>
+
+  {selectedTeam.feedbacks?.length ? (
+    <div className="space-y-4">
+      {selectedTeam.feedbacks.map((fb) => (
+        <div
+          key={fb.feedbackId}
+          className="border border-gray-200 rounded-xl p-4 bg-gray-50"
+        >
+          {/* Main Feedback */}
+          <p className="text-gray-800 font-medium">{fb.feedbackText}</p>
+
+          <p className="text-sm text-gray-500 mt-1">
+            Rating: {fb.progressRating ?? "N/A"} |{" "}
+            {new Date(fb.createdOn).toLocaleString()}
+          </p>
+
+          {/* Replies Section */}
+          {fb.replies?.length > 0 && (
+            <div className="mt-4 pl-4 border-l-4 border-blue-200 space-y-3">
+              <h4 className="text-sm font-semibold text-blue-700">
+                Team Replies
+              </h4>
+
+              {fb.replies.map((reply) => (
+                <div
+                  key={reply.replyId}
+                  className="bg-white p-3 rounded-lg shadow-sm border border-gray-100"
+                >
+                  <p className="text-gray-700">{reply.replyText}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    — {reply.userName || "Team Member"},{" "}
+                    {new Date(reply.createdOn).toLocaleString()}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  ) : (
+    <p className="text-gray-500 text-sm">No feedback provided yet.</p>
+  )}
+</div>
+
 
               {/* Add Feedback */}
               <div className="bg-white p-6 rounded-2xl shadow">
                 <h3 className="text-lg font-semibold mb-3 text-gray-700">
-                   Add New Feedback
+                  Add New Feedback
                 </h3>
                 <textarea
                   placeholder="Write your feedback..."

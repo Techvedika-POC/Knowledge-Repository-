@@ -20,8 +20,6 @@ namespace Knowledge_Repository.Controllers
         {
             _vlearnModuleService = vlearnModuleService;
         }
-
-        // Public: get modules (no user progress)
         [HttpGet("topic/{topicId:guid}/modules")]
         [AllowAnonymous]
         public async Task<IActionResult> GetModulesByTopic(Guid topicId)
@@ -29,7 +27,6 @@ namespace Knowledge_Repository.Controllers
             var modules = await _vlearnModuleService.GetModulesByTopicAsync(topicId);
             return Ok(modules);
         }
-        // GET api/vlearnmodule/topic/{topicId}/modules/me
         [HttpGet("topic/{topicId:guid}/modules/me")]
         [Authorize]
         public async Task<IActionResult> GetModulesByTopicForCurrentUser(Guid topicId)
@@ -40,7 +37,6 @@ namespace Knowledge_Repository.Controllers
             var modules = await _vlearnModuleService.GetModulesByTopicAndUserAsync(topicId, userId);
             return Ok(modules);
         }
-        // POST api/vlearnmodule/topic/{topicId}/modules
         [HttpPost("topic/{topicId:guid}/modules")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreateModule(Guid topicId, [FromBody] CreateModuleDto dto)
@@ -68,11 +64,9 @@ namespace Knowledge_Repository.Controllers
             }
             catch (Exception ex)
             {
-                // Optional: log
                 return StatusCode(500, ex.Message);
             }
         }
-        // POST api/vlearnmodule/update-test-status
         [HttpPost("update-test-status")]
         [Authorize]
         public async Task<IActionResult> UpdateTestStatus([FromBody] VLearnTestResultDto result)
@@ -83,7 +77,6 @@ namespace Knowledge_Repository.Controllers
             var userId = GetCurrentUserId();
             if (userId == Guid.Empty) return Unauthorized();
 
-            // enforce that non-admins only update their own status
             if (!User.IsInRole("Admin"))
             {
                 result.UserId = userId;
