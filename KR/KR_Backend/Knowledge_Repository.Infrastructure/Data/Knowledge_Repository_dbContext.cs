@@ -3,9 +3,10 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
-
 using Knowledge_Repository.Domain.Entities;
+
 namespace Knowledge_Repository.Infrastructure.Data;
+
 public partial class Knowledge_Repository_dbContext : DbContext
 {
     public Knowledge_Repository_dbContext(DbContextOptions<Knowledge_Repository_dbContext> options)
@@ -60,6 +61,8 @@ public partial class Knowledge_Repository_dbContext : DbContext
     public virtual DbSet<Team> Teams { get; set; }
 
     public virtual DbSet<TeamFeedback> TeamFeedbacks { get; set; }
+
+    public virtual DbSet<TeamFeedbackReply> TeamFeedbackReplies { get; set; }
 
     public virtual DbSet<TeamMember> TeamMembers { get; set; }
 
@@ -946,6 +949,7 @@ public partial class Knowledge_Repository_dbContext : DbContext
                 .HasColumnName("created_on");
             entity.Property(e => e.EventId).HasColumnName("event_id");
             entity.Property(e => e.FeedbackText).HasColumnName("feedback_text");
+            entity.Property(e => e.LastReplyOn).HasColumnName("last_reply_on");
             entity.Property(e => e.MentorId).HasColumnName("mentor_id");
             entity.Property(e => e.ProgressRating).HasColumnName("progress_rating");
             entity.Property(e => e.TeamId).HasColumnName("team_id");
@@ -962,6 +966,38 @@ public partial class Knowledge_Repository_dbContext : DbContext
             entity.HasOne(d => d.Team).WithMany(p => p.TeamFeedbacks)
                 .HasForeignKey(d => d.TeamId)
                 .HasConstraintName("fk_team_feedback_team");
+        });
+
+        modelBuilder.Entity<TeamFeedbackReply>(entity =>
+        {
+            entity.HasKey(e => e.ReplyId).HasName("team_feedback_reply_pkey");
+
+            entity.ToTable("team_feedback_reply");
+
+            entity.Property(e => e.ReplyId)
+                .HasDefaultValueSql("gen_random_uuid()")
+                .HasColumnName("reply_id");
+            entity.Property(e => e.CreatedOn)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("created_on");
+            entity.Property(e => e.FeedbackId).HasColumnName("feedback_id");
+            entity.Property(e => e.ReplyText)
+                .IsRequired()
+                .HasColumnName("reply_text");
+            entity.Property(e => e.TeamId).HasColumnName("team_id");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+
+            entity.HasOne(d => d.Feedback).WithMany(p => p.TeamFeedbackReplies)
+                .HasForeignKey(d => d.FeedbackId)
+                .HasConstraintName("fk_team_feedback_reply_feedback");
+
+            entity.HasOne(d => d.Team).WithMany(p => p.TeamFeedbackReplies)
+                .HasForeignKey(d => d.TeamId)
+                .HasConstraintName("fk_team_feedback_reply_team");
+
+            entity.HasOne(d => d.User).WithMany(p => p.TeamFeedbackReplies)
+                .HasForeignKey(d => d.UserId)
+                .HasConstraintName("fk_team_feedback_reply_user");
         });
 
         modelBuilder.Entity<TeamMember>(entity =>

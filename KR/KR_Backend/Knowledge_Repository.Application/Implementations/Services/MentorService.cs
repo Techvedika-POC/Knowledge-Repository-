@@ -1,7 +1,11 @@
 ﻿using Knowledge_Repository.Application.Dtos.Mentor;
+using Knowledge_Repository.Application.Dtos;
 using Knowledge_Repository.Application.Interfaces.Repositories;
 using Knowledge_Repository.Application.Interfaces.Services;
+using Knowledge_Repository.Application.Dtos.EventInsight;
+
 using Knowledge_Repository.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,7 +21,6 @@ namespace Knowledge_Repository.Application.Implementations.Services
         {
             _mentorRepo = mentorRepo;
         }
-
         public async Task<IEnumerable<TeamDetailsDto>> GetTeamsForMentorAsync(Guid mentorId)
         {
             if (mentorId == Guid.Empty)
@@ -25,14 +28,25 @@ namespace Knowledge_Repository.Application.Implementations.Services
 
             var teams = await _mentorRepo.GetAssignedTeamsAsync(mentorId);
 
-            return teams.Select(t => new TeamDetailsDto
+            var teamDtos = new List<TeamDetailsDto>();
+
+            foreach (var team in teams.Where(t => t != null))
             {
-                TeamId = t.TeamId,
-                TeamName = t.TeamName,
-                EventId = t.EventId,
-                Description = t.Event?.Description, 
-                ProjectTitle = null
-            }).ToList();
+                var eventDescription = team.Event?.Description ?? "No description available";
+
+                teamDtos.Add(new TeamDetailsDto
+                {
+                    TeamId = team.TeamId,
+                    TeamName = team.TeamName,
+
+                    EventId = team.EventId ?? Guid.Empty,
+
+                    Description = eventDescription,
+                    ProjectTitle = null
+                });
+            }
+
+            return teamDtos;
         }
 
 
@@ -47,42 +61,103 @@ namespace Knowledge_Repository.Application.Implementations.Services
 
             var feedbacks = await _mentorRepo.GetTeamFeedbacksAsync(teamId);
 
-            // Safely map members
             var members = team.TeamMembers?.Select(m => new MemberDto
             {
                 UserId = m.UserId,
-                Name = m.User?.Name, 
+                Name = m.User?.Name,
                 Email = m.User?.Email,
-                Role = m.User?.UserRoleUsers
-                             ?.FirstOrDefault()?.Role?.RoleName 
+                Role = m.User?.UserRoleUsers?.FirstOrDefault()?.Role?.RoleName
             }).ToList() ?? new List<MemberDto>();
+
+
+            var submissions = team.EventKnowledgeItems
+                .Where(eki => eki.Item != null)
+                .Select(eki => eki.Item)
+                .Select(k => new KnowledgeItemDto
+                {
+                    ItemId = k.ItemId,
+                    Title = k.Title,
+                    Description = k.Description,
+
+                    Tags = k.KnowledgeTags
+                            .Select(t => t.TagName)
+                            .ToList(),
+
+                    DomainId = k.DomainId,
+                    DomainName = k.Domain?.DomainName,
+                    CategoryId = k.CategoryId,
+                    CategoryName = k.Category?.CategoryName,
+
+                    OwnerId = k.OwnerId,
+                    OwnerName = k.Owner?.Name,
+
+                    Views = k.Engagements.Count(e => e.EngagementType == "View"),
+                    Likes = k.Engagements.Count(e => e.EngagementType == "Like"),
+                    Comments = k.Engagements.Count(e => e.EngagementType == "Comment"),
+                    EngagementScore = k.Engagements.Count(),
+
+                    IsEventItem = k.IsEventItem,
+                    CreatedBy = k.CreatedBy,
+                    CreatedByName = k.CreatedByNavigation?.Name,
+                    UpdatedBy = k.UpdatedBy,
+                    UpdatedByName = k.UpdatedByNavigation?.Name,
+
+                    CreatedOn = k.CreatedOn.HasValue
+                        ? new DateTimeOffset(k.CreatedOn.Value)
+                        : default,
+
+                    UpdatedOn = k.UpdatedOn,
+
+                    Language = k.Language,
+                    Framework = k.Framework,
+                    Metadata = k.Metadata,
+
+                    KnowledgeItem = k.KnowledgeText,
+                    SubmittedBy = k.Owner?.Name
+                })
+                .ToList();
+
+
+            var feedbackDtos = feedbacks.Select(f => new FeedbackResponseDto
+            {
+                FeedbackId = f.FeedbackId,
+                MentorId = f.MentorId,
+                TeamId = f.TeamId,
+                FeedbackText = f.FeedbackText,
+                ProgressRating = f.ProgressRating,
+                CreatedOn = f.CreatedOn,
+
+                Replies = team.TeamFeedbackReplies
+                    .Where(r => r.FeedbackId == f.FeedbackId)
+                    .Select(r => new FeedbackReplyDto
+                    {
+                        ReplyId = r.ReplyId,
+                        ReplyText = r.ReplyText,
+                        UserName = r.User?.Name,
+                        CreatedOn = r.CreatedOn
+                    })
+                    .ToList()
+            }).ToList();
+
 
             return new TeamDetailsDto
             {
                 TeamId = team.TeamId,
                 TeamName = team.TeamName,
-                EventId = team.EventId, 
-                Description = team.Event?.Description, 
+                EventId = team.EventId ?? Guid.Empty,
+                Description = team.Event?.Description,
                 ProjectTitle = null,
                 Members = members,
-                Feedbacks = feedbacks.Select(f => new FeedbackResponseDto
-                {
-                    FeedbackId = f.FeedbackId,
-                    MentorId = f.MentorId,
-                    TeamId = f.TeamId,
-                    FeedbackText = f.FeedbackText,
-                    ProgressRating = f.ProgressRating,
-                    CreatedOn = f.CreatedOn
-                }).ToList()
+                Feedbacks = feedbackDtos,
+                Submissions = submissions
             };
-
         }
+
 
         public async Task<FeedbackResponseDto> AddFeedbackAsync(AddFeedbackRequestDto request)
         {
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
-
             if (request.TeamId == Guid.Empty)
                 throw new ArgumentException("Invalid team ID.", nameof(request.TeamId));
             if (request.EventId == Guid.Empty)
@@ -97,7 +172,7 @@ namespace Knowledge_Repository.Application.Implementations.Services
             var feedback = new TeamFeedback
             {
                 FeedbackId = Guid.NewGuid(),
-                MentorId = mentor.MentorId, 
+                MentorId = mentor.MentorId,
                 TeamId = request.TeamId,
                 EventId = request.EventId,
                 FeedbackText = request.FeedbackText.Trim(),
@@ -117,7 +192,6 @@ namespace Knowledge_Repository.Application.Implementations.Services
                 CreatedOn = feedback.CreatedOn
             };
         }
-
 
         public async Task<bool> UpdateFeedbackAsync(UpdateFeedbackRequestDto request)
         {

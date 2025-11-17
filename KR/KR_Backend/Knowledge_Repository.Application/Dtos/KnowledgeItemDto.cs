@@ -9,11 +9,11 @@ namespace Knowledge_Repository.Application.Dtos
         public Guid ItemId { get; set; }
         public int EngagementScore { get; set; }
         public DateTimeOffset CreatedOn { get; set; }
-        public string Language { get; set; } = "[]";  
-        public string Framework { get; set; } = "[]";  
-        public int Views { get; set; }       
-        public int Likes { get; set; }       
-        public int Comments { get; set; }    
+        public string Language { get; set; } = "[]";
+        public string Framework { get; set; } = "[]";
+        public int Views { get; set; }
+        public int Likes { get; set; }
+        public int Comments { get; set; }
         public string Title { get; set; }
         public string Description { get; set; }
 

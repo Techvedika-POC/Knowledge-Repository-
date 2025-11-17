@@ -55,9 +55,9 @@ function AppShell() {
 
           {/* ✅ Manager Dashboard */}
           <Route
-            path="manager-dashboard"
+            path="mentor-dashboard"
             element={
-              <ProtectedRoute requireManager={true}>
+              <ProtectedRoute requireMentor={true}>
                 <MentorDashboard />
               </ProtectedRoute>
             }

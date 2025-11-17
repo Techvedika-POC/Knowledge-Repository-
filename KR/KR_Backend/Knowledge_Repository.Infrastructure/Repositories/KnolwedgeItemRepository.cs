@@ -163,7 +163,7 @@ namespace Knowledge_Repository.Infrastructure.Repositories
                 .Include(k => k.Owner)
                 .Include(k => k.KnowledgeTags)
                 .Include(k => k.Engagements)
-                .Where(k => k.Status == "Approved") 
+                .Where(k => k.Status == "Approved")
                 .OrderByDescending(k => k.CreatedOn)
                 .Take(count)
                 .AsNoTracking()
@@ -173,7 +173,7 @@ namespace Knowledge_Repository.Infrastructure.Repositories
         {
             return await _context.KnowledgeItems
                 .Where(k => itemIds.Contains(k.ItemId))
-                .Include(k => k.Owner) 
+                .Include(k => k.Owner)
                 .ToListAsync();
         }
         public async Task<KnowledgeItem?> GetByTitleAndUserAsync(string title, Guid userId)
@@ -210,7 +210,7 @@ namespace Knowledge_Repository.Infrastructure.Repositories
 
             return versions;
         }
-
+     
 
     }
 }

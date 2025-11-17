@@ -4,7 +4,7 @@
 .vs/
 *.user
 *.suo
- 
+
 # Build / Debug files
 *.pdb
 *.mdb
@@ -15,7 +15,7 @@
 *.ipdb
 *.tlog
 *.log
- 
+
 # Razor and SDK caches
 *.csproj.user
 *.csproj.CoreCompileInputs.cache
@@ -26,7 +26,7 @@
 *.nupkg.metadata
 *.nuget.props
 *.nuget.targets
- 
+
 ###############################
 # Build and Publish Artifacts
 ###############################
@@ -40,19 +40,19 @@ TestResults_*/
 *.trx
 *.coverage
 *.coveragexml
- 
+
 # static web assets
 **/staticwebassets.build.json
 **/staticwebassets.development.json
 **/staticwebassets.build.endpoints.json
 **/staticwebassets.build.json.cache
- 
+
 # compiled libraries/executables
 *.dll
 *.exe
 *.appx
 *.apphost.exe
- 
+
 ###############################
 # IDE & Editor files
 ###############################
@@ -60,20 +60,20 @@ TestResults_*/
 .vscode/
 *.swp
 *.swo
- 
+
 ###############################
 # OS-specific
 ###############################
 .DS_Store
 Thumbs.db
- 
+
 ###############################
 # Entity Framework Migrations Junk
 ###############################
 *.Designer.cs
 *_Migration.cs
 *.snapshot
- 
+
 ###############################
 # Environment & Config
 ###############################
@@ -81,7 +81,7 @@ Thumbs.db
 .env.*
 appsettings.*.local.json
 appsettings.Development.json
- 
+
 ###############################
 # Node / Frontend (if present)
 ###############################
@@ -89,5 +89,4 @@ node_modules/
 dist/
 npm-debug.log
 yarn-error.log
- 
- 
+

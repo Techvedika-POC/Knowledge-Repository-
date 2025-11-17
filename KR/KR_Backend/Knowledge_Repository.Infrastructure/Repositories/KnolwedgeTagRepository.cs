@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Knowledge_Repository.Infrastructure.Repositories
 {
-    public class KnowledgeTagRepository:GenericRepository<KnowledgeTag>,IKnowledgeTagRepository
+    public class KnowledgeTagRepository : GenericRepository<KnowledgeTag>, IKnowledgeTagRepository
     {
         private readonly Knowledge_Repository_dbContext _context;
 
@@ -20,7 +20,7 @@ namespace Knowledge_Repository.Infrastructure.Repositories
         }
         public async Task AddRangeAsync(IEnumerable<KnowledgeTag> tags)
         {
-            await _context.KnowledgeTags.AddRangeAsync(tags); 
+            await _context.KnowledgeTags.AddRangeAsync(tags);
             await _context.SaveChangesAsync();
         }
         public async Task<List<KnowledgeTag>> GetTagsByItemIdAsync(Guid itemId)

@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Knowledge_Repository.Application.Implementations.Services
 {
-   
+
     public class KnowledgeItemService : IKnowledgeItemService
     {
         private readonly IKnowledgeItemRepository _knowledgeItemRepository;
@@ -24,7 +24,7 @@ namespace Knowledge_Repository.Application.Implementations.Services
         private readonly IUserRepository _userRepository;
         private readonly IFileStorageService _fileStorageService;
         private readonly ILogger<KnowledgeItemService> _logger;
-    
+
 
         public KnowledgeItemService(
            IKnowledgeItemRepository knowledgeItemRepository,
@@ -544,7 +544,7 @@ namespace Knowledge_Repository.Application.Implementations.Services
                             MimeType = a.MimeType,
                             FileSize = a.FileSize,
                             FileUrl = a.FilePath,
-                            FilePath = a.FilePath     
+                            FilePath = a.FilePath
                         })
                         .ToList()
                 })

@@ -8,7 +8,7 @@ import {
   FileText,
   BookOpenCheck,
   Briefcase,
-  GraduationCap, // ✅ for Mentor Dashboard icon
+  GraduationCap, 
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -85,13 +85,14 @@ export default function Sidebar() {
         active={location.pathname === "/app/contributions"}
         onClick={() => navigate("/app/contributions")}
       />
+
       {/* Manager */}
-      {roles.includes("Manager") && (
+      {roles.includes("Mentor") && (
         <MenuItem
           icon={<Briefcase size={16} />}
           label="Mentor Dashboard"
-          active={location.pathname === "/app/manager-dashboard"}
-          onClick={() => navigate("/app/manager-dashboard")}
+          active={location.pathname === "/app/mentor-dashboard"}
+          onClick={() => navigate("/app/mentor-dashboard")}
         />
       )}
 
