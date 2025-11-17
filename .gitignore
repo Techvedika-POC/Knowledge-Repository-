@@ -1,46 +1,93 @@
-# ========================
-# .NET / Visual Studio
-# ========================
+###############################
+# .NET / C# / Visual Studio
+###############################
 .vs/
 *.user
 *.suo
-*.vsp
-*.vspscc
-*.vssscc
-*.cache
-*.log
+ 
+# Build / Debug files
 *.pdb
-*.dbmdl
-*.tmp
-*.bak
-
-# ========================
+*.mdb
+*.cache
+*.ilk
+*.obj
+*.iobj
+*.ipdb
+*.tlog
+*.log
+ 
+# Razor and SDK caches
+*.csproj.user
+*.csproj.CoreCompileInputs.cache
+*.csproj.FileListAbsolute.txt
+*.g.cs
+*.g.i.cs
+*.Generated.cs
+*.nupkg.metadata
+*.nuget.props
+*.nuget.targets
+ 
+###############################
 # Build and Publish Artifacts
-# ========================
+###############################
 bin/
 obj/
 out/
 publish/
+artifacts/
 TestResults/
-coverage/
-
-# ========================
+TestResults_*/
+*.trx
+*.coverage
+*.coveragexml
+ 
+# static web assets
+**/staticwebassets.build.json
+**/staticwebassets.development.json
+**/staticwebassets.build.endpoints.json
+**/staticwebassets.build.json.cache
+ 
+# compiled libraries/executables
+*.dll
+*.exe
+*.appx
+*.apphost.exe
+ 
+###############################
 # IDE & Editor files
-# ========================
+###############################
 .idea/
 .vscode/
 *.swp
 *.swo
-
-# ========================
+ 
+###############################
 # OS-specific
-# ========================
+###############################
 .DS_Store
 Thumbs.db
-
-# ========================
+ 
+###############################
+# Entity Framework Migrations Junk
+###############################
+*.Designer.cs
+*_Migration.cs
+*.snapshot
+ 
+###############################
 # Environment & Config
-# ========================
+###############################
 .env
 .env.*
 appsettings.*.local.json
+appsettings.Development.json
+ 
+###############################
+# Node / Frontend (if present)
+###############################
+node_modules/
+dist/
+npm-debug.log
+yarn-error.log
+ 
+ 
