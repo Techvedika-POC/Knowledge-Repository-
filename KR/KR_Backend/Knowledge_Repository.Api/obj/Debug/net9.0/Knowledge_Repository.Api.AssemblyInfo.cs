@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Knowledge_Repository.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+bce33b6393caae729d6a608627ebc20ffb697333")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+537ffbfdc9eeb42b26e239a6e0fe19a9f1ab89a7")]
 [assembly: System.Reflection.AssemblyProductAttribute("Knowledge_Repository.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Knowledge_Repository.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
