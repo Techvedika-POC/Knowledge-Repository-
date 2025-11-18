@@ -92,5 +92,15 @@ namespace Knowledge_Repository.Application.Implementations.Services
             await _eventRepository.DeleteAsync(existing);
             return true;
         }
+        public async Task<List<Event>> GetCurrentIdeathonsAsync()
+        {
+            var todayUtc = DateTime.UtcNow.Date;
+            return await _eventRepository.GetCurrentIdeathonsAsync(todayUtc);
+        }
+
+        public async Task<List<Event>> GetIdeathonsForMonthAsync(int year, int month)
+        {
+            return await _eventRepository.GetIdeathonsForMonthAsync(year, month);
+        }
     }
 }

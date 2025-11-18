@@ -48,5 +48,37 @@ namespace Knowledge_Repository.Infrastructure.Repositories
             _context.Events.Remove(evt);
             await _context.SaveChangesAsync();
         }
+        public async Task<List<Event>> GetCurrentIdeathonsAsync(DateTime todayUtc)
+        {
+            var today = DateOnly.FromDateTime(todayUtc.ToLocalTime()); 
+
+            return await _context.Events
+                .Where(e => e.EventType == "Ideathon"
+                            && e.StartDate.HasValue
+                            && e.EndDate.HasValue
+                            && e.StartDate.Value <= today
+                            && e.EndDate.Value >= today)
+                .AsNoTracking()
+                .OrderBy(e => e.StartDate)
+                .ToListAsync();
+        }
+
+        public async Task<List<Event>> GetIdeathonsForMonthAsync(int year, int month)
+        {
+            if (month < 1 || month > 12) return new List<Event>();
+
+            var monthStart = new DateOnly(year, month, 1);
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1); 
+
+            return await _context.Events
+                .Where(e => e.EventType == "Ideathon"
+                            && e.StartDate.HasValue
+                            && e.EndDate.HasValue
+                            && e.StartDate.Value <= monthEnd
+                            && e.EndDate.Value >= monthStart)
+                .AsNoTracking()
+                .OrderBy(e => e.StartDate)
+                .ToListAsync();
+        }
     }
 }

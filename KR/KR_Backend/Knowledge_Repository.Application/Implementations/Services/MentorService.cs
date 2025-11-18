@@ -21,33 +21,83 @@ namespace Knowledge_Repository.Application.Implementations.Services
         {
             _mentorRepo = mentorRepo;
         }
-        public async Task<IEnumerable<TeamDetailsDto>> GetTeamsForMentorAsync(Guid mentorId)
+        public async Task<IEnumerable<TeamsByMonthDto>> GetTeamsForMentorAsync(Guid mentorId)
         {
             if (mentorId == Guid.Empty)
                 throw new ArgumentException("Invalid mentor ID.", nameof(mentorId));
 
-            var teams = await _mentorRepo.GetAssignedTeamsAsync(mentorId);
+            
+            var teams = (await _mentorRepo.GetAssignedTeamsAsync(mentorId))?.Where(t => t != null).ToList()
+                        ?? new List<Team>();
 
-            var teamDtos = new List<TeamDetailsDto>();
+            var detailedList = new List<(TeamDetailsDto Details, DateOnly? GroupDate)>();
 
-            foreach (var team in teams.Where(t => t != null))
+            foreach (var t in teams)
             {
-                var eventDescription = team.Event?.Description ?? "No description available";
-
-                teamDtos.Add(new TeamDetailsDto
+                TeamDetailsDto details;
+                try
                 {
-                    TeamId = team.TeamId,
-                    TeamName = team.TeamName,
+                    details = await GetTeamDetailsAsync(t.TeamId);
+                }
+                catch (KeyNotFoundException)
+                {
+                   
+                    continue;
+                }
 
-                    EventId = team.EventId ?? Guid.Empty,
+               
+                DateOnly? groupDate = null;
+                if (t.Event?.StartDate.HasValue == true)
+                {
+                    groupDate = t.Event.StartDate.Value;
+                }
+                else if (t.CreatedOn.HasValue)
+                {
+                  
+                    groupDate = DateOnly.FromDateTime(t.CreatedOn.Value);
+                }
 
-                    Description = eventDescription,
-                    ProjectTitle = null
-                });
+                detailedList.Add((details, groupDate));
             }
 
-            return teamDtos;
+       
+            var grouped = detailedList
+                .GroupBy(d =>
+                {
+                    var gd = d.GroupDate;
+                    if (gd.HasValue) return (Year: gd.Value.Year, Month: gd.Value.Month);
+                    return (Year: 1, Month: 1); 
+                })
+                .Select(g =>
+                {
+                    var year = g.Key.Year;
+                    var month = g.Key.Month;
+                    var monthLabel = (year == 1 && month == 1)
+                        ? "Undated"
+                        : new DateTime(year, month, 1).ToString("MMMM yyyy");
+
+                    return new TeamsByMonthDto
+                    {
+                        Year = year,
+                        Month = month,
+                        MonthLabel = monthLabel,
+                        Teams = g.Select(x => x.Details).OrderBy(d => d.TeamName).ToList()
+                    };
+                })
+               
+                .OrderByDescending(x => x.Year)
+                .ThenByDescending(x => x.Month)
+                .ToList();
+
+           
+            var datedGroups = grouped.Where(g => g.Year != 1).ToList();
+            var undatedGroups = grouped.Where(g => g.Year == 1).ToList();
+            var final = datedGroups.Concat(undatedGroups).ToList();
+
+            return final;
         }
+
+
 
 
         public async Task<TeamDetailsDto> GetTeamDetailsAsync(Guid teamId)

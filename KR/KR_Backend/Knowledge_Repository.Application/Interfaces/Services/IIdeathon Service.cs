@@ -24,5 +24,7 @@ namespace Knowledge_Repository.Application.Interfaces.Services
 
         Task SchedulePresentationAsync(Guid eventId, Guid teamId, DateTime presentationDate);
         Task<IEnumerable<Presentation>> GetPresentationsForEventAsync(Guid eventId);
+        Task RemovePresentationAsync(Guid presentationId);
+
     }
 }
