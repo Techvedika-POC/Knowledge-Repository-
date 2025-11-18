@@ -3,15 +3,17 @@ using Knowledge_Repository.Application.Interfaces.Repositories;
 using Knowledge_Repository.Application.Interfaces.Services;
 using Knowledge_Repository.Infrastructure.Data;
 using Knowledge_Repository.Infrastructure.Repositories;
+using Knowledge_Repository.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Security.Claims;
 using System.Text;
-using Microsoft.Extensions.FileProviders;
+
 
 
 IdentityModelEventSource.ShowPII = true;
@@ -22,9 +24,7 @@ builder.Services.AddDbContext<Knowledge_Repository_dbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
 
-// ==========================
 // Register Repositories
-// ==========================
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserRoleRepository, UserRoleRepository>();
 builder.Services.AddScoped<IDepartmentRepository, DepartmentRepository>();
@@ -51,10 +51,7 @@ builder.Services.AddScoped<IEventKnowledgeItemRepository, EventKnowledgeItemRepo
 builder.Services.AddScoped<IKnowledgeTagRepository, KnowledgeTagRepository>();
 builder.Services.AddScoped<IKnowledgeVersionRepository, KnowledgeVersionRepository>();
 
-
-// ==========================
 // Register Services
-// ==========================
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 builder.Services.AddScoped<IEventService, EventService>();
@@ -171,13 +168,11 @@ if (!Directory.Exists(uploadsPhysicalPath))
 {
     Directory.CreateDirectory(uploadsPhysicalPath);
 }
-
-// Serve that same folder at the /uploads URL path
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(uploadsPhysicalPath),
     RequestPath = "/uploads",
-    ServeUnknownFileTypes = true,            // optional; allows unknown extensions
+    ServeUnknownFileTypes = true,            
     DefaultContentType = "application/octet-stream"
 });
 

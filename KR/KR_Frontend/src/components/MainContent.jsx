@@ -39,7 +39,7 @@ const MainContent = () => {
     const fetchEvent = async () => {
       try {
         setLoading(true);
-        const res = await api.get("/Events/type/Ideathon");
+        const res = await api.get("/Events/type/Ideathon/current");
         setIdeathonEvent(res.data[0] || null);
       } catch (err) {
         console.error("Error fetching Ideathon event:", err);
@@ -234,7 +234,7 @@ const MainContent = () => {
       </div>
 
       {/* Quick Events  */}
-      <div className="px-6 mt-2">
+      <div className="px-6 mt-0">
         <QuickEvents navigate={navigate} />
       </div>
 
@@ -319,3 +319,4 @@ const MainContent = () => {
 };
 
 export default MainContent;
+

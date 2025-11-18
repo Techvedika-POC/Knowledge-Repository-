@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Calendar, Users, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import api from "../api";
@@ -10,12 +10,11 @@ export default function IdeathonPage() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [activeTab, setActiveTab] = useState({});
+  const [selectedEventId, setSelectedEventId] = useState(null);
   const [userId] = useState(localStorage.getItem("userId"));
-  const navigate = useNavigate();
-
-  // State for preview modal
   const [previewItem, setPreviewItem] = useState(null);
+  const [viewMode, setViewMode] = useState("current"); // "current" | "past" | "all"
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -24,12 +23,9 @@ export default function IdeathonPage() {
         const res = await api.get("/Events/type/Ideathon");
         const eventsData = res?.data || [];
         setEvents(eventsData);
-
-        if (eventsData.length > 0) {
-          setActiveTab({ [eventsData[0].eventId]: "overview" });
-        }
+        setSelectedEventId(null);
       } catch (err) {
-        console.error("Error fetching Ideathon events:", err);
+        console.error(err);
         setError("Failed to load Ideathon events.");
       } finally {
         setLoading(false);
@@ -38,345 +34,289 @@ export default function IdeathonPage() {
     fetchEvents();
   }, []);
 
-  const handleTabChange = (eventId, tab) => {
-    setActiveTab((prev) => ({ ...prev, [eventId]: tab }));
+  const now = () => new Date();
+  const isCurrentEvent = (event) => {
+    if (!event) return false;
+    const n = now();
+    if (event.startDate && event.endDate) return new Date(event.startDate) <= n && n <= new Date(event.endDate);
+    if (event.finalSubmissionDeadline) return n <= new Date(event.finalSubmissionDeadline);
+    if (event.startDate) return new Date(event.startDate) <= n;
+    return false;
   };
 
-  const handleSubmitIdea = async (eventId, isRegistered) => {
-    if (!userId) {
-      navigate("/login");
-      return;
-    }
-    try {
-      if (isRegistered) {
-        navigate("/app/upload-knowledge", { state: { eventId } });
-      } else {
-        navigate("/app/events/event-registration", { state: { eventId } });
+  const isPastEvent = (event) => {
+    if (!event) return false;
+    const n = now();
+    if (event.endDate) return n > new Date(event.endDate);
+    if (event.finalSubmissionDeadline) return n > new Date(event.finalSubmissionDeadline);
+    return false;
+  };
+
+  const isFinished = (event) => isPastEvent(event);
+
+  const filteredEvents = useMemo(() => {
+    const list = events.filter((ev) => {
+      if (viewMode === "current") return isCurrentEvent(ev);
+      if (viewMode === "past") return isPastEvent(ev);
+      return true; // all
+    });
+    return list;
+  }, [events, viewMode]);
+
+  const selectedEvent = events.find((e) => e.eventId === selectedEventId) || null;
+
+  const goToRegistration = (eventId) => navigate("/app/events/event-registration", { state: { eventId } });
+  const goToUpload = (eventId) => navigate("/app/upload-knowledge", { state: { eventId } });
+
+  const handleSubmitIdea = (eventId, isRegistered, eventObj) => {
+    if (!eventObj) return;
+    if (eventObj.finalSubmissionDeadline) {
+      const deadline = new Date(eventObj.finalSubmissionDeadline);
+      if (new Date() > deadline) {
+        alert("Submissions are closed for this event (deadline passed).");
+        return;
       }
-    } catch (err) {
-      console.error("Error handling submission:", err);
-      navigate("/app/events/event-registration", { state: { eventId } });
     }
+    if (!userId) return navigate("/login");
+    if (isRegistered) goToUpload(eventId);
+    else goToRegistration(eventId);
   };
 
-  if (loading)
-    return <p className="text-center text-gray-600">Loading events...</p>;
+  if (loading) return <p className="text-center text-gray-600">Loading events...</p>;
   if (error) return <p className="text-center text-red-500">{error}</p>;
-  if (events.length === 0)
-    return <p className="text-center text-gray-600">No Ideathon events available.</p>;
+  if (events.length === 0) return <p className="text-center text-gray-600">No Ideathon events available.</p>;
 
   return (
-    <div className="space-y-12 p-8">
-      {events.map((event) => (
-        <IdeathonCard
-          key={event.eventId}
-          event={event}
-          userId={userId}
-          activeTab={activeTab[event.eventId] || "overview"}
-          onTabChange={(tab) => handleTabChange(event.eventId, tab)}
-          onSubmitIdea={handleSubmitIdea}
-          onPreview={(item) => setPreviewItem(item)} // Pass preview handler
-        />
-      ))}
+    <div className="p-6 space-y-6">
+      {/* Header with subtle gradient */}
+      <header className="rounded-2xl p-6 bg-gradient-to-r from-indigo-50 via-sky-50 to-emerald-50 shadow-sm">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-extrabold text-gray-900">Ideathon <span className="text-indigo-600">Hub</span></h1>
+            <p className="text-sm text-gray-600 mt-1 max-w-2xl">Browse ideathons — switch between <span className="font-semibold text-sky-600">Current</span>, <span className="font-semibold text-gray-600">Past</span> or <span className="font-semibold text-indigo-600">All</span>. Click an event to open full details below.</p>
+          </div>
 
-      {previewItem && (
-        <PreviewModal
-          item={previewItem}
-          onClose={() => setPreviewItem(null)}
-        />
+          {/* Segmented control (centered) */}
+          <div className="w-full md:w-2/5 lg:w-1/3">
+            <nav className="grid grid-cols-3 gap-6 bg-white p-2 rounded-3xl shadow-md">
+              {[
+                { key: "current", label: `Current (${events.filter(isCurrentEvent).length})` },
+                { key: "past", label: `Past (${events.filter(isPastEvent).length})` },
+                { key: "all", label: `All (${events.length})` },
+              ].map((t) => (
+                <button
+                  key={t.key}
+                  onClick={() => { setViewMode(t.key); setSelectedEventId(null); }}
+                  className={`py-3 rounded-2xl font-semibold text-sm transition-shadow text-center ${viewMode === t.key ? "bg-gradient-to-r from-blue-600 to-sky-500 text-white shadow-lg" : "bg-gray-50 text-gray-700 hover:bg-gray-100"}`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </nav>
+          </div>
+        </div>
+      </header>
+
+      {/* Selected event detail (full width) */}
+      {selectedEvent && (
+        <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} className="w-full">
+          <EventDetail
+            event={selectedEvent}
+            userId={userId}
+            onPreview={(item) => setPreviewItem(item)}
+            onRegister={() => goToRegistration(selectedEvent.eventId)}
+            onSubmitIdea={(eid, isReg) => handleSubmitIdea(eid, isReg, selectedEvent)}
+            fullWidth
+            isFinished={isFinished(selectedEvent)}
+          />
+        </motion.div>
       )}
+
+      {/* Cards grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredEvents.map((ev) => (
+          <motion.button
+            key={ev.eventId}
+            onClick={() => setSelectedEventId(ev.eventId)}
+            whileHover={{ translateY: -4 }}
+            className={`group text-left p-5 rounded-2xl shadow-sm border transition-all bg-white hover:shadow-lg ${selectedEventId === ev.eventId ? "ring-2 ring-indigo-100" : ""}`}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
+                <h3 className="font-semibold text-lg text-gray-800 group-hover:text-indigo-600">{ev.title}</h3>
+                <p className="mt-2 text-sm text-gray-600 line-clamp-3">{ev.description}</p>
+              </div>
+              <div className="ml-2 flex flex-col items-end gap-2">
+                <div className={`text-xs px-2 py-1 rounded-full font-medium ${isCurrentEvent(ev) ? 'bg-sky-50 text-sky-700' : isPastEvent(ev) ? 'bg-gray-100 text-gray-600' : 'bg-amber-50 text-amber-700'}`}>{isCurrentEvent(ev) ? 'Ongoing' : isPastEvent(ev) ? 'Finished' : 'Upcoming'}</div>
+                <div className="text-xs text-gray-400">{ev.startDate ? new Date(ev.startDate).toLocaleDateString() : ''}</div>
+              </div>
+            </div>
+
+            <div className="mt-4 flex items-center justify-between">
+              <div className="flex items-center gap-3 text-xs text-gray-500">
+                {ev.finalSubmissionDeadline && (
+                  <div className="flex items-center gap-1"><Calendar className="w-4 h-4 text-gray-400" /> <span>Deadline: <span className="font-medium text-gray-700">{new Date(ev.finalSubmissionDeadline).toLocaleDateString()}</span></span></div>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button onClick={(e) => { e.stopPropagation(); setSelectedEventId(ev.eventId); }} className="px-3 py-1 rounded-full border text-sm text-gray-700 hover:bg-gray-50">Open</button>
+                <button onClick={(e) => { e.stopPropagation(); if (isCurrentEvent(ev)) navigate('/app/upload-knowledge', { state: { eventId: ev.eventId } }); else alert('Submission not allowed'); }} className="px-3 py-1 rounded-full bg-indigo-600 text-white text-sm hover:bg-indigo-700">Submit</button>
+              </div>
+            </div>
+          </motion.button>
+        ))}
+      </div>
+
+      {previewItem && <PreviewModal item={previewItem} onClose={() => setPreviewItem(null)} />}
     </div>
   );
 }
 
-function IdeathonCard({ event, userId, activeTab, onTabChange, onSubmitIdea, onPreview }) {
+/* ------------------ EventDetail component (full event timeline + submissions + feedback) ------------------ */
+function EventDetail({ event, userId, onPreview, onRegister, onSubmitIdea, fullWidth = false, isFinished = false }) {
   const [isRegistered, setIsRegistered] = useState(false);
   const [submissions, setSubmissions] = useState([]);
   const [feedback, setFeedback] = useState([]);
   const [insight, setInsight] = useState(null);
   const [replyText, setReplyText] = useState("");
-  const [subFeedbackTab, setSubFeedbackTab] = useState("submissions"); // nested tab
+  const [tab, setTab] = useState("overview");
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetch = async () => {
       try {
         if (userId) {
-          const regRes = await api.get(
-            `/EventRegistration/is-registered/${event.eventId}?userId=${userId}`
-          );
+          const regRes = await api.get(`/EventRegistration/is-registered/${event.eventId}?userId=${userId}`);
           setIsRegistered(regRes?.data?.isRegistered || false);
 
-          const insightRes = await api.get(
-            `/Events/${event.eventId}/user/${userId}/insight`
-          );
+          const insightRes = await api.get(`/Events/${event.eventId}/user/${userId}/insight`);
           const data = insightRes?.data?.data;
           if (data) {
             setSubmissions(data.submissions || []);
             setFeedback(data.feedbacks || []);
             setInsight(data);
+          } else {
+            setSubmissions([]);
+            setFeedback([]);
+            setInsight(null);
           }
         }
       } catch (err) {
-        console.error("Error fetching user data for event:", err);
+        console.warn(err);
       }
     };
-    fetchData();
+    fetch();
   }, [event.eventId, userId]);
 
   const handleReply = async (feedbackId) => {
     if (!replyText.trim()) return;
     try {
-      await api.post(
-        `/EventInsight/feedback/${feedbackId}/reply?userId=${userId}`,
-        replyText,
-        { headers: { "Content-Type": "application/json" } }
-      );
-      setReplyText("");
-      alert("Reply submitted successfully!");
+      await api.post(`/EventInsight/feedback/${feedbackId}/reply?userId=${userId}`, replyText, { headers: { 'Content-Type': 'application/json' } });
+      setReplyText('');
+      alert('Reply submitted');
+      const insightRes = await api.get(`/Events/${event.eventId}/user/${userId}/insight`);
+      const data = insightRes?.data?.data;
+      if (data) setFeedback(data.feedbacks || []);
     } catch (err) {
-      console.error("Error posting reply:", err);
+      console.error(err);
+      alert('Failed to send reply');
     }
   };
 
-  const timeline = [
-    event.startDate && {
-      phase: "Team Formation & Registration",
-      date: `${new Date(event.startDate).toLocaleDateString()} – ${
-        event.registrationCloseDate
-          ? new Date(event.registrationCloseDate).toLocaleDateString()
-          : ""
-      }`,
-    },
-    event.finalSubmissionDeadline && {
-      phase: "Idea Submission Deadline",
-      date: new Date(event.finalSubmissionDeadline).toLocaleDateString(),
-    },
-    event.mentorCheckpointStart && {
-      phase: "Midway Mentor Review",
-      date: event.mentorCheckpointEnd
-        ? `${new Date(event.mentorCheckpointStart).toLocaleDateString()} – ${new Date(
-            event.mentorCheckpointEnd
-          ).toLocaleDateString()}`
-        : new Date(event.mentorCheckpointStart).toLocaleDateString(),
-    },
-    event.ideaPresentationStart && {
-      phase: "Final Presentations",
-      date: event.ideaPresentationEnd
-        ? `${new Date(event.ideaPresentationStart).toLocaleDateString()} – ${new Date(
-            event.ideaPresentationEnd
-          ).toLocaleDateString()}`
-        : new Date(event.ideaPresentationStart).toLocaleDateString(),
-    },
-    event.winnersAnnouncementDate && {
-      phase: "Winner Announcement",
-      date: new Date(event.winnersAnnouncementDate).toLocaleDateString(),
-    },
-  ].filter(Boolean);
+  // Build a full timeline with all available date fields in order
+  const timelineEntries = [];
+  if (event.startDate) timelineEntries.push({ key: 'start', label: 'Start', date: new Date(event.startDate) });
+  if (event.registrationCloseDate) timelineEntries.push({ key: 'regClose', label: 'Registration Close', date: new Date(event.registrationCloseDate) });
+  if (event.mentorCheckpointStart) timelineEntries.push({ key: 'mentorStart', label: 'Mentor Checkpoint Start', date: new Date(event.mentorCheckpointStart) });
+  if (event.mentorCheckpointEnd) timelineEntries.push({ key: 'mentorEnd', label: 'Mentor Checkpoint End', date: new Date(event.mentorCheckpointEnd) });
+  if (event.finalSubmissionDeadline) timelineEntries.push({ key: 'submission', label: 'Final Submission Deadline', date: new Date(event.finalSubmissionDeadline) });
+  if (event.ideaPresentationStart) timelineEntries.push({ key: 'presentationStart', label: 'Idea Presentation Start', date: new Date(event.ideaPresentationStart) });
+  if (event.ideaPresentationEnd) timelineEntries.push({ key: 'presentationEnd', label: 'Idea Presentation End', date: new Date(event.ideaPresentationEnd) });
+  if (event.endDate) timelineEntries.push({ key: 'end', label: 'End', date: new Date(event.endDate) });
+  if (event.winnersAnnouncementDate) timelineEntries.push({ key: 'winners', label: 'Winners Announcement', date: new Date(event.winnersAnnouncementDate) });
+
+  // sort timeline by date
+  timelineEntries.sort((a, b) => a.date - b.date);
 
   return (
-    <motion.div
-      className="p-8 bg-gradient-to-br from-blue-50 to-white rounded-3xl shadow-xl"
-      initial={{ opacity: 0, y: 40 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-    >
-      {/* Header */}
-      <div className="flex flex-col gap-4 mb-6">
-        <h2 className="text-2xl md:text-3xl font-extrabold text-blue-700">
-          {event.title} – {new Date(event.startDate).getFullYear()}
-        </h2>
-        <p className="text-gray-700">{event.description}</p>
-      </div>
-
-      {/* Top-level Tabs */}
-      <div className="flex gap-4 border-b mb-6">
-        <button
-          className={`pb-2 px-4 font-semibold ${
-            activeTab === "overview"
-              ? "border-b-4 border-blue-600 text-blue-700"
-              : "text-gray-500"
-          }`}
-          onClick={() => onTabChange("overview")}
-        >
-          Overview
-        </button>
-        <button
-          className={`pb-2 px-4 font-semibold ${
-            activeTab === "submissions"
-              ? "border-b-4 border-blue-600 text-blue-700"
-              : "text-gray-500"
-          }`}
-          onClick={() => onTabChange("submissions")}
-        >
-          My Submissions & Feedback
-        </button>
-      </div>
-
-      {/* Overview */}
-      {activeTab === "overview" && (
-        <>
-          <motion.div
-            className="bg-blue-100 border-l-4 border-blue-500 p-4 rounded-lg mb-6"
-            initial={{ x: -40, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-          >
-            <h3 className="text-xl font-semibold text-blue-700 mb-1">Event Theme</h3>
-            <p className="text-blue-800 font-medium">{event.title}</p>
-          </motion.div>
-
-          <div className="flex flex-wrap gap-4 mb-6 text-gray-600">
-            {event.startDate && (
-              <span className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-blue-500" /> Start:{" "}
-                {new Date(event.startDate).toLocaleDateString()}
-              </span>
-            )}
-            {event.endDate && (
-              <span className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-red-500" /> End:{" "}
-                {new Date(event.endDate).toLocaleDateString()}
-              </span>
-            )}
+    <div className={`rounded-2xl p-6 shadow-md border bg-white ${fullWidth ? '' : ''}`}>
+      <div className="flex flex-col md:flex-row items-start justify-between gap-4">
+        <div className="flex-1">
+          <h2 className="text-2xl font-bold text-gray-800">{event.title} <span className="text-indigo-600">• {event.category || 'Ideathon'}</span></h2>
+          <p className="text-sm text-gray-500 mt-1">{event.description}</p>
+          <div className="mt-3 flex items-center gap-3 text-xs text-gray-500">
+            {event.finalSubmissionDeadline && <div className="flex items-center gap-1"><Calendar className="w-4 h-4 text-gray-400" /> <span className="text-gray-700">Deadline: <span className="font-semibold">{new Date(event.finalSubmissionDeadline).toLocaleString()}</span></span></div>}
+            <div className="px-2 py-0.5 rounded-full bg-sky-50 text-sky-700">{event.startDate ? new Date(event.startDate).getFullYear() : ''}</div>
           </div>
+        </div>
 
-          <div className="mb-6">
-            <h3 className="text-xl font-semibold text-gray-800 mb-4">Event Timeline</h3>
-            <div className="space-y-3">
-              {timeline.map((item, idx) => (
-                <motion.div
-                  key={idx}
-                  className="flex justify-between items-center bg-white p-3 rounded-xl shadow-sm border"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.05 }}
-                >
-                  <span className="font-medium text-gray-700">{item.phase}</span>
-                  <span className="text-sm text-gray-500">{item.date}</span>
-                </motion.div>
+        <div className="flex flex-col items-end gap-2">
+          <div className={`text-sm px-3 py-1 rounded-full font-semibold ${!isFinished ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700'}`}>
+            {!isFinished ? 'Open' : 'Finished'}
+          </div>
+        </div>
+      </div>
+
+      {/* small nav */}
+      <div className="mt-6 flex gap-3 border-b pb-3">
+        <button onClick={() => setTab('overview')} className={`px-3 py-2 text-sm rounded-md ${tab === 'overview' ? 'bg-indigo-50 text-indigo-700 font-semibold' : 'text-gray-600'}`}>Overview</button>
+        <button onClick={() => setTab('submissions')} className={`px-3 py-2 text-sm rounded-md ${tab === 'submissions' ? 'bg-indigo-50 text-indigo-700 font-semibold' : 'text-gray-600'}`}>Submissions ({submissions.length})</button>
+        <button onClick={() => setTab('feedback')} className={`px-3 py-2 text-sm rounded-md ${tab === 'feedback' ? 'bg-indigo-50 text-indigo-700 font-semibold' : 'text-gray-600'}`}>Feedback ({feedback.length})</button>
+      </div>
+
+      <div className="mt-4">
+        {tab === 'overview' && (
+          <div>
+            <h4 className="text-sm font-semibold text-gray-700">Full Timeline</h4>
+            <div className="mt-3 space-y-2">
+              {timelineEntries.map((t, i) => (
+                <div key={t.key} className="flex items-center gap-4 bg-gray-50 rounded-md p-3">
+                  <div className="w-44 text-xs text-gray-500">{t.label}</div>
+                  <div className="text-sm text-gray-700">{t.date.toLocaleString()}</div>
+                </div>
               ))}
             </div>
+
+            {/* Submit/Register moved below timeline as requested; hide for finished events */}
+            {!isFinished && (
+              <div className="mt-6 flex gap-3">
+                <button onClick={() => onSubmitIdea(event.eventId, isRegistered, event)} className="px-5 py-2 rounded-full bg-gradient-to-r from-indigo-600 to-sky-500 text-white font-semibold shadow">Submit Your Idea</button>
+                {!isRegistered && <button onClick={() => onRegister()} className="px-5 py-2 rounded-full border font-semibold">Register</button>}
+              </div>
+            )}
           </div>
+        )}
 
-          <div className="text-center mt-4">
-            <button
-              onClick={() => onSubmitIdea(event.eventId, isRegistered)}
-              className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-full font-semibold"
-            >
-              Submit Your Idea
-            </button>
+        {tab === 'submissions' && (
+          <div className="mt-3">
+            {submissions.length > 0 ? (
+              <KnowledgeCardsDisplay items={submissions.map((s) => ({ itemId: s.itemId, title: s.itemTitle, description: s.description || s.itemDescription, tags: s.tags || [], ownerName: s.submittedBy || s.createdByName }))} userId={userId} onPreview={onPreview} />
+            ) : (
+              <div className="text-center text-gray-500 p-6">No submissions yet.</div>
+            )}
           </div>
-          {!isRegistered && (
-            <div className="text-center mt-2 text-sm text-gray-500">
-              You are not registered yet. Click "Submit Your Idea" to register your team first.
-            </div>
-          )}
-        </>
-      )}
+        )}
 
-      {/* Submissions & Feedback Nested Tabs */}
-      {activeTab === "submissions" && (
-        <div className="mt-6 space-y-6">
-          {insight && (
-            <motion.div
-              className="bg-gradient-to-r from-blue-50 to-blue-100 border-l-4 border-blue-500 p-4 rounded-2xl shadow-sm"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-            >
-              <p className="flex items-center gap-3 text-gray-800 font-medium">
-                <Users className="w-5 h-5 text-blue-600" />
-                Team: <strong>{insight.teamName}</strong> |{" "}
-                <Star className="w-5 h-5 text-yellow-500" /> Avg Rating:{" "}
-                <span className="font-semibold">{insight.averageRating || "N/A"}</span>
-              </p>
-            </motion.div>
-          )}
-
-          {/* Nested Tabs */}
-          <div className="flex gap-4 border-b mb-4">
-            <button
-              className={`pb-2 px-4 font-semibold ${
-                subFeedbackTab === "submissions"
-                  ? "border-b-4 border-blue-600 text-blue-700"
-                  : "text-gray-500"
-              }`}
-              onClick={() => setSubFeedbackTab("submissions")}
-            >
-              My Submissions
-            </button>
-            <button
-              className={`pb-2 px-4 font-semibold ${
-                subFeedbackTab === "feedback"
-                  ? "border-b-4 border-blue-600 text-blue-700"
-                  : "text-gray-500"
-              }`}
-              onClick={() => setSubFeedbackTab("feedback")}
-            >
-              Feedback
-            </button>
-          </div>
-
-          {/* Nested Tab Content */}
-          {subFeedbackTab === "submissions" && (
-            <div className="max-h-[650px] overflow-y-auto">
-              {submissions.length > 0 ? (
-                <KnowledgeCardsDisplay
-                  items={submissions.map((s) => ({
-                    itemId: s.itemId,
-                    title: s.itemTitle,
-                    description: s.description || s.itemDescription,
-                    tags: s.tags || [],
-                    ownerName: s.submittedBy || s.createdByName,
-                  }))}
-                  userId={userId}
-                  onPreview={onPreview} // Pass preview callback
-                />
-              ) : (
-                <p className="text-gray-500 text-center mt-4">No submissions yet.</p>
-              )}
-            </div>
-          )}
-
-          {subFeedbackTab === "feedback" && (
-            <div className="max-h-[650px] overflow-y-auto bg-gray-50 rounded-2xl shadow-inner border p-6">
-              {feedback.length > 0 ? (
-                <div className="space-y-4">
-                  {feedback.map((fb) => (
-                    <motion.div
-                      key={fb.feedbackId}
-                      className="bg-white border rounded-xl shadow-sm p-4 hover:shadow-md transition-shadow duration-200"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="font-semibold text-blue-700">{fb.mentorName}</p>
-                        {fb.progressRating && (
-                          <p className="text-sm text-yellow-600">⭐ {fb.progressRating}/5</p>
-                        )}
-                      </div>
-                      <p className="text-gray-700 mb-3">{fb.feedbackText}</p>
-                      <div className="flex gap-2 mt-3">
-                        <input
-                          type="text"
-                          placeholder="Write a reply..."
-                          className="flex-1 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"
-                          value={replyText}
-                          onChange={(e) => setReplyText(e.target.value)}
-                        />
-                        <button
-                          onClick={() => handleReply(fb.feedbackId)}
-                          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-                        >
-                          Reply
-                        </button>
-                      </div>
-                    </motion.div>
-                  ))}
+        {tab === 'feedback' && (
+          <div className="mt-3 space-y-3">
+            {feedback.length > 0 ? feedback.map((fb) => (
+              <div key={fb.feedbackId} className="p-3 bg-gray-50 rounded-lg border">
+                <div className="flex items-center justify-between">
+                  <div className="font-medium text-gray-800">{fb.mentorName}</div>
+                  {fb.progressRating && <div className="text-sm text-amber-600">⭐ {fb.progressRating}/5</div>}
                 </div>
-              ) : (
-                <p className="text-gray-500 text-center mt-4">No feedback received yet.</p>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-    </motion.div>
+                <p className="text-sm text-gray-700 mt-2">{fb.feedbackText}</p>
+                <div className="mt-3 flex gap-2">
+                  <input value={replyText} onChange={(e) => setReplyText(e.target.value)} placeholder="Write a reply..." className="flex-1 rounded-md border px-3 py-2" />
+                  <button onClick={() => handleReply(fb.feedbackId)} className="px-3 py-2 bg-indigo-600 text-white rounded-md">Reply</button>
+                </div>
+              </div>
+            )) : (
+              <div className="text-center text-gray-500 p-6">No feedback yet.</div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

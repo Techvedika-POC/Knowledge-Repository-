@@ -165,5 +165,34 @@ namespace Knowledge_Repository.Controllers
                 return StatusCode(500, new { success = false, message = "Failed to fetch user event insight.", details = ex.Message });
             }
         }
+        [HttpGet("type/Ideathon/current")]
+        public async Task<IActionResult> GetCurrentIdeathons()
+        {
+            try
+            {
+                var events = await _eventService.GetCurrentIdeathonsAsync();
+                return Ok(events);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Failed to load current ideathon events.", detail = ex.Message });
+            }
+        }
+
+        // GET api/Events/type/Ideathon/month/{year}/{month}
+        [HttpGet("type/Ideathon/month/{year:int}/{month:int}")]
+        public async Task<IActionResult> GetIdeathonsForMonth(int year, int month)
+        {
+            try
+            {
+                if (month < 1 || month > 12) return BadRequest("Month must be between 1 and 12.");
+                var events = await _eventService.GetIdeathonsForMonthAsync(year, month);
+                return Ok(events);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Failed to load ideathon events for month.", detail = ex.Message });
+            }
+        }
     }
 }

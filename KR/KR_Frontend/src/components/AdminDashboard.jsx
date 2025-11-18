@@ -4,7 +4,7 @@ import EventManagement from "./EventManagement";
 import DomainManagement from "./DomainCategoryManagement";
 import RoleManagement from "./RoleManagement";
 import KnowledgeQuestManagement from "./KnowledgeQuestManagement";
-import IdeathonEventPage from "./IdeathonEventPage"; // Placeholder page
+import IdeathonEventPage from "./IdeathonEventPage"; 
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("events");
@@ -20,7 +20,7 @@ export default function AdminDashboard() {
       case "knowledgeQuest":
         return <KnowledgeQuestManagement />;
       case "ideathon":
-        return <IdeathonEventPage />; // Render Ideathon placeholder
+        return <IdeathonEventPage />; 
       default:
         return <EventManagement />;
     }
