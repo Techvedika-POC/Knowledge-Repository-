@@ -17,11 +17,11 @@ namespace Knowledge_Repository.Application.Dtos.EventInsight
 
     public class SubmissionDto
     {
-        public Guid ItemId { get; set; }                 // Non-nullable; assign Guid.Empty if EF value is null
+        public Guid ItemId { get; set; }                 
         public string Title { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public string SubmittedBy { get; set; } = string.Empty;
-        public Guid? CreatedBy { get; set; }            // Nullable, matches EF property
+        public Guid? CreatedBy { get; set; }            
         public List<string>? Tags { get; set; }
         public List<FileAttachmentDto>? Attachments { get; set; }
         public DateTime? CreatedOn { get; set; }
@@ -73,6 +73,7 @@ namespace Knowledge_Repository.Application.Dtos.EventInsight
         public List<IFormFile>? Files { get; set; }
         public Guid EventId { get; set; }
         public Guid TeamId { get; set; }
-        public Guid? CreatedBy { get; set; } // ✅ nullable
+        public Guid? CreatedBy { get; set; }
     }
+
 }

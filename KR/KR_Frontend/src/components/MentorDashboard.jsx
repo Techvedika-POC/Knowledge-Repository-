@@ -1,59 +1,80 @@
 import React, { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-hot-toast";
 import api from "../api";
 import KnowledgeCardsDisplay from "../components/KnowledgeCardsDisplay";
 
+/**
+ * MentorDashboard.jsx
+ * - Clean Behance-like header (muted gradient)
+ * - Team cards with Details (inline expand) and View Details (full view)
+ * - Full team view with Tabs: Overview | Submissions | Feedback
+ * - Feedback supports 3 view modes: Timeline | Cards | Chat
+ * - Add Feedback form toggles open only when requested (with rating slider)
+ */
+
 export default function MentorDashboard() {
   const mentorId = localStorage.getItem("userId");
-  const [teams, setTeams] = useState([]);
-  const [selectedTeam, setSelectedTeam] = useState(null);
-  const [feedbackText, setFeedbackText] = useState("");
-  const [progressRating, setProgressRating] = useState(0);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [loadingTeams, setLoadingTeams] = useState(true);
-  const [activeTab, setActiveTab] = useState("teams");
 
-  // Fetch mentor’s assigned teams
+  // Data
+  const [teams, setTeams] = useState([]);
+  const [loadingTeams, setLoadingTeams] = useState(true);
+
+  // Card inline expansion
+  const [expandedCardId, setExpandedCardId] = useState(null);
+
+  // Full team view
+  const [selectedTeam, setSelectedTeam] = useState(null);
+  const [teamTab, setTeamTab] = useState("overview"); // overview | submissions | feedback
+
+  // Feedback state
+  const [feedbackText, setFeedbackText] = useState("");
+  const [rating, setRating] = useState(5);
+  const [isGivingFeedback, setIsGivingFeedback] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Feedback display mode: timeline | cards | chat
+  const [feedbackViewMode, setFeedbackViewMode] = useState("timeline");
+
+  // Load teams
   useEffect(() => {
+    let mounted = true;
     const fetchTeams = async () => {
       try {
         const res = await api.get(`/Mentor/${mentorId}/teams`);
-        setTeams(res.data);
+        if (mounted) setTeams(res.data || []);
       } catch (err) {
         console.error(err);
-        toast.error("Failed to load teams. Please try again.");
+        toast.error("Failed to load teams.");
       } finally {
-        setLoadingTeams(false);
+        if (mounted) setLoadingTeams(false);
       }
     };
     if (mentorId) fetchTeams();
+    return () => (mounted = false);
   }, [mentorId]);
 
-  // Fetch specific team details including submissions
-  const handleSelectTeam = async (teamId) => {
+  // Open full team view
+  const openTeamView = async (teamId) => {
     try {
       const res = await api.get(`/Mentor/team/${teamId}`);
-      setSelectedTeam(res.data);
-      setActiveTab("feedbacks");
+      setSelectedTeam(res.data || null);
+      setTeamTab("overview");
+      setIsGivingFeedback(false);
+      setFeedbackViewMode("timeline");
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
       console.error(err);
       toast.error("Failed to load team details.");
     }
   };
 
-  // Submit new feedback
-  const handleAddFeedback = async () => {
-    if (!selectedTeam || !feedbackText.trim()) {
-      toast.error("Please enter feedback before submitting.");
-      return;
-    }
-
-    const eventId = selectedTeam.eventId;
-    if (!eventId) {
-      toast.error("This team has no valid event assigned.");
-      return;
-    }
+  // Submit feedback
+  const submitFeedback = async () => {
+    if (!selectedTeam) return toast.error("No team selected.");
+    if (!feedbackText.trim()) return toast.error("Please enter feedback.");
+    const eventId = selectedTeam?.eventId;
+    if (!eventId) return toast.error("Invalid event.");
 
     setIsSubmitting(true);
     try {
@@ -62,12 +83,14 @@ export default function MentorDashboard() {
         teamId: selectedTeam.teamId,
         eventId,
         feedbackText,
-        progressRating,
+        progressRating: rating,
       });
-      toast.success("Feedback added successfully!");
+      toast.success("Feedback submitted");
       setFeedbackText("");
-      setProgressRating(0);
-      handleSelectTeam(selectedTeam.teamId); // refresh team details
+      setRating(5);
+      setIsGivingFeedback(false);
+      // refresh
+      openTeamView(selectedTeam.teamId);
     } catch (err) {
       console.error(err);
       toast.error("Failed to submit feedback.");
@@ -76,237 +99,473 @@ export default function MentorDashboard() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50 p-6 sm:p-8">
-      <motion.h1
-        className="text-3xl font-bold text-gray-800 mb-8 text-center"
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
-        Mentor Dashboard
-      </motion.h1>
+  // Utils
+  const fmt = (iso) => {
+    try {
+      return new Date(iso).toLocaleString();
+    } catch {
+      return iso;
+    }
+  };
 
-      {/* Tabs */}
-      <div className="flex justify-center border-b mb-6 space-x-8">
-        {["teams", "feedbacks"].map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`pb-2 text-lg font-medium transition-all ${
-              activeTab === tab
-                ? "text-blue-600 border-b-2 border-blue-600"
-                : "text-gray-500 hover:text-blue-500"
-            }`}
-          >
-            {tab === "teams" ? "My Teams" : "Team Feedback & Submissions"}
-          </button>
+  const initials = (name = "") =>
+    name
+      .split(" ")
+      .map((p) => p[0]?.toUpperCase())
+      .slice(0, 2)
+      .join("");
+
+  // Render feedback items in different modes
+  const FeedbackRender = ({ feedbacks = [] }) => {
+    if (!feedbacks || feedbacks.length === 0)
+      return <div className="text-sm text-slate-500">No feedback yet.</div>;
+
+    if (feedbackViewMode === "timeline") {
+      return (
+        <div className="space-y-6">
+          {feedbacks.map((fb) => (
+            <div key={fb.feedbackId} className="flex gap-4">
+              <div className="flex flex-col items-center">
+                <div className="w-3 h-3 rounded-full bg-indigo-600 mt-2" />
+                <div className="flex-1 w-px bg-slate-200 mt-2" />
+              </div>
+
+              <div className="flex-1">
+                <div className="bg-white border rounded-md p-3 shadow-sm">
+                  <div className="flex items-start justify-between">
+                    <div className="text-sm text-slate-800 font-medium">{fb.feedbackText}</div>
+                    <div className="text-xs text-slate-400">{fmt(fb.createdOn)}</div>
+                  </div>
+                  <div className="text-xs text-slate-500 mt-2">
+                    Rating: <span className="font-semibold">{fb.progressRating ?? "N/A"}</span>
+                  </div>
+
+                  {/* replies */}
+                  {fb.replies?.length > 0 && (
+                    <div className="mt-3 pl-4 border-l-2 border-indigo-100 space-y-2">
+                      {fb.replies.map((r) => (
+                        <div key={r.replyId} className="bg-slate-50 p-2 rounded-md border">
+                          <div className="text-sm text-slate-700">{r.replyText}</div>
+                          <div className="text-xs text-slate-400 mt-1">— {r.userName || "Team"}, {fmt(r.createdOn)}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    if (feedbackViewMode === "cards") {
+      return (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {feedbacks.map((fb) => (
+            <div key={fb.feedbackId} className="bg-white rounded-lg border p-3 shadow-sm">
+              <div className="flex justify-between items-start">
+                <div className="text-sm font-medium text-slate-800">{fb.feedbackText}</div>
+                <div className="text-xs text-slate-400">{fmt(fb.createdOn)}</div>
+              </div>
+              <div className="text-xs text-slate-500 mt-2">Rating: {fb.progressRating ?? "N/A"}</div>
+
+              {fb.replies?.length > 0 && (
+                <div className="mt-3 space-y-2">
+                  {fb.replies.map((r) => (
+                    <div key={r.replyId} className="flex gap-3 items-start">
+                      <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-semibold text-slate-600">
+                        {initials(r.userName)}
+                      </div>
+                      <div>
+                        <div className="text-sm text-slate-700">{r.replyText}</div>
+                        <div className="text-xs text-slate-400 mt-1">— {r.userName || "Team"}, {fmt(r.createdOn)}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    // chat mode
+    return (
+      <div className="space-y-3">
+        {feedbacks.map((fb) => (
+          <div key={fb.feedbackId} className="space-y-2">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center text-sm font-semibold">
+                M
+              </div>
+              <div className="bg-white p-3 rounded-lg border shadow-sm">
+                <div className="text-sm text-slate-800">{fb.feedbackText}</div>
+                <div className="text-xs text-slate-400 mt-1">{fmt(fb.createdOn)} • Rating: {fb.progressRating ?? "N/A"}</div>
+              </div>
+            </div>
+
+            {/* replies as right-aligned */}
+            {fb.replies?.map((r) => (
+              <div key={r.replyId} className="flex items-start gap-3 justify-end">
+                <div className="bg-slate-50 p-3 rounded-lg border text-sm text-slate-700 w-3/4">
+                  <div>{r.replyText}</div>
+                  <div className="text-xs text-slate-400 mt-1">— {r.userName || "Team"}, {fmt(r.createdOn)}</div>
+                </div>
+                <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-semibold">
+                  {initials(r.userName)}
+                </div>
+              </div>
+            ))}
+          </div>
         ))}
       </div>
+    );
+  };
 
-      {/* --- TEAMS TAB --- */}
-      {activeTab === "teams" && (
-        <div>
-          {loadingTeams ? (
-            <p className="text-gray-500 text-center mt-8">
-              Loading your assigned teams...
-            </p>
-          ) : teams.length === 0 ? (
-            <p className="text-gray-500 text-center mt-8">
-              You don’t have any assigned teams yet.
-            </p>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {teams.map((team) => (
-                <motion.div
-                  key={team.teamId}
-                  onClick={() => handleSelectTeam(team.teamId)}
-                  whileHover={{ scale: 1.02 }}
-                  className="p-5 bg-white rounded-2xl shadow hover:shadow-lg cursor-pointer transition-all"
-                >
-                  <h3 className="text-xl font-semibold text-gray-800 mb-1">
-                    {team.teamName}
-                  </h3>
-                  <p className="text-gray-600 text-sm mb-2">
-                    {team.projectTitle || "No project title"}
-                  </p>
-                  <p className="text-sm text-gray-400">
-                    Event: {team.description || "No description available"}
-                  </p>
-                </motion.div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* --- FEEDBACK & SUBMISSIONS TAB --- */}
-      {activeTab === "feedbacks" && (
-        <div>
-          {!selectedTeam ? (
-            <p className="text-gray-500 text-center mt-10">
-              Select a team from “My Teams” to view its submissions and feedback.
-            </p>
-          ) : (
-            <motion.div
-              key={selectedTeam.teamId}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="max-w-4xl mx-auto space-y-6"
-            >
-              {/* Team Overview */}
-              <div className="bg-white p-6 rounded-2xl shadow">
-                <h2 className="text-2xl font-semibold text-gray-800 mb-1">
-                  {selectedTeam.teamName}
-                </h2>
-                <p className="text-gray-600 mb-2">
-                  Event Description: {selectedTeam.description || "N/A"}
-                </p>
-                <p className="text-sm text-gray-400">
-                  Event ID: {selectedTeam.eventId || "N/A"}
-                </p>
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 text-slate-800">
+      {/* Header */}
+      <header className="sticky top-0 z-30">
+        <div className="max-w-7xl mx-auto px-6 py-5" style={{ background: "linear-gradient(90deg, rgba(239,246,255,0.9), rgba(255,255,255,0.9))" }}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-indigo-600 to-indigo-800 flex items-center justify-center text-white font-extrabold shadow-lg">
+                MD
               </div>
+              <div>
+                <h1 className="text-2xl md:text-3xl font-extrabold">Mentor Dashboard</h1>
+                <p className="text-sm text-slate-500 -mt-1">Manage teams, feedback & submissions</p>
+              </div>
+            </div>
 
-              {/* Team Members */}
-              <div className="bg-white p-6 rounded-2xl shadow">
-                <h3 className="text-lg font-semibold mb-3 text-gray-700">
-                  Team Members
-                </h3>
-                {selectedTeam.members?.length ? (
-                  <ul className="divide-y divide-gray-100">
-                    {selectedTeam.members.map((m) => (
-                      <li
-                        key={m.userId}
-                        className="py-2 flex justify-between items-center"
+            <nav className="flex items-center gap-4">
+              <button
+                onClick={() => {
+                  // keep any useful action here if needed later
+                  toast("You are on the Mentor Dashboard");
+                }}
+                className="hidden md:inline-block text-sm text-slate-600 px-3 py-1 rounded-md"
+              >
+                {/* intentionally subtle */}
+                Dashboard
+              </button>
+
+              <div className="text-sm text-slate-500">Signed in</div>
+            </nav>
+          </div>
+        </div>
+      </header>
+
+      {/* Main */}
+      <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+        {/* small stats row */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="rounded-2xl bg-white p-4 border shadow-sm">
+            <div className="text-xs text-slate-500">Assigned teams</div>
+            <div className="text-2xl font-bold mt-2">{teams.length}</div>
+          </div>
+
+          <div className="rounded-2xl bg-white p-4 border shadow-sm">
+            <div className="text-xs text-slate-500">Pending feedback</div>
+            <div className="text-2xl font-bold mt-2">—</div>
+          </div>
+
+          <div className="rounded-2xl bg-white p-4 border shadow-sm">
+            <div className="text-xs text-slate-500">Latest activity</div>
+            <div className="text-2xl font-bold mt-2">—</div>
+          </div>
+        </div>
+
+        {/* Teams cards */}
+        {!selectedTeam && (
+          <section>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">Your Teams</h2>
+              <div className="text-sm text-slate-500">Click Details or Open to proceed</div>
+            </div>
+
+            {loadingTeams ? (
+              <div className="rounded-lg bg-white p-6 border shadow-sm">Loading…</div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {teams.map((t) => (
+                  <article key={t.teamId} className="rounded-2xl bg-white p-5 border shadow-sm">
+                    <div className="flex justify-between items-start gap-4">
+                      <div>
+                        <h3 className="text-lg font-semibold text-slate-900">{t.teamName}</h3>
+                        <p className="text-sm text-slate-500 mt-1">{t.projectTitle || ""}</p>
+                      </div>
+
+                      <div className="text-xs text-slate-400">{/* event id hidden per request */}</div>
+                    </div>
+
+                    <p className="text-sm text-slate-500 mt-3 line-clamp-3">{t.description || ""}</p>
+
+                    <div className="mt-4 flex gap-2">
+                      <button
+                        onClick={() => openTeamView(t.teamId)}
+                        className="flex-1 rounded-md bg-indigo-600 text-white py-2 text-sm font-medium hover:bg-indigo-700"
                       >
-                        <div>
-                          <span className="font-medium">{m.name}</span>{" "}
-                          <span className="text-gray-500 text-sm">
-                            ({m.role || "Member"})
-                          </span>
+                        View Details
+                      </button>
+
+                      <button
+                        onClick={() => setExpandedCardId((cur) => (cur === t.teamId ? null : t.teamId))}
+                        className="rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-700"
+                      >
+                        Details
+                      </button>
+                    </div>
+
+                    {/* inline details */}
+                    <AnimatePresence>
+                      {expandedCardId === t.teamId && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.22 }}
+                          className="mt-4 p-4 bg-slate-50 border rounded-lg"
+                        >
+                          <div className="text-sm text-slate-600 mb-2">Project</div>
+                          <div className="text-sm text-slate-800 mb-3">{t.projectTitle || "—"}</div>
+
+                          <div className="text-sm text-slate-600 mb-2">Members</div>
+                          <ul className="text-sm text-slate-700 space-y-1 mb-3">
+                            {(t.members || []).slice(0, 4).map((m) => (
+                              <li key={m.userId} className="flex justify-between">
+                                <span>{m.name}</span>
+                                <span className="text-xs text-slate-500">({m.role || "Member"})</span>
+                              </li>
+                            ))}
+                            {(t.members || []).length > 4 && (
+                              <li className="text-xs text-slate-400">and {(t.members || []).length - 4} more…</li>
+                            )}
+                          </ul>
+
+                          <div className="flex gap-2">
+                            <button onClick={() => openTeamView(t.teamId)} className="rounded-md bg-indigo-600 text-white px-3 py-1 text-sm">Open</button>
+                            <button onClick={() => setExpandedCardId(null)} className="rounded-md border px-3 py-1 text-sm">Close</button>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* Full team view */}
+        {selectedTeam && (
+          <section className="space-y-6">
+            <div className="flex items-start justify-between gap-6">
+              <div className="flex-1 rounded-2xl bg-white p-6 border shadow-sm">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h2 className="text-2xl font-bold">{selectedTeam.teamName}</h2>
+                    <p className="text-sm text-slate-500 mt-1">{selectedTeam.projectTitle}</p>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setSelectedTeam(null)}
+                      className="text-sm text-slate-600 px-3 py-1 rounded-md border"
+                    >
+                      ← Back
+                    </button>
+                  </div>
+                </div>
+
+                <p className="text-sm text-slate-600 mt-4">{selectedTeam.description}</p>
+
+                {/* Tabs */}
+                <div className="mt-6 flex gap-3">
+                  {["overview", "submissions", "feedback"].map((tb) => (
+                    <button
+                      key={tb}
+                      onClick={() => {
+                        setTeamTab(tb);
+                        if (tb !== "feedback") {
+                          setIsGivingFeedback(false);
+                        }
+                      }}
+                      className={`px-3 py-2 rounded-full text-sm font-semibold ${
+                        teamTab === tb ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                      }`}
+                    >
+                      {tb === "overview" ? "Overview" : tb === "submissions" ? "Submissions" : "Feedback"}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Tab content */}
+                <div className="mt-6">
+                  {teamTab === "overview" && (
+                    <div className="space-y-4">
+                      <div>
+                        <h4 className="text-sm font-semibold text-slate-700">Members</h4>
+                        <ul className="mt-2 divide-y rounded-md border bg-white">
+                          {(selectedTeam.members || []).map((m) => (
+                            <li key={m.userId} className="flex items-center justify-between p-3">
+                              <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-semibold">
+                                  {initials(m.name)}
+                                </div>
+                                <div>
+                                  <div className="text-sm font-medium text-slate-800">{m.name}</div>
+                                  <div className="text-xs text-slate-500">{m.email}</div>
+                                </div>
+                              </div>
+                              <div className="text-xs text-slate-500">{m.role || "Member"}</div>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <div>
+                        <h4 className="text-sm font-semibold text-slate-700">Project</h4>
+                        <div className="mt-2 text-sm text-slate-600">{selectedTeam.projectTitle || "—"}</div>
+                      </div>
+                    </div>
+                  )}
+
+                  {teamTab === "submissions" && (
+                    <div>
+                      {selectedTeam.submissions?.length > 0 ? (
+                        <KnowledgeCardsDisplay
+                          items={selectedTeam.submissions.map((s) => ({
+                            itemId: s.itemId,
+                            title: s.title,
+                            description: s.description,
+                            tags: s.tags || [],
+                            ownerName: s.submittedBy || s.ownerName,
+                          }))}
+                          userId={mentorId}
+                        />
+                      ) : (
+                        <div className="text-sm text-slate-500">No submissions yet.</div>
+                      )}
+                    </div>
+                  )}
+
+                  {teamTab === "feedback" && (
+                    <div>
+                      {/* controls */}
+                      <div className="flex items-center justify-between mb-4 gap-3">
+                        <div className="flex items-center gap-2 text-sm text-slate-600">
+                          <span>View:</span>
+                          <select
+                            value={feedbackViewMode}
+                            onChange={(e) => setFeedbackViewMode(e.target.value)}
+                            className="text-sm rounded-md border px-2 py-1"
+                          >
+                            <option value="timeline">Timeline</option>
+                            <option value="cards">Cards</option>
+                            <option value="chat">Chat</option>
+                          </select>
                         </div>
-                        <span className="text-gray-400 text-sm">{m.email}</span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-gray-500 text-sm">No members found.</p>
-                )}
-              </div>
 
-              {/* Team Submissions */}
-              <div className="bg-white p-6 rounded-2xl shadow">
-                <h3 className="text-lg font-semibold mb-3 text-gray-700">
-                  Team Submissions
-                </h3>
-                {selectedTeam.submissions?.length > 0 ? (
-                  <KnowledgeCardsDisplay
-                    items={selectedTeam.submissions.map((s) => ({
-                      itemId: s.itemId,
-                      title: s.title,
-                      description: s.description,
-                      tags: s.tags || [],
-                      ownerName: s.submittedBy || s.ownerName,
-                    }))}
-                    userId={mentorId}
-                  />
-                ) : (
-                  <p className="text-gray-500 text-sm">No submissions yet.</p>
-                )}
-              </div>
+                        <div>
+                          <button
+                            onClick={() => setIsGivingFeedback((s) => !s)}
+                            className="rounded-md bg-indigo-600 text-white px-3 py-1 text-sm hover:bg-indigo-700"
+                          >
+                            {isGivingFeedback ? "Close" : "Add Feedback"}
+                          </button>
+                        </div>
+                      </div>
 
-              {/* Feedback History */}
-             {/* Feedback History */}
-<div className="bg-white p-6 rounded-2xl shadow">
-  <h3 className="text-lg font-semibold mb-3 text-gray-700">
-    Previous Feedback
-  </h3>
+                      {/* add feedback form hidden by default */}
+                      <AnimatePresence>
+                        {isGivingFeedback && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="mb-4 p-4 bg-indigo-50 border border-indigo-100 rounded-md"
+                          >
+                            <textarea
+                              value={feedbackText}
+                              onChange={(e) => setFeedbackText(e.target.value)}
+                              rows={3}
+                              placeholder="Write feedback..."
+                              className="w-full p-3 rounded-md border focus:ring-2 focus:ring-indigo-300"
+                            />
+                            <div className="mt-3 flex items-center gap-3">
+                              <div className="flex items-center gap-2">
+                                <label className="text-sm text-slate-600">Rating</label>
+                                <input
+                                  type="range"
+                                  min="0"
+                                  max="10"
+                                  value={rating}
+                                  onChange={(e) => setRating(parseInt(e.target.value))}
+                                  className="w-36"
+                                />
+                                <div className="text-sm font-semibold">{rating}</div>
+                              </div>
 
-  {selectedTeam.feedbacks?.length ? (
-    <div className="space-y-4">
-      {selectedTeam.feedbacks.map((fb) => (
-        <div
-          key={fb.feedbackId}
-          className="border border-gray-200 rounded-xl p-4 bg-gray-50"
-        >
-          {/* Main Feedback */}
-          <p className="text-gray-800 font-medium">{fb.feedbackText}</p>
+                              <div className="ml-auto flex items-center gap-2">
+                                <button
+                                  onClick={submitFeedback}
+                                  disabled={isSubmitting}
+                                  className={`px-4 py-2 rounded-md text-white ${isSubmitting ? "bg-indigo-400" : "bg-indigo-600 hover:bg-indigo-700"}`}
+                                >
+                                  {isSubmitting ? "Submitting..." : "Submit"}
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setIsGivingFeedback(false);
+                                    setFeedbackText("");
+                                  }}
+                                  className="px-3 py-2 rounded-md border"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
 
-          <p className="text-sm text-gray-500 mt-1">
-            Rating: {fb.progressRating ?? "N/A"} |{" "}
-            {new Date(fb.createdOn).toLocaleString()}
-          </p>
-
-          {/* Replies Section */}
-          {fb.replies?.length > 0 && (
-            <div className="mt-4 pl-4 border-l-4 border-blue-200 space-y-3">
-              <h4 className="text-sm font-semibold text-blue-700">
-                Team Replies
-              </h4>
-
-              {fb.replies.map((reply) => (
-                <div
-                  key={reply.replyId}
-                  className="bg-white p-3 rounded-lg shadow-sm border border-gray-100"
-                >
-                  <p className="text-gray-700">{reply.replyText}</p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    — {reply.userName || "Team Member"},{" "}
-                    {new Date(reply.createdOn).toLocaleString()}
-                  </p>
+                      {/* feedback listing */}
+                      <div>
+                        <FeedbackRender feedbacks={selectedTeam.feedbacks || []} />
+                      </div>
+                    </div>
+                  )}
                 </div>
-              ))}
+              </div>
             </div>
-          )}
-        </div>
-      ))}
-    </div>
-  ) : (
-    <p className="text-gray-500 text-sm">No feedback provided yet.</p>
-  )}
-</div>
 
+            {/* small summary rail */}
+            <div className="rounded-2xl bg-white p-4 border shadow-sm">
+              <div className="text-sm text-slate-600 font-semibold">Summary</div>
+              <div className="mt-3 text-sm text-slate-700">
+                <div className="flex justify-between">
+                  <span>Members</span>
+                  <span>{selectedTeam.members?.length || 0}</span>
+                </div>
 
-              {/* Add Feedback */}
-              <div className="bg-white p-6 rounded-2xl shadow">
-                <h3 className="text-lg font-semibold mb-3 text-gray-700">
-                  Add New Feedback
-                </h3>
-                <textarea
-                  placeholder="Write your feedback..."
-                  value={feedbackText}
-                  onChange={(e) => setFeedbackText(e.target.value)}
-                  rows={3}
-                  className="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <div className="flex items-center gap-4 mb-4">
-                  <input
-                    type="number"
-                    min={0}
-                    max={10}
-                    value={progressRating}
-                    onChange={(e) =>
-                      setProgressRating(parseInt(e.target.value) || 0)
-                    }
-                    className="w-32 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Rating (0–10)"
-                  />
-                  <button
-                    disabled={isSubmitting}
-                    onClick={handleAddFeedback}
-                    className={`px-6 py-2 rounded-lg text-white font-medium ${
-                      isSubmitting
-                        ? "bg-blue-400 cursor-not-allowed"
-                        : "bg-blue-600 hover:bg-blue-700"
-                    }`}
-                  >
-                    {isSubmitting ? "Submitting..." : "Submit Feedback"}
-                  </button>
+                <div className="flex justify-between mt-2">
+                  <span>Submissions</span>
+                  <span>{selectedTeam.submissions?.length || 0}</span>
+                </div>
+
+                <div className="flex justify-between mt-2">
+                  <span>Feedback count</span>
+                  <span>{selectedTeam.feedbacks?.length || 0}</span>
                 </div>
               </div>
-            </motion.div>
-          )}
-        </div>
-      )}
+            </div>
+          </section>
+        )}
+      </main>
     </div>
   );
 }

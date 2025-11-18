@@ -92,5 +92,26 @@ namespace Knowledge_Repository.Application.Implementations.Services
             await _eventRepository.DeleteAsync(existing);
             return true;
         }
+
+
+        // -----------------------------------------------------------
+        // NEW SERVICE METHODS
+        // -----------------------------------------------------------
+
+        /// <summary>
+        /// Get all events belonging to the current month
+        /// </summary>
+        public async Task<List<Event>> GetCurrentMonthEventsAsync()
+        {
+            return await _eventRepository.GetCurrentMonthEventsAsync();
+        }
+
+        /// <summary>
+        /// Get events that are actively running today
+        /// </summary>
+        public async Task<List<Event>> GetActiveEventsAsync()
+        {
+            return await _eventRepository.GetActiveEventsAsync();
+        }
     }
 }

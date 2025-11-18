@@ -31,9 +31,9 @@ namespace Knowledge_Repository.Infrastructure.Repositories
         {
             return await _context.EventKnowledgeItems
                 .Include(e => e.Item)
-                    .ThenInclude(i => i.Owner) // Use Owner instead of CreatedByNavigation
+                    .ThenInclude(i => i.Owner) 
                 .Include(e => e.Item)
-                    .ThenInclude(i => i.KnowledgeTags) // KnowledgeTags no longer needs .Tag
+                    .ThenInclude(i => i.KnowledgeTags) 
                 .Include(e => e.Item)
                     .ThenInclude(i => i.Attachments)
                 .Include(e => e.Event)

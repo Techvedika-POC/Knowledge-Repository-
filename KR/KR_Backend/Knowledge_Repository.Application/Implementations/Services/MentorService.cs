@@ -21,6 +21,46 @@ namespace Knowledge_Repository.Application.Implementations.Services
         {
             _mentorRepo = mentorRepo;
         }
+
+        // =====================================================================
+        //     NEW METHOD → GET TEAMS ASSIGNED TO MENTOR FOR A SELECTED EVENT
+        // =====================================================================
+
+        public async Task<IEnumerable<TeamDetailsDto>> GetTeamsForMentorByEventAsync(Guid mentorId, Guid eventId)
+        {
+            if (mentorId == Guid.Empty)
+                throw new ArgumentException("Invalid mentor ID.");
+            if (eventId == Guid.Empty)
+                throw new ArgumentException("Invalid event ID.");
+
+            var teams = await _mentorRepo.GetAssignedTeamsAsync(mentorId);
+
+            // Filter teams based on event ID
+            var filteredTeams = teams
+                .Where(t => t != null && t.EventId == eventId)
+                .ToList();
+
+            var result = new List<TeamDetailsDto>();
+
+            foreach (var team in filteredTeams)
+            {
+                result.Add(new TeamDetailsDto
+                {
+                    TeamId = team.TeamId,
+                    TeamName = team.TeamName,
+                    EventId = team.EventId ?? Guid.Empty,
+                    Description = team.Event?.Description ?? "No description available",
+                    ProjectTitle = null
+                });
+            }
+
+            return result;
+        }
+
+        // =====================================================================
+        //                 EXISTING: GET ALL TEAMS FOR MENTOR
+        // =====================================================================
+
         public async Task<IEnumerable<TeamDetailsDto>> GetTeamsForMentorAsync(Guid mentorId)
         {
             if (mentorId == Guid.Empty)
@@ -38,9 +78,7 @@ namespace Knowledge_Repository.Application.Implementations.Services
                 {
                     TeamId = team.TeamId,
                     TeamName = team.TeamName,
-
                     EventId = team.EventId ?? Guid.Empty,
-
                     Description = eventDescription,
                     ProjectTitle = null
                 });
@@ -49,6 +87,9 @@ namespace Knowledge_Repository.Application.Implementations.Services
             return teamDtos;
         }
 
+        // =====================================================================
+        //                    EXISTING: TEAM DETAILS
+        // =====================================================================
 
         public async Task<TeamDetailsDto> GetTeamDetailsAsync(Guid teamId)
         {
@@ -153,6 +194,9 @@ namespace Knowledge_Repository.Application.Implementations.Services
             };
         }
 
+        // =====================================================================
+        //                    FEEDBACK: ADD
+        // =====================================================================
 
         public async Task<FeedbackResponseDto> AddFeedbackAsync(AddFeedbackRequestDto request)
         {
@@ -193,6 +237,10 @@ namespace Knowledge_Repository.Application.Implementations.Services
             };
         }
 
+        // =====================================================================
+        //                    FEEDBACK: UPDATE
+        // =====================================================================
+
         public async Task<bool> UpdateFeedbackAsync(UpdateFeedbackRequestDto request)
         {
             if (request == null)
@@ -214,6 +262,10 @@ namespace Knowledge_Repository.Application.Implementations.Services
             return true;
         }
 
+        // =====================================================================
+        //                    FEEDBACK: GET BY MENTOR
+        // =====================================================================
+
         public async Task<IEnumerable<FeedbackResponseDto>> GetFeedbacksByMentorAsync(Guid mentorId)
         {
             if (mentorId == Guid.Empty)
@@ -230,6 +282,10 @@ namespace Knowledge_Repository.Application.Implementations.Services
                 CreatedOn = f.CreatedOn
             }).ToList();
         }
+
+        // =====================================================================
+        //                    FEEDBACK: GET BY ID
+        // =====================================================================
 
         public async Task<FeedbackResponseDto> GetFeedbackByIdAsync(Guid feedbackId)
         {

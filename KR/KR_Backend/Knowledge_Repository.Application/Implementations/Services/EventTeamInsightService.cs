@@ -36,11 +36,11 @@ namespace Knowledge_Repository.Application.Implementations.Services
                 AverageRating = avgRating,
                 Submissions = submissions.Select(s => new SubmissionDto
                 {
-                    ItemId = s.ItemId ?? Guid.Empty,                 // Non-nullable safe
+                    ItemId = s.ItemId ?? Guid.Empty,
                     Title = s.Item?.Title ?? "(Untitled)",
                     Description = s.Item?.Description ?? "",
                     SubmittedBy = s.Item?.Owner?.Name ?? "Unknown",
-                    CreatedBy = s.Item?.CreatedBy,                  // Nullable assignment
+                    CreatedBy = s.Item?.CreatedBy,
                     Tags = s.Item?.KnowledgeTags?.Select(t => t.TagName).ToList() ?? new List<string>(),
                     Attachments = s.Item?.Attachments?.Select(a => new FileAttachmentDto
                     {
@@ -83,11 +83,11 @@ namespace Knowledge_Repository.Application.Implementations.Services
                     : 0,
                 Submissions = team.EventKnowledgeItems.Select(s => new SubmissionDto
                 {
-                    ItemId = s.ItemId ?? Guid.Empty,                 // Non-nullable safe
+                    ItemId = s.ItemId ?? Guid.Empty,                 
                     Title = s.Item?.Title ?? "(Untitled)",
                     Description = s.Item?.Description ?? "",
                     SubmittedBy = s.Item?.Owner?.Name ?? "Unknown",
-                    CreatedBy = s.Item?.CreatedBy,                  // Nullable assignment
+                    CreatedBy = s.Item?.CreatedBy,
                     Tags = s.Item?.KnowledgeTags?.Select(t => t.TagName).ToList() ?? new List<string>(),
                     Attachments = s.Item?.Attachments?.Select(a => new FileAttachmentDto
                     {
@@ -125,7 +125,7 @@ namespace Knowledge_Repository.Application.Implementations.Services
             {
                 ReplyId = Guid.NewGuid(),
                 FeedbackId = feedbackId,
-                TeamId = await _insightRepo.GetTeamIdByFeedbackAsync(feedbackId), // ✅ no '??' needed
+                TeamId = await _insightRepo.GetTeamIdByFeedbackAsync(feedbackId), 
                 UserId = userId,
                 ReplyText = replyText,
                 CreatedOn = DateTime.UtcNow

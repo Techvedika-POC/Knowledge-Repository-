@@ -101,5 +101,15 @@ namespace Knowledge_Repository.Api.Controllers
 
             return Ok(feedback);
         }
+        [HttpGet("{mentorId}/teams/{eventId}")]
+        public async Task<IActionResult> GetTeamsForMentorByEvent(Guid mentorId, Guid eventId)
+        {
+            if (mentorId == Guid.Empty || eventId == Guid.Empty)
+                return BadRequest("Invalid mentor or event ID.");
+
+            var teams = await _mentorService.GetTeamsForMentorByEventAsync(mentorId, eventId);
+            return Ok(teams);
+        }
+
     }
 }

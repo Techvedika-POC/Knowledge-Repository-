@@ -52,6 +52,48 @@ namespace Knowledge_Repository.Controllers
                 : Ok(events);
         }
 
+        // ======================================================
+        //               NEW ADDED ENDPOINTS
+        // ======================================================
+
+        /// <summary>
+        /// Returns events that belong to the current month.
+        /// </summary>
+        [HttpGet("current-month")]
+        public async Task<IActionResult> GetCurrentMonthEvents()
+        {
+            try
+            {
+                var events = await _eventService.GetCurrentMonthEventsAsync();
+                return Ok(new { success = true, data = events });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = "Failed to fetch current month events.", details = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Returns events that are active today.
+        /// </summary>
+        [HttpGet("active")]
+        public async Task<IActionResult> GetActiveEvents()
+        {
+            try
+            {
+                var events = await _eventService.GetActiveEventsAsync();
+                return Ok(new { success = true, data = events });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = "Failed to fetch active events.", details = ex.Message });
+            }
+        }
+
+        // ======================================================
+        //               EXISTING CRUD ENDPOINTS
+        // ======================================================
+
         [HttpPost]
         public async Task<IActionResult> AddEvent([FromBody] Event evt)
         {
@@ -123,6 +165,10 @@ namespace Knowledge_Repository.Controllers
                 return StatusCode(500, new { success = false, message = "An error occurred while deleting the event.", details = ex.Message });
             }
         }
+
+        // ======================================================
+        //               INSIGHT ENDPOINTS
+        // ======================================================
 
         [HttpGet("{eventId:guid}/insights")]
         public async Task<IActionResult> GetEventInsights(Guid eventId)

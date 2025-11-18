@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import EngagementButtons from "./EngagementButtons";
-import VersionFilesModal from "./VersionFilesModal"; // <-- make sure path is correct
 import {
   FileText,
   Tag,
@@ -29,7 +28,6 @@ export default function KnowledgeCardsDisplay({ items = [], onPreview, userId, o
   const [editingComment, setEditingComment] = useState(null);
   const [editText, setEditText] = useState("");
   const [expandedComments, setExpandedComments] = useState({});
-  const [filesItemId, setFilesItemId] = useState(null);
 
   const themeColor = "indigo";
   const cardHighlightColor = "blue";
@@ -100,15 +98,15 @@ export default function KnowledgeCardsDisplay({ items = [], onPreview, userId, o
     setCommentModalItem(item);
     const id = item.itemId || item.id;
     const res = await axios.get(`/api/Engagement/comments/${id}`);
-    setComments(res.data || []);
+    setComments(res.data);
   };
 
-  const refreshComments = async () => {
-    if (!commentModalItem) return;
-    const id = commentModalItem.itemId || commentModalItem.id;
-    const res = await axios.get(`/api/Engagement/comments/${id}`);
-    setComments(res.data || []);
-  };
+ const refreshComments = async () => {
+  const id = commentModalItem.itemId || commentModalItem.id;
+  const res = await axios.get(`/api/Engagement/comments/${id}`);
+  setComments(res.data);
+};
+
 
   const handleAddComment = async (text, parentCommentId = null) => {
     if (!text.trim() || !commentModalItem) return;
@@ -125,19 +123,20 @@ export default function KnowledgeCardsDisplay({ items = [], onPreview, userId, o
     setReplyTo(null);
   };
 
-  const handleEditComment = async (commentId, newText) => {
-    if (!newText.trim()) return;
-    try {
-      await axios.put(`/api/Engagement/comment/${commentId}`, {
-        CommentText: newText,
-      });
-      await refreshComments();
-      setEditingComment(null);
-      setEditText("");
-    } catch (err) {
-      console.error("Error updating comment", err);
-    }
-  };
+ const handleEditComment = async (commentId, newText) => {
+  if (!newText.trim()) return;
+  try {
+    await axios.put(`/api/Engagement/comment/${commentId}`, {
+      CommentText: newText,
+    });
+    await refreshComments();
+    setEditingComment(null);
+    setEditText("");
+  } catch (err) {
+    console.error("Error updating comment", err);
+  }
+};
+
 
   const handleDeleteComment = async (commentId) => {
     if (!window.confirm("Are you sure you want to delete this comment?")) return;
@@ -157,7 +156,9 @@ export default function KnowledgeCardsDisplay({ items = [], onPreview, userId, o
     list.map((c) => (
       <div
         key={c.engagementId}
-        className={`p-3 border rounded-xl bg-gray-50 mb-2 transition-all ${level > 0 ? "ml-6" : ""}`}
+        className={`p-3 border rounded-xl bg-gray-50 mb-2 transition-all ${
+          level > 0 ? "ml-6" : ""
+        }`}
       >
         <div className="flex justify-between items-center">
           <span className="text-sm font-semibold text-gray-800">
@@ -286,24 +287,11 @@ export default function KnowledgeCardsDisplay({ items = [], onPreview, userId, o
           return (
             <div
               key={id || idx}
-              className="bg-white rounded-2xl shadow-md border border-gray-200 hover:shadow-lg transition flex flex-col relative"
+              className="bg-white rounded-2xl shadow-md border border-gray-200 hover:shadow-lg transition flex flex-col"
             >
-              {/* Highlight strip */}
               <div
                 className={`h-2 w-full rounded-t-2xl bg-${cardHighlightColor}-100`}
               ></div>
-
-              {/* File icon - top-right */}
-              <div className="absolute top-3 right-3 z-10">
-                <button
-                  onClick={() => setFilesItemId(id)}
-                  className="p-2 rounded-full hover:bg-gray-100 transition"
-                  aria-label="Open version files"
-                >
-                  <FileText className="w-5 h-5 text-indigo-600" />
-                </button>
-              </div>
-
               <div className="p-6 flex flex-col flex-grow">
                 <div className="mb-4">
                   <div className="flex items-center gap-2 mb-2">
@@ -432,7 +420,6 @@ export default function KnowledgeCardsDisplay({ items = [], onPreview, userId, o
           </div>
         </div>
       )}
-      {filesItemId && <VersionFilesModal itemId={filesItemId} onClose={() => setFilesItemId(null)} />}
     </div>
   );
 }

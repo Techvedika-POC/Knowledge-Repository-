@@ -48,5 +48,46 @@ namespace Knowledge_Repository.Infrastructure.Repositories
             _context.Events.Remove(evt);
             await _context.SaveChangesAsync();
         }
+
+
+        // -----------------------------------------------------------
+        // NEW METHODS for Dashboards
+        // -----------------------------------------------------------
+
+        /// <summary>
+        /// Gets all events for the current month (Start OR End date falls within this month)
+        /// </summary>
+        public async Task<List<Event>> GetCurrentMonthEventsAsync()
+        {
+            var today = DateTime.Today;
+            var firstDay = new DateOnly(today.Year, today.Month, 1);
+            var lastDay = firstDay.AddMonths(1).AddDays(-1);
+
+            return await _context.Events
+                .Where(e =>
+                    (e.StartDate.HasValue && e.StartDate.Value >= firstDay && e.StartDate.Value <= lastDay) ||
+                    (e.EndDate.HasValue && e.EndDate.Value >= firstDay && e.EndDate.Value <= lastDay)
+                )
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
+        /// <summary>
+        /// Gets active events for the current date (Running events)
+        /// </summary>
+        public async Task<List<Event>> GetActiveEventsAsync()
+        {
+            var today = DateOnly.FromDateTime(DateTime.Today);
+
+            return await _context.Events
+                .Where(e =>
+                    e.StartDate.HasValue &&
+                    e.EndDate.HasValue &&
+                    e.StartDate.Value <= today &&
+                    e.EndDate.Value >= today
+                )
+                .AsNoTracking()
+                .ToListAsync();
+        }
     }
 }
