@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Lock, PlayCircle, CheckCircle2, XCircle } from "lucide-react";
 import toast from "react-hot-toast";
 
+
 export default function KnowledgeQuestPage() {
   const [topics, setTopics] = useState([]);
   const [modules, setModules] = useState([]);

@@ -188,8 +188,6 @@ namespace Knowledge_Repository.Controllers
                 return StatusCode(500, new { message = "Failed to load current ideathon events.", detail = ex.Message });
             }
         }
-
-        // GET api/Events/type/Ideathon/month/{year}/{month}
         [HttpGet("type/Ideathon/month/{year:int}/{month:int}")]
         public async Task<IActionResult> GetIdeathonsForMonth(int year, int month)
         {
@@ -203,6 +201,12 @@ namespace Knowledge_Repository.Controllers
             {
                 return StatusCode(500, new { message = "Failed to load ideathon events for month.", detail = ex.Message });
             }
+        }
+        [HttpGet("grouped-by-type-month")]
+        public async Task<IActionResult> GetGroupedByTypeAndMonth()
+        {
+            var result = await _eventService.GetEventsGroupedByTypeAndMonthAsync();
+            return Ok(result);
         }
     }
 }
