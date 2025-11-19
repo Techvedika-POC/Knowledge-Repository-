@@ -238,9 +238,8 @@ const MainContent = () => {
         <QuickEvents navigate={navigate} />
       </div>
 
-      {/* Leaderboard / Recent Activity / Announcements */}
+     
    <div className="bg-white rounded-2xl p-4 shadow-md mt-4">
-  {/* Tabs */}
   <div className="flex justify-center mb-4 flex-wrap gap-3">
     {[
       { key: "Leaderboard", label: "Leaderboard", color: "bg-blue-100 text-blue-800 hover:bg-blue-200" },

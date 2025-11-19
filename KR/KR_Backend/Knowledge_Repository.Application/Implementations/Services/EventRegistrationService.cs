@@ -51,8 +51,6 @@ namespace Knowledge_Repository.Application.Implementations.Services
             var leaderEmailLower = leaderUser.Email.ToLowerInvariant();
             if (!memberEmails.Contains(leaderEmailLower))
                 memberEmails.Insert(0, leaderEmailLower);
-
-            // 3) Resolve emails -> users; reject if some emails don't map to actual users
             var users = (await _userRepository.GetAllAsync(u => memberEmails.Contains(u.Email.ToLower())))
                         .ToList();
 
@@ -62,19 +60,14 @@ namespace Knowledge_Repository.Application.Implementations.Services
             {
                 throw new Exception($"These emails are not registered users: {string.Join(", ", unresolved)}");
             }
-
-            // Member userIds list (sorted for deterministic signature)
             var memberUserIds = users.Select(u => u.UserId).Distinct().ToList();
-            memberUserIds.Sort(); // ensure deterministic order
+            memberUserIds.Sort(); 
 
-            // 4) Check: leader (requesting user) cannot already be part of a different team for the SAME event
             bool leaderAlreadyInEvent = (await _teamMemberRepository.GetAllAsync(
                 tm => tm.UserId == userId && tm.Team.EventId == dto.EventId)).Any();
 
             if (leaderAlreadyInEvent)
                 throw new Exception("You are already part of a team for this event.");
-
-            // 5) Check: none of the supplied members may already be in another team for the SAME event
             var conflictMembersInSameEvent = (await _teamMemberRepository.GetAllAsync(
                 tm => memberUserIds.Contains(tm.UserId) && tm.Team.EventId == dto.EventId))
                 .Select(tm => tm.UserId)
@@ -90,8 +83,6 @@ namespace Knowledge_Repository.Application.Implementations.Services
 
                 throw new Exception($"These member(s) are already registered in a team for this event: {string.Join(", ", conflictingEmails)}");
             }
-
-            // 6) Check: the same team (identical member set) should not already exist for ANY other event
             var relatedTeamMembers = (await _teamMemberRepository.GetAllAsync(
                 tm => memberUserIds.Contains(tm.UserId)))
                 .ToList();
@@ -123,7 +114,7 @@ namespace Knowledge_Repository.Application.Implementations.Services
                 var identicalTeams = (await _teamRepository.GetAllAsync(t => identicalTeamIds.Contains(t.TeamId))).ToList();
 
                 var conflictsAcrossEvents = identicalTeams
-                    .Where(t => t.EventId != dto.EventId) // teams in other events
+                    .Where(t => t.EventId != dto.EventId) 
                     .ToList();
 
                 if (conflictsAcrossEvents.Any())
@@ -137,16 +128,12 @@ namespace Knowledge_Repository.Application.Implementations.Services
 
                 throw new Exception("An identical team (same members) is already registered for this event.");
             }
-
-            // 7) Check duplicate team name for same event
             bool duplicateTeamName = (await _teamRepository.GetAllAsync(
                 t => t.EventId == dto.EventId && t.TeamName.ToLower() == dto.TeamName.ToLower()))
                 .Any();
 
             if (duplicateTeamName)
                 throw new Exception("A team with this name already exists for this event.");
-
-            // 8) Create team + members using repository methods (no transaction)
             var team = new Team
             {
                 TeamId = Guid.NewGuid(),
@@ -161,7 +148,7 @@ namespace Knowledge_Repository.Application.Implementations.Services
 
             var teamMembers = new List<TeamMember>();
 
-            // leader
+        //leader
             var leader = emailToUser[leaderEmailLower];
             teamMembers.Add(new TeamMember
             {
@@ -194,14 +181,12 @@ namespace Knowledge_Repository.Application.Implementations.Services
             {
                 var conflictIds = raceConflicts.Select(r => r.UserId).Distinct().ToHashSet();
                 var conflictEmailsNow = users.Where(u => conflictIds.Contains(u.UserId)).Select(u => u.Email).ToList();
-                // If conflicts found, do not add members; you may want to remove the team you added (but without transactions this is best-effort)
                 throw new Exception($"Registration failed; these members were just registered in another team for this event: {string.Join(", ", conflictEmailsNow)}");
             }
 
-            // Add members
             await _teamMemberRepository.AddRangeAsync(teamMembers);
 
-            // Return created team (assuming repositories persist)
+         
             return team;
         }
 

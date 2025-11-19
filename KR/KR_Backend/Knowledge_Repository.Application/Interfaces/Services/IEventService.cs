@@ -1,4 +1,5 @@
-﻿using Knowledge_Repository.Domain.Entities;
+﻿using Knowledge_Repository.Application.Dtos;
+using Knowledge_Repository.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -14,5 +15,6 @@ namespace Knowledge_Repository.Application.Interfaces.Services
         Task<bool> DeleteEventAsync(Guid eventId);
         Task<List<Event>> GetCurrentIdeathonsAsync();
         Task<List<Event>> GetIdeathonsForMonthAsync(int year, int month);
+        Task<IEnumerable<EventsByTypeDto>> GetEventsGroupedByTypeAndMonthAsync();
     }
 }

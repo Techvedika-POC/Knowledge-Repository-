@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Lock, PlayCircle, CheckCircle2, XCircle } from "lucide-react";
 import toast from "react-hot-toast";
 
+
 export default function KnowledgeQuestPage() {
   const [topics, setTopics] = useState([]);
   const [modules, setModules] = useState([]);
@@ -20,7 +21,7 @@ export default function KnowledgeQuestPage() {
 
   const userId = localStorage.getItem("userId");
 
-  // Load Topics
+
   useEffect(() => {
     const fetchTopics = async () => {
       try {
@@ -32,8 +33,6 @@ export default function KnowledgeQuestPage() {
     };
     fetchTopics();
   }, []);
-
-  // FIXED: Correct API URL for modules
   const handleTopicSelect = async (topicId) => {
     setSelectedTopic(topicId);
     setModules([]);
@@ -120,8 +119,6 @@ export default function KnowledgeQuestPage() {
   const handleAnswerChange = (qIndex, option) => {
     setAnswers({ ...answers, [qIndex]: option });
   };
-
-  // FIXED: Correct API URL for progress update + reload modules
   const handleSubmitTest = async () => {
     let correct = 0;
 
@@ -150,8 +147,6 @@ export default function KnowledgeQuestPage() {
         moduleId: activeModule.moduleId,
         testStatus,
       });
-
-      // FIX: reload modules from proper endpoint
       const res = await api.get(
         `/VLearnModule/topic/${selectedTopic}/modules/me`
       );
@@ -191,17 +186,17 @@ export default function KnowledgeQuestPage() {
       <div className="w-full flex justify-center gap-6 px-6 py-10">
         {[
           {
-            img: "./Assets/lms.png",
+            img: "/Assets/lms1.png",
             title: "Think Innovatively",
             desc: "Unlock your learning potential through interactive modules and quizzes.",
           },
           {
-            img: "./Assets/lms2.png",
+            img: "/Assets/lms2.png",
             title: "Step Into the Future",
             desc: "Experience a smarter way of learning through guided knowledge paths.",
           },
           {
-            img: "./Assets/lms.png",
+            img: "/Assets/lms.png",
             title: "Empower Your Skills",
             desc: "Learn, test, and grow through structured VLearn Knowledge Quest.",
           },
