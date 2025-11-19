@@ -178,8 +178,6 @@ namespace Knowledge_Repository.Controllers
                 return StatusCode(500, new { message = "Failed to load current ideathon events.", detail = ex.Message });
             }
         }
-
-        // GET api/Events/type/Ideathon/month/{year}/{month}
         [HttpGet("type/Ideathon/month/{year:int}/{month:int}")]
         public async Task<IActionResult> GetIdeathonsForMonth(int year, int month)
         {
