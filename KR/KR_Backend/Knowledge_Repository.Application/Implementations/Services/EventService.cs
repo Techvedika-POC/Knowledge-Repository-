@@ -1,4 +1,5 @@
-﻿using Knowledge_Repository.Application.Interfaces.Repositories;
+﻿using Knowledge_Repository.Application.Dtos;
+using Knowledge_Repository.Application.Interfaces.Repositories;
 using Knowledge_Repository.Application.Interfaces.Services;
 using Knowledge_Repository.Domain.Entities;
 using System;
@@ -102,5 +103,108 @@ namespace Knowledge_Repository.Application.Implementations.Services
         {
             return await _eventRepository.GetIdeathonsForMonthAsync(year, month);
         }
+        public async Task<IEnumerable<EventsByTypeDto>> GetEventsGroupedByTypeAndMonthAsync()
+        {
+            var allEvents = await _eventRepository.GetAllEventsAsync();
+            if (allEvents == null || allEvents.Count == 0)
+                return Enumerable.Empty<EventsByTypeDto>();
+
+            var mapped = allEvents
+                .Where(e => e != null)
+                .Select(e => new EventDto
+                {
+                    EventId = e.EventId,
+                    Title = e.Title ?? string.Empty,
+                    Description = e.Description ?? string.Empty,
+                    EventType = string.IsNullOrWhiteSpace(e.EventType) ? "Unknown" : e.EventType.Trim(),
+                    StartDate = e.StartDate,   
+                    EndDate = e.EndDate,      
+                    OwnerId = e.OwnerId,
+                    CreatedOn = e.CreatedOn,
+                    UpdatedOn = e.UpdatedOn,
+                    RegistrationCloseDate = e.RegistrationCloseDate,
+                    MentorCheckpointStart = e.MentorCheckpointStart,
+                    MentorCheckpointEnd = e.MentorCheckpointEnd,
+                    FinalSubmissionDeadline = e.FinalSubmissionDeadline,
+                    IdeaPresentationStart = e.IdeaPresentationStart,
+                    IdeaPresentationEnd = e.IdeaPresentationEnd,
+                    WinnersAnnouncementDate = e.WinnersAnnouncementDate,
+                    ContactEmail = e.ContactEmail ?? string.Empty,
+                    Notes = e.Notes ?? string.Empty
+                })
+                .ToList();
+
+            var result = new List<EventsByTypeDto>();
+
+            
+            var groupedByType = mapped
+                .GroupBy(x => x.EventType)
+                .OrderBy(g => g.Key);
+
+            foreach (var typeGroup in groupedByType)
+            {
+               
+                var monthBuckets = new Dictionary<(int Year, int Month), EventsByMonthDto>();
+
+                foreach (var ev in typeGroup)
+                {
+                    DateOnly? groupDate = ev.StartDate ?? ev.EndDate; 
+
+                    int year, month;
+                    if (groupDate.HasValue)
+                    {
+                        year = groupDate.Value.Year;
+                        month = groupDate.Value.Month;
+                    }
+                    else
+                    {
+                        year = 1; month = 1; 
+                    }
+
+                    var key = (Year: year, Month: month);
+
+                    if (!monthBuckets.TryGetValue(key, out var monthDto))
+                    {
+                        var label = (year == 1 && month == 1)
+                            ? "Undated"
+                            : new DateTime(year, month, 1).ToString("MMMM yyyy");
+
+                        monthDto = new EventsByMonthDto
+                        {
+                            Year = year,
+                            Month = month,
+                            MonthLabel = label,
+                            Events = new List<EventDto>()
+                        };
+
+                        monthBuckets[key] = monthDto;
+                    }
+
+                    monthDto.Events.Add(ev);
+                }
+
+                var monthsList = monthBuckets
+                    .Values
+                    .OrderByDescending(m => m.Year)
+                    .ThenByDescending(m => m.Month)
+                    .ToList();
+
+                var dated = monthsList.Where(m => m.Year != 1).ToList();
+                var undated = monthsList.Where(m => m.Year == 1).ToList();
+                var finalMonths = dated.Concat(undated).ToList();
+                foreach (var m in finalMonths)
+                    m.Events = m.Events.OrderBy(e => e.Title).ToList();
+
+                result.Add(new EventsByTypeDto
+                {
+                    EventType = typeGroup.Key,
+                    Months = finalMonths
+                });
+            }
+
+            return result;
+        }
+
+
     }
 }

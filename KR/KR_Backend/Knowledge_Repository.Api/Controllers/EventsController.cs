@@ -194,5 +194,11 @@ namespace Knowledge_Repository.Controllers
                 return StatusCode(500, new { message = "Failed to load ideathon events for month.", detail = ex.Message });
             }
         }
+        [HttpGet("grouped-by-type-month")]
+        public async Task<IActionResult> GetGroupedByTypeAndMonth()
+        {
+            var result = await _eventService.GetEventsGroupedByTypeAndMonthAsync();
+            return Ok(result);
+        }
     }
 }
