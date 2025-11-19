@@ -40,14 +40,21 @@ namespace Knowledge_Repository.Infrastructure.Repositories
         public async Task<List<Engagement>> GetFavouritesByUserAsync(Guid userId)
         {
             return await _context.Engagements
-                .Where(e => e.UserId == userId && e.EngagementType == "Favourite")
-                .Include(e => e.Item)
-                    .ThenInclude(i => i.Domain)
-                .Include(e => e.Item)
-                    .ThenInclude(i => i.Category)
-                .AsNoTracking()
-                .ToListAsync();
+      .Where(e => e.UserId == userId && e.EngagementType == "Favourite")
+      .Include(e => e.Item)
+          .ThenInclude(i => i.Domain)
+      .Include(e => e.Item)
+          .ThenInclude(i => i.Category)
+      .Include(e => e.Item)
+          .ThenInclude(i => i.Owner)
+      .Include(e => e.Item)
+          .ThenInclude(i => i.KnowledgeTags)
+      .Include(e => e.Item)
+          .ThenInclude(i => i.Engagements)
+      .ToListAsync(); // tracking query
+
         }
+
 
         public async Task<List<TResult>> GroupByAsync<TKey, TResult>(
             Expression<Func<Engagement, bool>> filter,

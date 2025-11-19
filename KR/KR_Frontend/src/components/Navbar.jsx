@@ -79,7 +79,6 @@ export default function Navbar() {
         await api.post(`/engagement/like/${itemId}?userId=${userId}`);
       }
 
-      // Update like count locally
       setSearchResults((prev) =>
         prev.map((i) =>
           i.id === itemId
@@ -129,7 +128,6 @@ export default function Navbar() {
         { headers: { "Content-Type": "application/json" } }
       );
 
-      // Update local UI immediately
       const newComment = {
         text: commentText.trim(),
         userName: "You",
@@ -198,12 +196,14 @@ export default function Navbar() {
   const handleDomainSelection = (id) => {
     setSelectedDomain(id);
     setSelectedCategory("");
+    setShowDomainDropdown(false); // Close dropdown dynamically
     fetchItems(`/KnowledgeItem/ByDomain/${id}`);
   };
 
   const handleCategorySelection = (id) => {
     setSelectedCategory(id);
     setSelectedDomain("");
+    setShowCategoryDropdown(false); // Close dropdown dynamically
     fetchItems(`/KnowledgeItem/ByCategory/${id}`);
   };
 
@@ -290,6 +290,16 @@ export default function Navbar() {
             >
               <FaFilter /> Browse All
             </button>
+
+            {/* Reset button only visible when searchResults exist */}
+            {searchResults.length > 0 && (
+              <button
+                onClick={handleReset}
+                className="px-5 py-2 rounded-full bg-gray-300 text-gray-800 hover:bg-gray-400"
+              >
+                Reset
+              </button>
+            )}
           </div>
 
           {/* Search Bar */}

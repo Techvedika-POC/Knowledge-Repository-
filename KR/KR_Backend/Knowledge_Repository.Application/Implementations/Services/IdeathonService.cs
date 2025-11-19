@@ -129,5 +129,12 @@ namespace Knowledge_Repository.Application.Implementations.Services
 
             return await _repo.GetPresentationsForEventAsync(eventId);
         }
+        public async Task RemovePresentationAsync(Guid presentationId)
+        {
+            if (presentationId == Guid.Empty)
+                throw new ArgumentException("Invalid presentation ID.", nameof(presentationId));
+
+            await _repo.RemovePresentationAsync(presentationId);
+        }
     }
 }

@@ -16,8 +16,8 @@ namespace Knowledge_Repository.Application.Interfaces.Repositories
 
         Task UpdateAsync(Event evt);
         Task DeleteAsync(Event evt);
-        Task<List<Event>> GetCurrentMonthEventsAsync();
-        Task<List<Event>> GetActiveEventsAsync();
-
+        Task<List<Event>> GetCurrentIdeathonsAsync(DateTime todayUtc);
+        Task<List<Event>> GetIdeathonsForMonthAsync(int year, int month);
     }
+
 }

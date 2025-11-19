@@ -18,7 +18,6 @@ export default function DomainCategoryManagement() {
 
   const emptyForm = { id: "", name: "", domainId: "" };
 
-  /** Fetch all domains and categories */
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -42,7 +41,7 @@ export default function DomainCategoryManagement() {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  /** Save (add/update) handler */
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.name.trim()) {
@@ -118,7 +117,6 @@ export default function DomainCategoryManagement() {
         Domain & Category Management
       </h2>
 
-      {/* Section Toggle */}
       <div className="flex gap-4 mb-6">
         <button
           onClick={() => {
@@ -148,7 +146,7 @@ export default function DomainCategoryManagement() {
         </button>
       </div>
 
-      {/* Form */}
+
       <form
         onSubmit={handleSubmit}
         className="flex flex-wrap gap-4 items-end mb-6 border p-4 rounded-lg"
@@ -195,7 +193,7 @@ export default function DomainCategoryManagement() {
         </button>
       </form>
 
-      {/* Table */}
+
       <div>
         {loading ? (
           <p>Loading...</p>

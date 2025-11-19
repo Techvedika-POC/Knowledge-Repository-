@@ -191,5 +191,28 @@ namespace Knowledge_Repository.API.Controllers
                 return StatusCode(500, new { success = false, message = "Failed to schedule presentation.", details = ex.Message });
             }
         }
+    
+        [HttpDelete("presentations/{presentationId:guid}")]
+        public async Task<IActionResult> DeletePresentation(Guid presentationId)
+        {
+            if (presentationId == Guid.Empty)
+                return BadRequest(new { success = false, message = "Invalid presentation ID." });
+
+            try
+            {
+                await _ideathonService.RemovePresentationAsync(presentationId);
+                return Ok(new { success = true, message = "Presentation removed successfully." });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = "Failed to remove presentation.", details = ex.Message });
+            }
+        }
+
+
     }
 }

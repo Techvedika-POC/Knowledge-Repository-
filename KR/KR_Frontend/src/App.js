@@ -1,8 +1,6 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
-
-// Components
 import Sidebar from "./components/SideBar";
 import UploadKnowledgeItem from "./components/UploadKnowledgeItem";
 import MainContent from "./components/MainContent";

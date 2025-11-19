@@ -34,17 +34,17 @@ export default function IdeathonAdminDashboard() {
   const [page, setPage] = useState(1);
   const teamsPerPage = 5;
 
-  // UI state for expanded team details and per-team scheduling form
+
   const [expandedTeamId, setExpandedTeamId] = useState(null);
-  const [scheduleInputs, setScheduleInputs] = useState({}); // { [teamId]: "2025-11-09T15:00" }
-  const [mentorSelect, setMentorSelect] = useState({}); // { [teamId]: selectedMentorUserId }
+  const [scheduleInputs, setScheduleInputs] = useState({}); 
+  const [mentorSelect, setMentorSelect] = useState({}); 
   const [selectedJuryToAdd, setSelectedJuryToAdd] = useState("");
 
-  // Presentation scheduling (compact form)
+
   const [presentationTeamToSchedule, setPresentationTeamToSchedule] = useState("");
   const [presentationDatetime, setPresentationDatetime] = useState("");
 
-  // -------------------- Fetch Ideathon-type events --------------------
+ 
   const fetchEvents = async () => {
     try {
       const res = await api.get("/Events/type/Ideathon");
@@ -55,7 +55,7 @@ export default function IdeathonAdminDashboard() {
     }
   };
 
-  // -------------------- Fetch event-specific data --------------------
+
   const fetchEventData = async (eventId) => {
     if (!eventId) return;
     try {
@@ -273,7 +273,7 @@ export default function IdeathonAdminDashboard() {
 
   const removePresentation = async (presentationId) => {
     try {
-      await api.delete(`/Presentations/${presentationId}`);
+      await api.delete(`/Ideathon/Presentations/${presentationId}`);
       toast.success("Presentation removed.");
       addAuditLog(`Presentation ${presentationId} removed.`);
       await fetchEventData(selectedEventId);
@@ -322,7 +322,7 @@ export default function IdeathonAdminDashboard() {
 
       {/* Event Selector */}
       <div className="mb-6 flex items-center gap-4">
-        <label className="mr-2 font-semibold">Select Ideathon Event:</label>
+        <label className=" text-violet-700 bg-gray-100 p-2 rounded">Select Ideathon Event:</label>
         <select
           value={selectedEventId || ""}
           onChange={(e) => setSelectedEventId(e.target.value || null)}
@@ -343,21 +343,30 @@ export default function IdeathonAdminDashboard() {
 
       {selectedEventId && (
         <>
-          <h2 className="text-2xl font-semibold mb-2">{eventData.title}</h2>
-          <p className="mb-6 text-gray-600">{eventData.description}</p>
+ <h2 className="text-2xl font-semibold mb-2 text-violet-700 bg-gray-100 p-2 rounded">{eventData.title}</h2>
+<p className="mb-6 text-black-600 bg-gray-50 p-2 rounded">{eventData.description}</p>
 
           {/* Tabs */}
-          <div className="flex gap-4 mb-6 border-b">
-            {["teams", "jury", "presentations", "audit"].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2 rounded-t-lg ${activeTab === tab ? "bg-white border-t border-l border-r" : "bg-gray-100"}`}
-              >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
-              </button>
-            ))}
-          </div>
+      {/* Tabs */}
+<div className="flex gap-4 mb-6 border-b">
+  {["teams", "jury", "presentations", "audit"].map((tab) => (
+    <button
+      key={tab}
+      onClick={() => setActiveTab(tab)}
+      className={`px-4 py-2 rounded-t-lg transition-all
+        ${
+          activeTab === tab
+            ? "bg-indigo-100 text-indigo-700 font-semibold border-t border-l border-r border-indigo-700"
+            : "bg-slate-200 text-slate-700 hover:bg-slate-300 hover:text-indigo-700"
+        }
+      `}
+    >
+      {tab.charAt(0).toUpperCase() + tab.slice(1)}
+    </button>
+  ))}
+</div>
+
+
 
           {/* TEAMS */}
           {activeTab === "teams" && (
@@ -376,7 +385,7 @@ export default function IdeathonAdminDashboard() {
               <div className="space-y-3">
                 {paginatedTeams.map((team) => {
                   const lead = inferTeamLead(team);
-                  const assignedMentors = team.mentors || []; // mentors returned with team
+                  const assignedMentors = team.mentors || []; 
                   return (
                     <div key={team.teamId} className="border rounded-md p-3 bg-gray-50">
                       <div className="flex justify-between items-center">

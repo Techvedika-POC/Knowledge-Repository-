@@ -13,6 +13,7 @@
 	<ItemGroup>
 		<!-- Password hashing -->
 		<PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+		<PackageReference Include="MailKit" Version="4.14.1" />
 		<PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0" />
 
 		<!-- Configuration & logging -->

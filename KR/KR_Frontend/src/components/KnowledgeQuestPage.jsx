@@ -19,8 +19,6 @@ export default function KnowledgeQuestPage() {
   const [videoStarted, setVideoStarted] = useState(false);
 
   const userId = localStorage.getItem("userId");
-
-  // Load Topics
   useEffect(() => {
     const fetchTopics = async () => {
       try {
@@ -32,8 +30,6 @@ export default function KnowledgeQuestPage() {
     };
     fetchTopics();
   }, []);
-
-  // FIXED: Correct API URL for modules
   const handleTopicSelect = async (topicId) => {
     setSelectedTopic(topicId);
     setModules([]);
@@ -120,8 +116,6 @@ export default function KnowledgeQuestPage() {
   const handleAnswerChange = (qIndex, option) => {
     setAnswers({ ...answers, [qIndex]: option });
   };
-
-  // FIXED: Correct API URL for progress update + reload modules
   const handleSubmitTest = async () => {
     let correct = 0;
 
@@ -150,8 +144,6 @@ export default function KnowledgeQuestPage() {
         moduleId: activeModule.moduleId,
         testStatus,
       });
-
-      // FIX: reload modules from proper endpoint
       const res = await api.get(
         `/VLearnModule/topic/${selectedTopic}/modules/me`
       );
@@ -177,7 +169,7 @@ export default function KnowledgeQuestPage() {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <h1 className="text-4xl font-extrabold text-blue-700 mb-4">
+        <h1 className="text-4xl font-extrabold text-blue-700 mb-1 mt-4 pt-4">
           VLearn Knowledge Progression
         </h1>
 
@@ -188,20 +180,20 @@ export default function KnowledgeQuestPage() {
       </motion.div>
 
       {/* FIXED IMAGE URLs */}
-      <div className="w-full flex justify-center gap-6 px-6 py-10">
+      <div className="w-full flex justify-center gap-6 px-6 py-3">
         {[
           {
-            img: "/lms1.png",
+            img: "/Assets/lms.png",
             title: "Think Innovatively",
             desc: "Unlock your learning potential through interactive modules and quizzes.",
           },
           {
-            img: "/Assessment.png",
+            img: "/Assets/lms2.png",
             title: "Step Into the Future",
             desc: "Experience a smarter way of learning through guided knowledge paths.",
           },
           {
-            img: "/lms.png",
+            img: "/Assets/lms.png",
             title: "Empower Your Skills",
             desc: "Learn, test, and grow through structured VLearn Knowledge Quest.",
           },
@@ -221,7 +213,7 @@ export default function KnowledgeQuestPage() {
       </div>
 
       {/* TOPICS */}
-      <div className="max-w-6xl mx-auto mb-12 px-4">
+      <div className="max-w-6xl mx-auto mb-12 px-2 pt-8">
         <h2 className="text-2xl font-semibold text-center text-blue-700 mb-6">
           Select a Topic
         </h2>

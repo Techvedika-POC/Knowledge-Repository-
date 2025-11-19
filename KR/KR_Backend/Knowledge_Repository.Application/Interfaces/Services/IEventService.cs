@@ -12,8 +12,7 @@ namespace Knowledge_Repository.Application.Interfaces.Services
         Task<Event?> GetEventByIdAsync(Guid eventId);
         Task<Event> AddOrUpdateEventAsync(Event evt);
         Task<bool> DeleteEventAsync(Guid eventId);
-        Task<List<Event>> GetCurrentMonthEventsAsync();
-        Task<List<Event>> GetActiveEventsAsync();
-
+        Task<List<Event>> GetCurrentIdeathonsAsync();
+        Task<List<Event>> GetIdeathonsForMonthAsync(int year, int month);
     }
 }
