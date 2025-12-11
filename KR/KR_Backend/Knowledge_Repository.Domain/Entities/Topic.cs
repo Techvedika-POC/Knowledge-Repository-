@@ -13,6 +13,10 @@ public partial class Topic
 
     public string Description { get; set; }
 
+    public string Category { get; set; }
+
+    public string SubCategory { get; set; }
+
     public DateTime? CreatedOn { get; set; }
 
     public DateTime? UpdatedOn { get; set; }
@@ -23,9 +27,5 @@ public partial class Topic
 
     public virtual User CreatedByNavigation { get; set; }
 
-    public virtual ICollection<Module> Modules { get; set; } = new List<Module>();
-
     public virtual User UpdatedByNavigation { get; set; }
-
-    public virtual ICollection<UserModuleProgress> UserModuleProgresses { get; set; } = new List<UserModuleProgress>();
 }

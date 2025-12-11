@@ -1,18 +1,11 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { toast } from "react-hot-toast";
-import api from "../api"; 
+import api from "../api";
 import debounce from "lodash.debounce";
 
-/**
- * IdeathonAdminDashboard (Ideathon Hub)
- * - Always shows the month/event cards under a prominent "Ideathon Hub" heading.
- * - Selecting an event opens its Teams / Jury / Presentations / Audit panes.
- * - Tabs remain hidden until an event is selected.
- */
-
 export default function IdeathonAdminDashboard() {
-  const [events, setEvents] = useState([]); // fallback
-  const [eventsByType, setEventsByType] = useState([]); // grouped data
+  const [events, setEvents] = useState([]); 
+  const [eventsByType, setEventsByType] = useState([]); 
   const [selectedEventId, setSelectedEventId] = useState(null);
 
   const [eventData, setEventData] = useState({});
@@ -356,10 +349,12 @@ export default function IdeathonAdminDashboard() {
       {selectedEventId && eventData && (
         <>
           <div className="mb-6">
-            <h2 className="text-2xl font-semibold mb-2 text-violet-700 bg-gray-100 p-3 rounded">{eventData.title}</h2>
+            <h2 className="text-2xl font-semibold mb-2 text-blue-700 bg-gray-100 p-3 rounded">
+              {eventData.title}
+            </h2>
+
             <p className="mb-6 text-gray-700 bg-white p-3 rounded shadow-sm">{eventData.description}</p>
           </div>
-
           {/* Tabs */}
           <div className="flex gap-4 mb-6 border-b">
             {["teams", "jury", "presentations", "audit"].map((tab) => (

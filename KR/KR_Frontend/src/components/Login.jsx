@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import axios from "axios";
-import api from "../api"; 
+import api from "../api";
 import { useNavigate } from "react-router-dom";
-import toast  from "react-hot-toast";
+import toast from "react-hot-toast";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -18,14 +18,9 @@ export default function Login() {
     try {
       const res = await api.post("/auth/login", form);
       const token = res.data.token;
-       const userId = res.data.userId;
-
+      const userId = res.data.userId;
       localStorage.setItem("jwtToken", token);
-        localStorage.setItem("userId", userId);
-console.log("Login response:", res.data);
-console.log("Storing userId:", userId);
-
-
+      localStorage.setItem("userId", userId);
       if (res.data.name) localStorage.setItem("userName", res.data.name);
       if (res.data.email) localStorage.setItem("userEmail", res.data.email);
       if (res.data.roles) {
@@ -34,13 +29,13 @@ console.log("Storing userId:", userId);
       if (res.data.userId) {
         localStorage.setItem("userId", res.data.userId);
       } else if (res.data.id) {
-        localStorage.setItem("userId", res.data.id); 
+        localStorage.setItem("userId", res.data.id);
       } else {
         console.warn("userId missing from login response");
       }
 
       toast.success("Login successful!");
-      navigate("/app/home"); 
+      navigate("/app/home");
     } catch (err) {
       console.error("Login failed", err);
       toast.error(err.response?.data?.message || "Invalid email or password.");

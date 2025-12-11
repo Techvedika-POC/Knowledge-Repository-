@@ -35,34 +35,34 @@ export default function MyContributions() {
   const searchTypes = ["Title", "Domain", "Category", "Status", "Date"];
 
   // ----------------- FETCH METRICS -----------------
- const fetchMetrics = async () => {
-  try {
-    const token = localStorage.getItem("jwtToken");
-    console.log(token);
-    if (!token) return;
+  const fetchMetrics = async () => {
+    try {
+      const token = localStorage.getItem("jwtToken");
+      console.log(token);
+      if (!token) return;
 
-    // Fetch all contributions of the user to compute metrics
-    const url = `/Contributions/my/paged?pageNumber=1&pageSize=10000`; // use large pageSize
-    const response = await api.get(url, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+      // Fetch all contributions of the user to compute metrics
+      const url = `/Contributions/my/paged?pageNumber=1&pageSize=10000`; // use large pageSize
+      const response = await api.get(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-    const allItems = response.data.items || [];
+      const allItems = response.data.items || [];
 
-    const approvedCount = allItems.filter(i => i.status.toLowerCase() === "approved").length;
-    const rejectedCount = allItems.filter(i => i.status.toLowerCase() === "rejected").length;
-    const pendingCount = allItems.filter(i => i.status.toLowerCase() === "pending").length;
+      const approvedCount = allItems.filter(i => i.status.toLowerCase() === "approved").length;
+      const rejectedCount = allItems.filter(i => i.status.toLowerCase() === "rejected").length;
+      const pendingCount = allItems.filter(i => i.status.toLowerCase() === "pending").length;
 
-    setMetrics({
-      knowledgeItems: allItems.length,
-      approved: approvedCount,
-      rejected: rejectedCount,
-      pendingReviews: pendingCount,
-    });
-  } catch (err) {
-    console.error("Failed to fetch metrics", err);
-  }
-};
+      setMetrics({
+        knowledgeItems: allItems.length,
+        approved: approvedCount,
+        rejected: rejectedCount,
+        pendingReviews: pendingCount,
+      });
+    } catch (err) {
+      console.error("Failed to fetch metrics", err);
+    }
+  };
 
 
   // ----------------- FETCH PAGED CONTRIBUTIONS -----------------
@@ -118,10 +118,9 @@ export default function MyContributions() {
       console.error("Failed to load filter options:", error);
     }
   };
-
   useEffect(() => {
-    fetchMetrics();        // Fetch metrics once
-    fetchContributions();  // Fetch first page
+    fetchMetrics();
+    fetchContributions();
     fetchFilterOptions();
   }, []);
 
@@ -155,7 +154,7 @@ export default function MyContributions() {
 
   return (
     <div className="max-w-[1000px] mx-auto mt-5 p-6 bg-white rounded-[12px] shadow-[0_6px_12px_rgba(0,0,0,0.05)] font-inter text-[#1f2937]">
-      
+
       {/* HEADER */}
       <div className="flex flex-col gap-3 mb-5">
         <h2 className="text-[24px] font-semibold">My Contributions</h2>
@@ -248,31 +247,29 @@ export default function MyContributions() {
                 <td className="px-4 py-2">{c.category}</td>
                 <td className="px-4 py-2">{new Date(c.date).toLocaleDateString()}</td>
                 <td className="px-4 py-2 font-medium">{c.status}</td>
-               <td className="px-4 py-2 flex gap-3 items-center">
-  <button
-    className="text-[#92400e] hover:underline font-semibold"
-    onClick={() => openModal(c)}
-    aria-label={`Preview ${c.title}`}
-  >
-    Preview
-  </button>
-<button
-  className="px-3 py-1 rounded-[10px] bg-[#06b6d4] text-white text-[13px] hover:opacity-90"
-  onClick={() => navigate("/app/upload-knowledge", { state: { itemId: c.itemId } })}
-  aria-label={`Edit ${c.title}`}
-  title="Edit"
->
-  Edit
-</button>
+                <td className="px-4 py-2 flex gap-3 items-center">
+                  <button
+                    className="text-[#92400e] hover:underline font-semibold"
+                    onClick={() => openModal(c)}
+                    aria-label={`Preview ${c.title}`}
+                  >
+                    Preview
+                  </button>
+                  <button
+                    className="px-3 py-1 rounded-[10px] bg-[#06b6d4] text-white text-[13px] hover:opacity-90"
+                    onClick={() => navigate("/app/upload-knowledge", { state: { itemId: c.itemId } })}
+                    aria-label={`Edit ${c.title}`}
+                    title="Edit"
+                  >
+                    Edit
+                  </button>
 
-</td>
+                </td>
 
               </tr>
             ))}
           </tbody>
         </table>
-
-        {/* PAGINATION */}
         <div className="flex justify-end items-center gap-3 p-3 mt-3">
           <button onClick={handlePrevPage} disabled={pageNumber === 1}
             className="px-4 py-2 bg-[#fef3c7] rounded-[8px] hover:bg-[#e5e7eb] text-center disabled:opacity-50 flex items-center gap-1">

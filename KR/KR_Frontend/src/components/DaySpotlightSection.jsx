@@ -1,4 +1,3 @@
-// DaySpotlightSection.jsx
 import React from "react";
 
 export default function DaySpotlightSection({ daySpotlight }) {

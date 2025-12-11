@@ -76,7 +76,7 @@ export default function AppHighlights() {
             }}
             autoplay={{ delay: 3000, disableOnInteraction: false }}
             loop
-            spaceBetween={15} // reduced space between cards
+            spaceBetween={15} 
             slidesPerView={3}
             breakpoints={{
               320: { slidesPerView: 1 },

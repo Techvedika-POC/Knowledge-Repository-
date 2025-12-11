@@ -5,16 +5,11 @@ export default function PreviewModal({ item, onClose }) {
   const [showFullDesc, setShowFullDesc] = useState(false);
   if (!item) return null;
 
- 
   const parseDbJsonArray = (str) => {
     if (!str) return [];
     try {
-      // Remove outer quotes if they exist
       let cleaned = str.trim();
-      if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
-        cleaned = cleaned.slice(1, -1);
-      }
-      // Replace double quotes with single quotes for valid JSON
+      if (cleaned.startsWith('"') && cleaned.endsWith('"')) cleaned = cleaned.slice(1, -1);
       cleaned = cleaned.replace(/""/g, '"');
       const parsed = JSON.parse(cleaned);
       return Array.isArray(parsed) ? parsed.filter(Boolean) : [];
@@ -28,9 +23,7 @@ export default function PreviewModal({ item, onClose }) {
     if (!str) return {};
     try {
       let cleaned = str.trim();
-      if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
-        cleaned = cleaned.slice(1, -1);
-      }
+      if (cleaned.startsWith('"') && cleaned.endsWith('"')) cleaned = cleaned.slice(1, -1);
       cleaned = cleaned.replace(/""/g, '"');
       const parsed = JSON.parse(cleaned);
       return typeof parsed === "object" && parsed !== null ? parsed : {};
@@ -43,7 +36,6 @@ export default function PreviewModal({ item, onClose }) {
   const languages = parseDbJsonArray(item.language);
   const frameworks = parseDbJsonArray(item.framework);
   const metadataObj = parseDbJsonObject(item.metadata);
-
   const description = item.description || item.Description || "No description available.";
 
   const details = [
@@ -58,8 +50,8 @@ export default function PreviewModal({ item, onClose }) {
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-center items-start bg-black bg-opacity-50 backdrop-blur-sm animate-fadeIn">
-      <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-4xl mt-20 mb-20 flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm animate-fadeIn p-4">
+      <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-4xl flex flex-col overflow-hidden max-h-[90vh]">
 
         {/* Header */}
         <div className="flex justify-between items-center px-6 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md sticky top-0 z-10">
@@ -68,7 +60,7 @@ export default function PreviewModal({ item, onClose }) {
         </div>
 
         {/* Content */}
-        <div className="p-8 overflow-y-auto max-h-[80vh] space-y-10">
+        <div className="p-6 overflow-y-auto space-y-10">
 
           {/* Description */}
           <div>

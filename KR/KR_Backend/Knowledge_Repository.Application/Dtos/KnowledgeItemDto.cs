@@ -5,7 +5,6 @@ namespace Knowledge_Repository.Application.Dtos
 {
     public class KnowledgeItemDto
     {
-        // Unique identifier
         public Guid ItemId { get; set; }
         public int EngagementScore { get; set; }
         public DateTimeOffset CreatedOn { get; set; }

@@ -154,40 +154,63 @@ namespace Knowledge_Repository.Application.Implementations.Services
         }
 
 
-        public async Task<List<LeaderboardDto>> GetTopLikedItemsAsync(int top = 5)
+        public async Task<List<UserLeaderboardDto>> GetTopUsersByLikesAsync(int top = 3)
         {
-            var likes = await _engagementRepository.GetAllAsync(e => e.EngagementType == "Like");
+            // 1. Fetch all LIKE engagements
+            var likes = await _engagementRepository.GetAllAsync(
+                e => e.EngagementType == "Like"
+            );
 
-            var groupedLikes = likes
-                .GroupBy(e => e.ItemId)
+            if (!likes.Any())
+                return new List<UserLeaderboardDto>();
+
+            // 2. Get all liked item IDs
+            var itemIds = likes.Select(l => l.ItemId).Distinct().ToList();
+
+            // 3. Load items with their owners
+            var items = await _knowledgeItemRepository.GetByItemIdsAsync(itemIds);
+
+            // 4. Group likes by ITEM OWNER
+            var ownerLikeGroups = likes
+                .Join(items,
+                      like => like.ItemId,
+                      item => item.ItemId,
+                      (like, item) => new { item.OwnerId })
+                .Where(x => x.OwnerId != null)
+                .GroupBy(x => x.OwnerId)
                 .Select(g => new
                 {
-                    ItemId = g.Key,
-                    LikesCount = g.Count()
+                    UserId = g.Key.Value,
+                    TotalLikes = g.Count()
                 })
-                .OrderByDescending(x => x.LikesCount)
+                .OrderByDescending(x => x.TotalLikes)
                 .Take(top)
                 .ToList();
 
-            var itemIds = groupedLikes.Select(t => t.ItemId).ToList();
-            var items = await _knowledgeItemRepository.GetByItemIdsAsync(itemIds);
+            // 5. Get full user details
+            var userIds = ownerLikeGroups.Select(x => x.UserId).ToList();
+            var users = await _userRepository.GetUsersByIdsAsync(userIds);
 
-            return items.Select(k =>
+            // 6. Build final leaderboard DTO
+            var leaderboard = ownerLikeGroups.Select(g =>
             {
-                var likesCount = groupedLikes.FirstOrDefault(t => t.ItemId == k.ItemId)?.LikesCount ?? 0;
-                return new LeaderboardDto
+                var user = users.FirstOrDefault(u => u.UserId == g.UserId);
+
+                return new UserLeaderboardDto
                 {
-                    ItemId = k.ItemId,
-                    ItemTitle = k.Title,
-                    ItemDescription = string.IsNullOrEmpty(k.Description)
-                        ? ""
-                        : (k.Description.Length > 100 ? k.Description.Substring(0, 100) + "..." : k.Description),
-                    UserId = k.OwnerId ?? Guid.Empty,
-                    UserName = k.Owner?.Name ?? "Unknown",
-                    LikesCount = likesCount
+                    UserId = g.UserId,
+                    UserName = user?.Name ?? "Unknown",
+                    Department = user?.Department?.DepartmentName ?? "N/A",
+                    TotalLikesReceived = g.TotalLikes
                 };
-            }).OrderByDescending(l => l.LikesCount).ToList();
+            })
+            .OrderByDescending(x => x.TotalLikesReceived)
+            .ToList();
+
+            return leaderboard;
         }
+
+
 
 
         private static CommentDto MapToCommentDto(Engagement e)

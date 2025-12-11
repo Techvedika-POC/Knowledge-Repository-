@@ -137,11 +137,10 @@ namespace Knowledge_Repository.Application.Implementations.Services
             var favourites = await _engagementRepository.GetFavouritesByUserAsync(userId);
 
             return favourites
-                .Where(e => e.Item != null)              // safety check
+                .Where(e => e.Item != null)             
                 .Select(e => MapToKnowledgeItemDto(e.Item))
                 .ToList();
         }
-
 
         private static ActivityLogDto MapToActivityLogDto(KnowledgeItem k)
         {

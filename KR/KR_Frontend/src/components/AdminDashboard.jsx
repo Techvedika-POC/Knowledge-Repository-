@@ -3,7 +3,7 @@ import { Toaster } from "react-hot-toast";
 import EventManagement from "./EventManagement";
 import DomainManagement from "./DomainCategoryManagement";
 import RoleManagement from "./RoleManagement";
-import KnowledgeQuestManagement from "./KnowledgeQuestManagement";
+import LearningPlanManager from "./LearningPlanManager";
 import IdeathonEventPage from "./IdeathonEventPage"; 
 
 export default function AdminDashboard() {
@@ -18,7 +18,7 @@ export default function AdminDashboard() {
       case "roles":
         return <RoleManagement />;
       case "knowledgeQuest":
-        return <KnowledgeQuestManagement />;
+        return <LearningPlanManager />;
       case "ideathon":
         return <IdeathonEventPage />; 
       default:
@@ -72,7 +72,7 @@ export default function AdminDashboard() {
                 : "bg-white border border-blue-200 hover:bg-blue-50"
             }`}
           >
-            Knowledge Quest
+            Learn Sphere
           </button>
           <button
             onClick={() => setActiveTab("ideathon")}

@@ -18,53 +18,6 @@ namespace Knowledge_Repository.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<List<KnowledgeItem>> GetPendingItemsAsync(int pageNumber, int pageSize)
-        {
-            return await _context.KnowledgeItems
-                .Where(k => k.Status == "Pending")
-                .OrderBy(k => k.CreatedOn)
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .Include(k => k.Domain)
-                .Include(k => k.Category)
-                 .Include(k => k.Owner)
-                .Include(k => k.KnowledgeTags)
-                .Include(k => k.Engagements)
-                .ToListAsync();
-        }
-
-        public async Task<int> GetPendingItemsCountAsync()
-        {
-            return await _context.KnowledgeItems
-                .CountAsync(k => k.Status == "Pending");
-        }
-
-        public async Task<bool> ApproveItemAsync(Guid itemId, Guid approverId)
-        {
-            var item = await _context.KnowledgeItems.FindAsync(itemId);
-            if (item == null) return false;
-
-            item.Status = "Approved";
-            item.UpdatedBy = approverId;
-            item.UpdatedOn = DateTime.UtcNow;
-
-            await _context.SaveChangesAsync();
-            return true;
-        }
-
-        public async Task<bool> RejectItemAsync(Guid itemId, Guid approverId)
-        {
-            var item = await _context.KnowledgeItems.FindAsync(itemId);
-            if (item == null) return false;
-
-            item.Status = "Rejected";
-            item.UpdatedBy = approverId;
-            item.UpdatedOn = DateTime.UtcNow;
-
-            await _context.SaveChangesAsync();
-            return true;
-        }
-
         public async Task<IEnumerable<KnowledgeItem>> GetByDomainOrCategoryAsync(Guid? domainId, Guid? categoryId)
         {
             var q = _context.KnowledgeItems

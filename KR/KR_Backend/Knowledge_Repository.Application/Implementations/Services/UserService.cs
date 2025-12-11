@@ -54,5 +54,18 @@ namespace Knowledge_Repository.Application.Implementations.Services
             if (user != null)
                 await _userRepository.DeleteAsync(user);
         }
+        public async Task<bool> UpdateUserProfileAsync(Guid userId, UserProfileUpdateDto dto)
+        {
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null) return false;
+
+            user.Name = dto.Name;
+            user.DepartmentId = dto.DepartmentId;
+            user.UpdatedOn = DateTime.UtcNow;
+
+            await _userRepository.UpdateAsync(user);
+            return true;
+        }
+
     }
 }

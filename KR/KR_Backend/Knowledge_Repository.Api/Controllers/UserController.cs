@@ -72,5 +72,15 @@ namespace Knowledge_Repository.API.Controllers
             await _userService.DeleteUserAsync(id);
             return Ok(new { Message = "User deleted successfully" });
         }
+        [HttpPut("{id}/profile")]
+        public async Task<IActionResult> UpdateProfile(Guid id, [FromBody] UserProfileUpdateDto dto)
+        {
+            var updated = await _userService.UpdateUserProfileAsync(id, dto);
+            if (!updated)
+                return NotFound(new { Message = "User not found" });
+
+            return Ok(new { Message = "Profile updated successfully" });
+        }
+
     }
 }

@@ -31,9 +31,19 @@ public partial class UserModuleProgress
 
     public DateTime? UpdatedAt { get; set; }
 
-    public virtual Module Module { get; set; }
+    public Guid? CurrentLessonId { get; set; }
 
-    public virtual Topic Topic { get; set; }
+    public int CompletedLessonsCount { get; set; }
+
+    public int TotalLessonsCount { get; set; }
+
+    public string CompletedLessonIds { get; set; }
+
+    public decimal LessonProgressPercent { get; set; }
+
+    public virtual Lesson CurrentLesson { get; set; }
+
+    public virtual Module Module { get; set; }
 
     public virtual User User { get; set; }
 }

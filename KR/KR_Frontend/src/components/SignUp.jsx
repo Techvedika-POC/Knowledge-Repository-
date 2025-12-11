@@ -16,8 +16,6 @@ export default function Signup() {
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
-
-  // ✅ Validation function
   const validateForm = () => {
     const newErrors = {};
 
@@ -36,7 +34,7 @@ export default function Signup() {
       newErrors.DepartmentName = "Department name must contain only letters";
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0; // ✅ Return true if valid
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
@@ -52,7 +50,7 @@ export default function Signup() {
       navigate("/login");
     } catch (err) {
       console.error("Signup failed", err);
-      toast.error("❌ Signup failed. Try again.");
+      toast.error(" Signup failed. Try again.");
     }
   };
 
@@ -74,9 +72,8 @@ export default function Signup() {
               name="name"
               value={form.name}
               onChange={handleChange}
-              className={`mt-1 block w-full rounded-md border ${
-                errors.name ? "border-red-500" : "border-gray-300"
-              } shadow-sm focus:ring-blue-600 focus:border-blue-600 sm:text-sm p-2`}
+              className={`mt-1 block w-full rounded-md border ${errors.name ? "border-red-500" : "border-gray-300"
+                } shadow-sm focus:ring-blue-600 focus:border-blue-600 sm:text-sm p-2`}
               placeholder="Jane Doe"
             />
             {errors.name && (
@@ -94,9 +91,8 @@ export default function Signup() {
               name="email"
               value={form.email}
               onChange={handleChange}
-              className={`mt-1 block w-full rounded-md border ${
-                errors.email ? "border-red-500" : "border-gray-300"
-              } shadow-sm focus:ring-blue-600 focus:border-blue-600 sm:text-sm p-2`}
+              className={`mt-1 block w-full rounded-md border ${errors.email ? "border-red-500" : "border-gray-300"
+                } shadow-sm focus:ring-blue-600 focus:border-blue-600 sm:text-sm p-2`}
               placeholder="you@example.com"
             />
             {errors.email && (
@@ -114,9 +110,8 @@ export default function Signup() {
               name="password"
               value={form.password}
               onChange={handleChange}
-              className={`mt-1 block w-full rounded-md border ${
-                errors.password ? "border-red-500" : "border-gray-300"
-              } shadow-sm focus:ring-blue-600 focus:border-blue-600 sm:text-sm p-2`}
+              className={`mt-1 block w-full rounded-md border ${errors.password ? "border-red-500" : "border-gray-300"
+                } shadow-sm focus:ring-blue-600 focus:border-blue-600 sm:text-sm p-2`}
               placeholder="••••••••"
             />
             {errors.password && (
@@ -134,9 +129,8 @@ export default function Signup() {
               name="DepartmentName"
               value={form.DepartmentName}
               onChange={handleChange}
-              className={`mt-1 block w-full rounded-md border ${
-                errors.DepartmentName ? "border-red-500" : "border-gray-300"
-              } shadow-sm focus:ring-blue-600 focus:border-blue-600 sm:text-sm p-2`}
+              className={`mt-1 block w-full rounded-md border ${errors.DepartmentName ? "border-red-500" : "border-gray-300"
+                } shadow-sm focus:ring-blue-600 focus:border-blue-600 sm:text-sm p-2`}
               placeholder="Enter your department"
             />
             {errors.DepartmentName && (

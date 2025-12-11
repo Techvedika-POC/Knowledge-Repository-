@@ -1,5 +1,4 @@
-﻿using Knowledge_Repository.Application.Dtos;
-using Knowledge_Repository.Application.Interfaces.Services;
+﻿using Knowledge_Repository.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -10,7 +9,7 @@ namespace Knowledge_Repository.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(Roles = "Approver,Admin")]
     public class ApproverController : ControllerBase
     {
         private readonly IApproverService _approverService;
@@ -20,66 +19,136 @@ namespace Knowledge_Repository.Api.Controllers
             _approverService = approverService;
         }
 
-        [HttpGet("pending")]
-        public async Task<IActionResult> GetPendingItems()
+        [HttpGet("dashboard")]
+        public async Task<IActionResult> GetDashboard()
         {
-            var items = await _approverService.GetPendingKnowledgeItemsAsync();
-            return Ok(items);
+            var dashboard = await _approverService.GetDashboardSummaryAsync();
+            return Ok(dashboard);
         }
 
-        [HttpPost("approve/{itemId}")]
-        public async Task<IActionResult> ApproveItem(Guid itemId)
+        [HttpGet("pending/normal")]
+        public async Task<IActionResult> GetNormalPending(
+            [FromQuery] int page = 1,
+            [FromQuery] int size = 10)
         {
-            var approverIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(approverIdClaim))
-                return Unauthorized("User ID not found in token.");
-
-            if (!Guid.TryParse(approverIdClaim, out var approverId))
-                return BadRequest("Invalid user ID format.");
-
-            var result = await _approverService.ApproveKnowledgeItemAsync(itemId, approverId);
-
-            if (!result)
-                return BadRequest("Item cannot be approved.");
-
-            return Ok("Item approved successfully.");
-        }
-
-        [HttpGet("pending/paged")]
-        public async Task<IActionResult> GetPendingPaged(
-            [FromQuery] int pageNumber = 1,
-            [FromQuery] int pageSize = 10)
-        {
-            var (items, totalCount) = await _approverService.GetPendingKnowledgeItemsAsync(pageNumber, pageSize);
-            var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+            var (items, total) = await _approverService.GetNormalPendingAsync(page, size);
+            var totalPages = (int)Math.Ceiling(total / (double)size);
 
             return Ok(new
             {
                 items,
-                totalCount,
+                total,
                 totalPages,
-                pageNumber,
-                pageSize
+                page,
+                size
             });
+        }
+
+
+        [HttpGet("pending/event")]
+        public async Task<IActionResult> GetEventPending(
+            [FromQuery] int page = 1,
+            [FromQuery] int size = 10)
+        {
+            var (items, total) = await _approverService.GetEventPendingAsync(page, size);
+            var totalPages = (int)Math.Ceiling(total / (double)size);
+
+            return Ok(new
+            {
+                items,
+                total,
+                totalPages,
+                page,
+                size
+            });
+        }
+
+ 
+        [HttpGet("pending/event/{eventId}")]
+        public async Task<IActionResult> GetPendingByEvent(
+            Guid eventId,
+            [FromQuery] int page = 1,
+            [FromQuery] int size = 10)
+        {
+            var (items, total) = await _approverService.GetPendingByEventAsync(eventId, page, size);
+            var totalPages = (int)Math.Ceiling(total / (double)size);
+
+            return Ok(new
+            {
+                items,
+                total,
+                totalPages,
+                eventId,
+                page,
+                size
+            });
+        }
+
+ 
+        [HttpPost("approve/{itemId}")]
+        public async Task<IActionResult> ApproveItem(Guid itemId)
+        {
+            var approverId = GetLoggedInUserId();
+            if (approverId == null)
+                return Unauthorized("User ID missing in token.");
+
+            var success = await _approverService.ApproveAsync(itemId, approverId.Value);
+            if (!success)
+                return BadRequest("Unable to approve the item.");
+
+            return Ok("Item approved successfully.");
         }
 
         [HttpPost("reject/{itemId}")]
         public async Task<IActionResult> RejectItem(Guid itemId)
         {
-            var approverIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var approverId = GetLoggedInUserId();
+            if (approverId == null)
+                return Unauthorized("User ID missing in token.");
 
-            if (string.IsNullOrEmpty(approverIdClaim))
-                return Unauthorized("User ID not found in claims.");
-
-            if (!Guid.TryParse(approverIdClaim, out var approverId))
-                return BadRequest("Invalid user ID format.");
-
-            var result = await _approverService.RejectKnowledgeItemAsync(itemId, approverId);
-
-            if (!result)
-                return BadRequest("Item cannot be rejected.");
+            var success = await _approverService.RejectAsync(itemId, approverId.Value);
+            if (!success)
+                return BadRequest("Unable to reject the item.");
 
             return Ok("Item rejected successfully.");
         }
+
+
+        private Guid? GetLoggedInUserId()
+        {
+            var claim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            return Guid.TryParse(claim, out var id) ? id : null;
+        }
+
+        [HttpGet("event/types")]
+        public async Task<IActionResult> GetEventTypes()
+        {
+            var types = await _approverService.GetEventTypesAsync();
+            return Ok(types);
+        }
+        // --------------------------------------------
+        // EVENT TYPE → PENDING ITEMS (Paged)
+        // --------------------------------------------
+        [HttpGet("pending/event/type/{eventType}")]
+        public async Task<IActionResult> GetPendingByEventType(
+            string eventType,
+            [FromQuery] int page = 1,
+            [FromQuery] int size = 10)
+        {
+            var (items, total) = await _approverService.GetPendingByEventTypeAsync(eventType, page, size);
+
+            var totalPages = (int)Math.Ceiling(total / (double)size);
+
+            return Ok(new
+            {
+                items,
+                total,
+                totalPages,
+                eventType,
+                page,
+                size
+            });
+        }
+
     }
 }

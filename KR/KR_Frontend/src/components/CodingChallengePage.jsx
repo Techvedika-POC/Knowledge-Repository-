@@ -49,8 +49,6 @@ export default function CodingChallengePage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const navigate = useNavigate();
-
-    // Fetch coding challenge events dynamically
     useEffect(() => {
         const fetchEvents = async () => {
             try {
@@ -176,14 +174,12 @@ export default function CodingChallengePage() {
                                     <h3 className="text-2xl font-semibold text-blue-700 mb-2">{e.title}</h3>
                                     <p className="text-gray-700 text-base">{e.description}</p>
                                 </div>
-    <button
-  onClick={() => handleSubmitIdea(e.eventId)}
-  className="mx-auto mt-4 bg-blue-600 text-white text-sm px-4 py-2 rounded-full font-semibold shadow-lg cursor-pointer hover:bg-blue-700 transition"
->
-  Submit
-</button>
-
-
+                                <button
+                                    onClick={() => handleSubmitIdea(e.eventId)}
+                                    className="mx-auto mt-4 bg-blue-600 text-white text-sm px-4 py-2 rounded-full font-semibold shadow-lg cursor-pointer hover:bg-blue-700 transition"
+                                >
+                                    Submit
+                                </button>
                             </div>
                         ))}
                     </div>
@@ -195,12 +191,6 @@ export default function CodingChallengePage() {
                 <p className="text-gray-700 max-w-2xl mx-auto mb-8">
                     submit now and prove your skills in a business-driven environment designed to push innovation.
                 </p>
-                {/* <a
-                    href="/register"
-                    className="bg-blue-600 text-white px-8 py-3 rounded-full font-semibold hover:bg-blue-700 transition"
-                >
-                    Register Today
-                </a> */}
             </section>
             {/* Footer */}
             <footer className="bg-white text-gray-700 py-8 text-center border-t">

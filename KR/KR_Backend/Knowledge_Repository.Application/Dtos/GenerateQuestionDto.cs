@@ -4,13 +4,13 @@
     {
         public string Question { get; set; }
         public List<string> Options { get; set; }
-        public string CorrectAnswer { get; set; }  // optional, not sent to user
+        public string CorrectAnswer { get; set; }  
     }
 
     public class VLearnQuestionRequestDto
     {
         public string ModuleName { get; set; }
-        public string Type { get; set; } = "topicBased"; // or "contextBased"
+        public string Type { get; set; } = "topicBased"; 
     }
 
     public class VLearnQuestionResponseDto

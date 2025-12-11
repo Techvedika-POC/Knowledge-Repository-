@@ -16,7 +16,6 @@ const MainContent = () => {
   const [showActivity, setShowActivity] = useState(false);
   const [showAnnouncements, setShowAnnouncements] = useState(false);
   const [activeSection, setActiveSection] = useState("freshPicks");
-
   const [freshPicks, setFreshPicks] = useState([]);
   const [trending, setTrending] = useState([]);
   const [topics, setTopics] = useState([]);
@@ -25,7 +24,6 @@ const MainContent = () => {
   const [leaderboardData, setLeaderboardData] = useState([]);
   const [loadingLeaderboard, setLoadingLeaderboard] = useState(false);
   const [errorLeaderboard, setErrorLeaderboard] = useState("");
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [userContributions, setUserContributions] = useState([]);
@@ -138,7 +136,7 @@ const MainContent = () => {
       try {
         setLoadingLeaderboard(true);
         setErrorLeaderboard("");
-        const res = await api.get("/Engagement/top-liked?top=5");
+        const res = await api.get("/Engagement/top-users?top=5");
         setLeaderboardData(res.data);
       } catch (err) {
         console.error("Failed to load leaderboard:", err);
@@ -189,7 +187,10 @@ const MainContent = () => {
   return (
     <div className="flex flex-col w-full">
       <Navbar />
-      <AppHighlights />
+      {/* Quick Events  */}
+      <div className="px-4 py-4 mt-6">
+        <QuickEvents navigate={navigate} />
+      </div>
       {/* Section Tabs & Content */}
       <div className="px-6 mt-4 mb-2">
         <SectionTabs activeSection={activeSection} onSectionChange={setActiveSection} />
@@ -227,11 +228,6 @@ const MainContent = () => {
         </div>
       </div>
 
-      {/* Quick Events  */}
-      <div className="px-6 mt-1">
-        <QuickEvents navigate={navigate} />
-      </div>
-
       {/* Leaderboard / Announcements */}
       <div className="bg-white rounded-2xl p-4 shadow-md mt-4 relative">
         <div className="flex justify-center mb-4 flex-wrap gap-3">
@@ -264,26 +260,54 @@ const MainContent = () => {
             ) : errorLeaderboard ? (
               <p className="text-red-500 text-xs">{errorLeaderboard}</p>
             ) : (
-              leaderboardData.slice(0, 3).map((item, index) => (
-                <div key={index} className="rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-all flex flex-col sm:flex-row bg-gray-50 border border-gray-100">
-                  <div className="sm:w-1/2 bg-gray-200 flex items-center justify-center">
-                    <img
-                      src={`/assets/Rank${index + 1}.png`}
-                      alt={item.userName}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="sm:w-1/2 p-4 flex flex-col justify-center gap-2">
-                    <span className={`font-semibold px-2 py-1 rounded-full text-[10px] w-max ${leaderboardNumberColors[index] || "bg-gray-300 text-gray-800"}`}>
-                      #{index + 1}
-                    </span>
-                    <h4 className="text-lg font-bold text-gray-900">{item.userName}</h4>
-                    <p className="text-sm text-gray-700">{item.itemTitle}</p>
-                  </div>
-                </div>
-              ))
-            ))}
+              leaderboardData.slice(0, 3).map((item, index) => {
 
+                // Map rank to correct image
+                const rankImage = `/assets/Rank${index + 1}.png`;
+
+                return (
+                  <div
+                    key={index}
+                    className="rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-all flex flex-col sm:flex-row bg-gray-50 border border-gray-100"
+                  >
+                    {/* LEFT: Rank Visual */}
+                    <div className="sm:w-1/2 bg-gray-200 flex items-center justify-center">
+                      <img
+                        src={rankImage}
+                        alt={`Rank ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+
+                    {/* RIGHT: User Details */}
+                    <div className="sm:w-1/2 p-4 flex flex-col justify-center gap-2">
+
+                      {/* Rank Tag */}
+                      <span
+                        className={`font-semibold px-2 py-1 rounded-full text-[10px] w-max ${leaderboardNumberColors[index] ||
+                          "bg-gray-300 text-gray-800"
+                          }`}
+                      >
+                        #{index + 1}
+                      </span>
+
+                      {/* User Name */}
+                      <h4 className="text-lg font-bold text-gray-900">
+                        {item.userName}
+                      </h4>
+
+                      {/* Divider */}
+                      <div className="border-t border-gray-200 my-2"></div>
+
+                      {/* Likes */}
+                      <p className="text-sm text-gray-900 font-semibold">
+                        {item.totalLikesReceived} Likes
+                      </p>
+                    </div>
+                  </div>
+                );
+              })
+            ))}
           {/* Announcements */}
           {activeTab === "Announcements" && ideathonEvent && (
             <div className="rounded-2xl p-3 shadow-md hover:shadow-lg transition-all flex flex-col gap-1 border border-gray-100 bg-pink-50 relative group">

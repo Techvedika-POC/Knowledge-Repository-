@@ -9,13 +9,11 @@ public partial class Module
 {
     public Guid ModuleId { get; set; }
 
-    public Guid TopicId { get; set; }
+    public Guid WeekId { get; set; }
 
     public string ModuleName { get; set; }
 
     public string Description { get; set; }
-
-    public string ContentLink { get; set; }
 
     public int? OrderNo { get; set; }
 
@@ -23,15 +21,25 @@ public partial class Module
 
     public DateTime? UpdatedOn { get; set; }
 
-    public Guid? CreatedBy { get; set; }
+    public string Overview { get; set; }
 
-    public Guid? UpdatedBy { get; set; }
+    public string Description1 { get; set; }
 
-    public virtual User CreatedByNavigation { get; set; }
+    public string Prerequisites { get; set; }
 
-    public virtual Topic Topic { get; set; }
+    public int? DurationDays { get; set; }
 
-    public virtual User UpdatedByNavigation { get; set; }
+    public bool? IsAiGenerated { get; set; }
+
+    public string Metadata { get; set; }
+
+    public virtual ICollection<Assessment> Assessments { get; set; } = new List<Assessment>();
+
+    public virtual ICollection<Lesson> Lessons { get; set; } = new List<Lesson>();
+
+    public virtual ICollection<Resource> Resources { get; set; } = new List<Resource>();
 
     public virtual ICollection<UserModuleProgress> UserModuleProgresses { get; set; } = new List<UserModuleProgress>();
+
+    public virtual Week Week { get; set; }
 }

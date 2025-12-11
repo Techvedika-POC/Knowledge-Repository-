@@ -3,7 +3,11 @@ import api from "../api";
 import { Check, X, Eye, ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function ApproverPage() {
+  const [tab, setTab] = useState("normal");
   const [items, setItems] = useState([]);
+  const [eventTypes, setEventTypes] = useState([]);
+  const [selectedEventType, setSelectedEventType] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(null);
   const [previewItem, setPreviewItem] = useState(null);
@@ -14,191 +18,266 @@ export default function ApproverPage() {
   const [totalItems, setTotalItems] = useState(0);
   const totalPages = Math.ceil(totalItems / pageSize);
 
-  const fetchPendingItems = async () => {
-    setLoading(true);
-    setError("");
+  const loadEventTypes = async () => {
     try {
       const token = localStorage.getItem("token");
-      const params = new URLSearchParams({ pageNumber, pageSize }).toString();
+      const res = await api.get("/approver/event/types", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setEventTypes(res.data || []);
+    } catch (err) {
+      console.error("Failed loading event types", err);
+    }
+  };
 
-      const res = await api.get(`/approver/pending/paged?${params}`, {
+  useEffect(() => {
+    loadEventTypes();
+  }, []);
+
+  const fetchData = async () => {
+    setLoading(true);
+    setError("");
+
+    try {
+      const token = localStorage.getItem("token");
+      let params = `?page=${pageNumber}&size=${pageSize}`;
+      let endpoint = "";
+
+      if (tab === "normal") endpoint = `/approver/pending/normal${params}`;
+      else if (tab === "event") endpoint = `/approver/pending/event${params}`;
+      else if (tab === "eventType") {
+        if (!selectedEventType) {
+          setItems([]);
+          return;
+        }
+        endpoint = `/approver/pending/event/type/${selectedEventType}${params}`;
+      } else if (tab === "all") {
+        const [normal, event] = await Promise.all([
+          api.get(`/approver/pending/normal${params}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          api.get(`/approver/pending/event${params}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
+        const merged = [...(normal.data.items || []), ...(event.data.items || [])];
+        setItems(merged);
+        setTotalItems(merged.length);
+        setLoading(false);
+        return;
+      }
+
+      const res = await api.get(endpoint, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       setItems(res.data.items || []);
-      setTotalItems(res.data.totalCount || 0);
+      setTotalItems(res.data.total || 0);
     } catch (err) {
       console.error(err);
-      setError("Failed to fetch pending items.");
+      setError("Failed to load items.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchPendingItems();
-  }, [pageNumber]);
+    fetchData();
+  }, [tab, selectedEventType, pageNumber]);
 
   const handleAction = async (itemId, action) => {
     setActionLoading(itemId);
-    setError("");
     try {
       const token = localStorage.getItem("token");
-      await api.post(
-        `/approver/${action}/${itemId}`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      fetchPendingItems();
+      await api.post(`/approver/${action}/${itemId}`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      fetchData();
     } catch (err) {
-      console.error(err);
-      setError(err.response?.data || "Action failed.");
+      setError("Action failed.");
     } finally {
       setActionLoading(null);
     }
   };
 
-  const handlePrevPage = () => {
-    if (pageNumber > 1) setPageNumber(pageNumber - 1);
-  };
-
-  const handleNextPage = () => {
-    if (pageNumber < totalPages) setPageNumber(pageNumber + 1);
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-indigo-50 p-8">
-      <div className="max-w-7xl mx-auto">
-        <h2 className="text-3xl font-bold text-indigo-700 mb-6 text-center">
-          Pending Knowledge Approvals
-        </h2>
+    <div className="p-10 min-h-screen bg-gradient-to-br from-[#F7F9FC] to-[#EDF2FA]">
+      <div className="max-w-6xl mx-auto">
 
-        {error && <p className="text-sm text-red-500 text-center mb-4">{error}</p>}
+        {/* HEADER */}
+        <div className="mb-10 text-center">
+          <h1 className="text-3xl font-extrabold text-gray-700 tracking-wide">
+            Knowledge Approval Center
+          </h1>
+          <p className="text-gray-500 mt-2 text-sm">
+            Review, approve and manage knowledge submissions efficiently.
+          </p>
+        </div>
 
-        {loading ? (
-          <p className="text-sm text-gray-500 text-center">Loading...</p>
-        ) : items.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-6 text-center text-gray-600">
-            No pending items 
+        {/* Tabs */}
+        <div className="flex gap-3 mb-6 justify-center">
+          {[
+            { key: "normal", label: "Normal Items" },
+            { key: "event", label: "Event Items" },
+            { key: "eventType", label: "Filter by Event Type" },
+            { key: "all", label: "Show All" },
+          ].map((t) => (
+            <button
+              key={t.key}
+              className={`px-5 py-2.5 shadow-sm rounded-full text-sm font-medium transition
+                ${tab === t.key
+                  ? "bg-blue-500 text-white shadow-md"
+                  : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
+                }
+              `}
+              onClick={() => {
+                setTab(t.key);
+                setPageNumber(1);
+              }}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Event Type Dropdown */}
+        {tab === "eventType" && (
+          <div className="flex justify-center mb-5">
+            <select
+              className="border rounded-lg px-4 py-2.5 bg-white shadow-sm text-gray-600"
+              value={selectedEventType}
+              onChange={(e) => setSelectedEventType(e.target.value)}
+            >
+              <option value="">Select Event Type</option>
+              {eventTypes.map((type, idx) => (
+                <option key={idx} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
           </div>
+        )}
+
+        {/* Error */}
+        {error && (
+          <p className="text-red-500 text-center bg-red-50 py-2 rounded-lg mb-4 border border-red-200">
+            {error}
+          </p>
+        )}
+
+        {/* Data */}
+        {loading ? (
+          <p className="text-center text-gray-500">Loading...</p>
+        ) : items.length === 0 ? (
+          <p className="text-center bg-white p-6 rounded-lg shadow text-gray-600 border border-gray-100">
+            No pending items found.
+          </p>
         ) : (
           <>
-          <div className="bg-white rounded-lg shadow overflow-x-auto border border-gray-200">
-            <table className="min-w-full text-sm">
-              <thead className="bg-indigo-100 text-indigo-800">
-                <tr>
-                  <th className="py-3 px-4 font-medium">Title</th>
-                  <th className="py-3 px-4 font-medium">Submitted By</th>
-                  <th className="py-3 px-4 font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {items.map((item) => (
-                    <tr key={item.itemId} className="hover:bg-indigo-50 transition-all">
-                      <td className="py-3 px-4 font-medium text-gray-800">{item.title}</td>
-                      <td className="py-3 px-4 text-gray-700">{item.createdByName}</td>
-                    <td className="py-3 px-4 flex gap-2 flex-wrap">
-                      <button
-                        onClick={() => handleAction(item.itemId, "approve")}
-                        disabled={actionLoading === item.itemId}
-                        className="flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-green-100 text-green-800 hover:bg-green-200 transition"
-                      >
-                        <Check size={14} /> Approve
-                      </button>
-                      <button
-                        onClick={() => handleAction(item.itemId, "reject")}
-                        disabled={actionLoading === item.itemId}
-                        className="flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-rose-100 text-rose-800 hover:bg-rose-200 transition"
-                      >
-                        <X size={14} /> Reject
-                      </button>
-                      <button
-                        onClick={() => setPreviewItem(item)}
-                        className="flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-indigo-200 text-indigo-800 hover:bg-indigo-300 transition"
-                      >
-                        <Eye size={14} /> Preview
-                      </button>
-                    </td>
+            <div className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-100">
+              <table className="min-w-full text-sm">
+                <thead className="bg-blue-50 text-blue-700">
+                  <tr>
+                    <th className="px-4 py-3 text-left font-medium">Title</th>
+                    <th className="px-4 py-3 text-left font-medium">Submitted By</th>
+                    <th className="px-4 py-3 text-center font-medium">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+
+                <tbody className="divide-y divide-gray-100">
+                  {items.map((item) => (
+                    <tr key={item.knowledgeItemId} className="hover:bg-blue-50/40 transition">
+                      <td className="px-4 py-3 font-medium text-gray-700">{item.title}</td>
+                      <td className="px-4 py-3 text-gray-600">{item.createdByName}</td>
+
+                      <td className="px-4 py-3 flex gap-2 justify-center">
+                        <button
+                          onClick={() => handleAction(item.knowledgeItemId, "approve")}
+                          disabled={actionLoading === item.knowledgeItemId}
+                          className="px-3 py-1.5 bg-green-100 text-green-700 hover:bg-green-200 rounded-full flex items-center gap-1 text-xs"
+                        >
+                          <Check size={14} /> Approve
+                        </button>
+
+                        <button
+                          onClick={() => handleAction(item.knowledgeItemId, "reject")}
+                          disabled={actionLoading === item.knowledgeItemId}
+                          className="px-3 py-1.5 bg-red-100 text-red-700 hover:bg-red-200 rounded-full flex items-center gap-1 text-xs"
+                        >
+                          <X size={14} /> Reject
+                        </button>
+
+                        <button
+                          onClick={() => setPreviewItem(item)}
+                          className="px-3 py-1.5 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-full flex items-center gap-1 text-xs"
+                        >
+                          <Eye size={14} /> Preview
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
             {/* Pagination */}
-            <div className="flex justify-end items-center gap-2 mt-3">
-              <button
-                onClick={handlePrevPage}
-                disabled={pageNumber === 1}
-                className="flex items-center px-2 py-1 border rounded hover:bg-gray-100 disabled:opacity-50"
-              >
-                <ChevronLeft size={16} /> Prev
-              </button>
-              <span>
-                Page {pageNumber} of {totalPages}
-              </span>
-              <button
-                onClick={handleNextPage}
-                disabled={pageNumber === totalPages}
-                className="flex items-center px-2 py-1 border rounded hover:bg-gray-100 disabled:opacity-50"
-              >
-                Next <ChevronRight size={16} />
-              </button>
-            </div>
+            {tab !== "all" && (
+              <div className="flex justify-end items-center gap-3 mt-4">
+                <button
+                  disabled={pageNumber === 1}
+                  onClick={() => setPageNumber(pageNumber - 1)}
+                  className="px-3 py-1.5 border border-gray-200 bg-white rounded-md shadow-sm hover:bg-gray-50 flex items-center gap-1"
+                >
+                  <ChevronLeft size={16} /> Prev
+                </button>
+
+                <span className="text-gray-600 text-sm">
+                  Page {pageNumber} / {totalPages}
+                </span>
+
+                <button
+                  disabled={pageNumber === totalPages}
+                  onClick={() => setPageNumber(pageNumber + 1)}
+                  className="px-3 py-1.5 border border-gray-200 bg-white rounded-md shadow-sm hover:bg-gray-50 flex items-center gap-1"
+                >
+                  Next <ChevronRight size={16} />
+                </button>
+              </div>
+            )}
           </>
         )}
 
         {/* Preview Modal */}
         {previewItem && (
-          <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 border border-gray-200 relative animate-fade-in">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center">
+            <div className="bg-white rounded-2xl p-6 shadow-xl w-full max-w-lg border border-gray-100 relative animate-fadeIn">
               <button
-                className="absolute top-4 right-4 text-gray-500 hover:text-gray-900"
+                className="absolute right-4 top-4 text-gray-500 hover:text-gray-700"
                 onClick={() => setPreviewItem(null)}
               >
-                <X size={20} />
+                <X />
               </button>
-              <h3 className="text-2xl font-bold text-indigo-700 mb-4 border-b pb-2">
-                {previewItem.title}
-              </h3>
-              <div className="space-y-3 text-sm text-gray-700">
-                <p>
-                  <strong>Description:</strong> {previewItem.description}
-                </p>
-                <p>
-                  <strong>Submitted By:</strong> {previewItem.createdByName}
-                </p>
-                <div className="grid grid-cols-2 gap-3 border-t pt-3 mt-3">
-                  <div>
-                    <strong>Domain:</strong>{" "}
-                    <span className="text-blue-600">{previewItem.domainName || "N/A"}</span>
-                  </div>
-                  <div>
-                    <strong>Category:</strong>{" "}
-                    <span className="text-purple-600">{previewItem.categoryName || "N/A"}</span>
-                  </div>
-                  <div>
-                    <strong>Framework:</strong>{" "}
-                    <span className="text-cyan-600">{previewItem.framework || "N/A"}</span>
-                  </div>
-                  <div>
-                    <strong>Language:</strong>{" "}
-                    <span className="text-pink-600">{previewItem.language || "N/A"}</span>
-                  </div>
-                </div>
-              </div>
 
-              <div className="mt-6 flex justify-end">
-                <button
-                  onClick={() => setPreviewItem(null)}
-                  className="px-4 py-2 rounded-full bg-indigo-600 text-white text-sm hover:bg-indigo-700 transition"
-                >
-                  Close
-                </button>
+              <h2 className="text-xl font-bold text-gray-700">
+                {previewItem.title}
+              </h2>
+
+              <div className="mt-3 space-y-2 text-sm text-gray-600">
+                <p><strong>Description:</strong> {previewItem.description}</p>
+                <p><strong>Submitted By:</strong> {previewItem.createdByName}</p>
+
+                <div className="grid grid-cols-2 gap-3 border-t pt-3 mt-3 text-gray-600">
+                  <p><strong>Domain:</strong> {previewItem.domainName}</p>
+                  <p><strong>Category:</strong> {previewItem.categoryName}</p>
+                  <p><strong>Framework:</strong> {previewItem.framework}</p>
+                  <p><strong>Language:</strong> {previewItem.language}</p>
+                </div>
               </div>
             </div>
           </div>
         )}
+
       </div>
     </div>
   );

@@ -162,7 +162,6 @@ export default function Navbar() {
     fetchFilters();
   }, []);
 
-  // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (domainDropdownRef.current && !domainDropdownRef.current.contains(event.target))
@@ -173,8 +172,6 @@ export default function Navbar() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  // Fetch items
   const fetchItems = async (url) => {
     setIsSearching(true);
     setError("");
@@ -196,14 +193,14 @@ export default function Navbar() {
   const handleDomainSelection = (id) => {
     setSelectedDomain(id);
     setSelectedCategory("");
-    setShowDomainDropdown(false); // Close dropdown dynamically
+    setShowDomainDropdown(false);
     fetchItems(`/KnowledgeItem/ByDomain/${id}`);
   };
 
   const handleCategorySelection = (id) => {
     setSelectedCategory(id);
     setSelectedDomain("");
-    setShowCategoryDropdown(false); // Close dropdown dynamically
+    setShowCategoryDropdown(false);
     fetchItems(`/KnowledgeItem/ByCategory/${id}`);
   };
 
@@ -238,9 +235,8 @@ export default function Navbar() {
             <div className="relative" ref={domainDropdownRef}>
               <button
                 onClick={() => setShowDomainDropdown(!showDomainDropdown)}
-                className={`px-5 py-2 rounded-full flex items-center gap-2 ${
-                  selectedDomain ? "bg-cyan-700 text-white" : "bg-cyan-100 text-cyan-700"
-                }`}
+                className={`px-5 py-2 rounded-full flex items-center gap-2 ${selectedDomain ? "bg-cyan-700 text-white" : "bg-cyan-100 text-cyan-700"
+                  }`}
               >
                 <FaLayerGroup /> Domain
               </button>
@@ -263,9 +259,8 @@ export default function Navbar() {
             <div className="relative" ref={categoryDropdownRef}>
               <button
                 onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-                className={`px-5 py-2 rounded-full flex items-center gap-2 ${
-                  selectedCategory ? "bg-blue-700 text-white" : "bg-blue-100 text-blue-700"
-                }`}
+                className={`px-5 py-2 rounded-full flex items-center gap-2 ${selectedCategory ? "bg-blue-700 text-white" : "bg-blue-100 text-blue-700"
+                  }`}
               >
                 <FaFolderOpen /> Category
               </button>
@@ -290,8 +285,6 @@ export default function Navbar() {
             >
               <FaFilter /> Browse All
             </button>
-
-            {/* Reset button only visible when searchResults exist */}
             {searchResults.length > 0 && (
               <button
                 onClick={handleReset}

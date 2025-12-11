@@ -10,7 +10,7 @@
         public string SubmittedBy { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty;
         public DateTime CreatedOn { get; set; } = DateTime.MinValue;
-        public bool IsEventItem { get; set; } = false;   // <-- added
+        public bool IsEventItem { get; set; } = false;
         public List<string> Tags { get; set; } = new List<string>();
     }
 }

@@ -12,5 +12,7 @@ namespace Knowledge_Repository.Application.Interfaces.Services
         Task AddUserAsync(User user);
         Task UpdateUserAsync(User user);
         Task DeleteUserAsync(Guid userId);
+        Task<bool> UpdateUserProfileAsync(Guid userId, UserProfileUpdateDto dto);
+
     }
 }

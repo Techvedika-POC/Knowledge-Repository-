@@ -7,10 +7,6 @@ namespace Knowledge_Repository.Application.Interfaces.Repositories
 {
     public interface IKnowledgeItemRepository : IGenericRepository<KnowledgeItem>
     {
-        Task<List<KnowledgeItem>> GetPendingItemsAsync(int pageNumber, int pageSize);
-        Task<int> GetPendingItemsCountAsync();
-        Task<bool> ApproveItemAsync(Guid itemId, Guid approverId);
-        Task<bool> RejectItemAsync(Guid itemId, Guid approverId);
         Task<IEnumerable<KnowledgeItem>> GetByDomainOrCategoryAsync(Guid? domainId, Guid? categoryId);
         Task<IEnumerable<KnowledgeItem>> GetByOwnerAsync(Guid ownerId);
         Task<List<KnowledgeItem>> GetFreshPicksAsync(int count = 10);

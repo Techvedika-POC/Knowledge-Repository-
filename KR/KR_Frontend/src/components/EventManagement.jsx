@@ -51,12 +51,9 @@ export default function EventManagement() {
 
   useEffect(() => {
     if (activeTab === "view") fetchEvents();
-    // initial load for better UX
-    // but keep this as-is to avoid double calls when switching
   }, [activeTab]);
 
   useEffect(() => {
-    // initial fetch so the UI feels populated immediately
     fetchEvents();
   }, []);
 
@@ -201,18 +198,16 @@ export default function EventManagement() {
                 setActiveTab("add");
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition ${
-                activeTab === "add" ? "bg-indigo-600 text-white shadow-md" : "bg-white text-indigo-700 border border-indigo-100 hover:shadow-sm"
-              }`}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition ${activeTab === "add" ? "bg-indigo-600 text-white shadow-md" : "bg-white text-indigo-700 border border-indigo-100 hover:shadow-sm"
+                }`}
             >
               Add Event
             </button>
 
             <button
               onClick={() => setActiveTab("view")}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition ${
-                activeTab === "view" ? "bg-indigo-600 text-white shadow-md" : "bg-white text-indigo-700 border border-indigo-100 hover:shadow-sm"
-              }`}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition ${activeTab === "view" ? "bg-indigo-600 text-white shadow-md" : "bg-white text-indigo-700 border border-indigo-100 hover:shadow-sm"
+                }`}
             >
               Events List
             </button>

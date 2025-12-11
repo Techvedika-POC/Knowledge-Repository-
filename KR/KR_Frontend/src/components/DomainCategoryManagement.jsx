@@ -1,13 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
 import api from "../api";
-
-/**
- * Domain & Category Management
- * Admin can create, edit, and delete domains and categories.
- * This uses two sections in one file with simple toggle.
- */
-
 export default function DomainCategoryManagement() {
   const [activeSection, setActiveSection] = useState("domains");
 

@@ -20,7 +20,27 @@
          "ObjectType": 0
       },
       {
+         "Name": "public.ai_generation_outputs",
+         "ObjectType": 0
+      },
+      {
+         "Name": "public.ai_generation_requests",
+         "ObjectType": 0
+      },
+      {
          "Name": "public.announcements",
+         "ObjectType": 0
+      },
+      {
+         "Name": "public.assessment_questions",
+         "ObjectType": 0
+      },
+      {
+         "Name": "public.assessments",
+         "ObjectType": 0
+      },
+      {
+         "Name": "public.assignments",
          "ObjectType": 0
       },
       {
@@ -84,6 +104,14 @@
          "ObjectType": 0
       },
       {
+         "Name": "public.learning_plans",
+         "ObjectType": 0
+      },
+      {
+         "Name": "public.lessons",
+         "ObjectType": 0
+      },
+      {
          "Name": "public.mentors",
          "ObjectType": 0
       },
@@ -93,6 +121,10 @@
       },
       {
          "Name": "public.presentations",
+         "ObjectType": 0
+      },
+      {
+         "Name": "public.resources",
          "ObjectType": 0
       },
       {
@@ -136,7 +168,15 @@
          "ObjectType": 0
       },
       {
+         "Name": "public.UserAssessmentResult",
+         "ObjectType": 0
+      },
+      {
          "Name": "public.users",
+         "ObjectType": 0
+      },
+      {
+         "Name": "public.weeks",
          "ObjectType": 0
       }
    ],

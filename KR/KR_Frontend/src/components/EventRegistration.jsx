@@ -13,8 +13,6 @@ export default function EventRegistration() {
   const [isRegistered, setIsRegistered] = useState(false);
 
   const navigate = useNavigate();
-
-  // Fetch events on mount
   useEffect(() => {
     const fetchEvents = async () => {
       try {
@@ -28,7 +26,6 @@ export default function EventRegistration() {
     fetchEvents();
   }, []);
 
-  // When selectedEvent changes, check if current user is already registered
   useEffect(() => {
     if (!selectedEvent) {
       setIsRegistered(false);
@@ -58,19 +55,16 @@ export default function EventRegistration() {
     };
   }, [selectedEvent]);
 
-  // Helper: extract emails from text message using regex (best-effort)
   const extractEmailsFromText = (text = "") => {
     const re = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,}/g;
     const matches = text.match(re);
     return Array.isArray(matches) ? Array.from(new Set(matches.map(m => m.toLowerCase()))) : [];
   };
 
-  // Helper: friendly message for backend error
   const handleBackendError = (err) => {
     const backendMessage = err?.response?.data?.message || err?.message || "Registration failed";
     const conflictingEmails = extractEmailsFromText(backendMessage);
 
-    // If backend included emails, show them specifically
     if (conflictingEmails.length > 0) {
       toast.error(
         <div>
@@ -85,7 +79,6 @@ export default function EventRegistration() {
       return;
     }
 
-    // Handle some specific backend message keywords for nicer UX
     if (/not registered users/i.test(backendMessage)) {
       toast.error(`Some emails are not registered users. ${backendMessage}`);
       return;
@@ -96,7 +89,6 @@ export default function EventRegistration() {
       return;
     }
 
-    // Fallback generic message
     toast.error(backendMessage);
   };
 
@@ -124,22 +116,16 @@ export default function EventRegistration() {
       return;
     }
 
-    // Ensure leader (current logged-in user) is included client-side if you want.
-    // (Server already enforces leader inclusion, so this is optional.)
     try {
       setLoading(true);
 
       const payload = {
         eventId: selectedEvent,
         teamName,
-        teamMemberEmails: uniqueMembers, // array form expected by your service
+        teamMemberEmails: uniqueMembers, 
       };
-
       const res = await api.post("/EventRegistration/register-team", payload);
-
-      // Your controller returns BadRequest with { success:false, message: ex.Message }
       if (res.data?.success === false || res.status >= 400) {
-        // If backend returns structured error
         const serverMsg = res.data?.message || "Registration failed";
         throw new Error(serverMsg);
       }

@@ -39,11 +39,9 @@ export default function UploadKnowledgeItem() {
     tags: [],
     isEventItem: false,
     eventId: "",
-    teamId: "", // prefilled
-    teamMemberEmails: "", // prefilled
+    teamId: "", 
+    teamMemberEmails: "", 
   });
-
-  // ------------------- Prefill event & team info -------------------
   useEffect(() => {
     if (location.state?.eventId) {
       const userTeam = JSON.parse(localStorage.getItem("userTeam") || "{}");
@@ -57,12 +55,10 @@ export default function UploadKnowledgeItem() {
     }
   }, [location.state]);
 
-  // ------------------- Fetch domains -------------------
   useEffect(() => {
     api.get("/domains").then((res) => setDomains(res.data)).catch((err) => console.error(err));
   }, []);
 
-  // ------------------- Fetch categories on domain change -------------------
   useEffect(() => {
     if (form.domainId) {
       api.get(`/domains/${form.domainId}/categories`).then((res) => setCategories(res.data)).catch((err) => console.error(err));
@@ -70,13 +66,9 @@ export default function UploadKnowledgeItem() {
       setCategories([]);
     }
   }, [form.domainId]);
-
-  // ------------------- Fetch events  -------------------
   useEffect(() => {
     api.get("/events").then((res) => setEvents(res.data)).catch((err) => console.error(err));
   }, []);
-
-  // ------------------- Prefill when editing -------------------
   useEffect(() => {
     if (!editItemId) return;
     const token = localStorage.getItem("jwtToken");
@@ -105,8 +97,6 @@ export default function UploadKnowledgeItem() {
         toast.error("Failed to load item for edit.");
       });
   }, [editItemId]);
-
-  // ------------------- File handlers -------------------
   const handleFileChange = (e) => {
     const chosen = Array.from(e.target.files || []);
     setFiles((prev) => [...prev, ...chosen]);
@@ -124,7 +114,6 @@ export default function UploadKnowledgeItem() {
     setKeptExistingAttachmentIds((prev) => (prev.includes(attachmentId) ? prev : [...prev, attachmentId]));
   };
 
-  // ------------------- Input handler -------------------
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setForm((prev) => ({
@@ -216,8 +205,6 @@ export default function UploadKnowledgeItem() {
       toast.error(`Submit failed: ${JSON.stringify(msg)}`);
     }
   };
-
-  // ------------------- JSX (kept structure + added existing attachments UI) -------------------
   return (
     <div className="max-w-[1000px] mx-auto mt-5 p-6 bg-white rounded-[12px] shadow-md font-inter text-[#1f2937]">
       <div className="flex justify-between items-center mb-4">
@@ -276,8 +263,6 @@ export default function UploadKnowledgeItem() {
               ))}
             </select>
           </div>
-
-          {/* Event checkbox (optional, just shows info) */}
           {form.isEventItem && (
             <div className="text-sm text-gray-700 mb-2">
               This submission will be linked to the event automatically.
@@ -386,7 +371,7 @@ export default function UploadKnowledgeItem() {
             Upload Options
           </h3>
           <div className="flex gap-2 mb-3">
-            {["File", "Text", "Video", "Audio"].map((tab) => (
+            {["File"].map((tab) => (
               <button
                 type="button"
                 key={tab}
@@ -402,7 +387,6 @@ export default function UploadKnowledgeItem() {
 
           {activeTab === "File" && (
             <>
-              {/* existing attachments (prefill) */}
               {existingAttachments.length > 0 && (
                 <div className="mb-4">
                   <div className="text-sm mb-2">Existing attachments — keep/remove</div>
@@ -477,8 +461,6 @@ export default function UploadKnowledgeItem() {
             </>
           )}
         </section>
-
-        {/* ------------------- Footer Buttons ------------------- */}
         <div className="flex gap-2 justify-end mt-5">
           <button
             type="submit"

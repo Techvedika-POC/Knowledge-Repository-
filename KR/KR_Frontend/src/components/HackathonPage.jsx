@@ -7,8 +7,6 @@ export default function HackathonPage() {
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [errorEvents, setErrorEvents] = useState("");
   const navigate = useNavigate();
-
-  // Fetch Hackathon Events
   useEffect(() => {
     const fetchEvents = async () => {
       try {
@@ -24,8 +22,6 @@ export default function HackathonPage() {
     };
     fetchEvents();
   }, []);
-
-  // Handle submit idea click with registration checking
   const handleSubmitIdea = async (eventId) => {
     try {
       const regRes = await api.get(`/EventRegistration/is-registered/${eventId}`);

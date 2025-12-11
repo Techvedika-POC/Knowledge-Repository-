@@ -28,8 +28,6 @@ namespace Knowledge_Repository.Api.Controllers
 
             return Guid.TryParse(userIdClaim, out var userId) ? userId : Guid.Empty;
         }
-
-        // Get all contributions of current user
         [HttpGet("my")]
         public async Task<IActionResult> GetMyContributions()
         {
@@ -40,8 +38,6 @@ namespace Knowledge_Repository.Api.Controllers
             return Ok(contributions ?? new List<ActivityLogDto>());
         }
 
-        // Get contributions of current user in current month
-        // New route to match frontend call
         [HttpGet("user/contributions/month")]
         public async Task<IActionResult> GetMyContributionsThisMonth()
         {
@@ -52,8 +48,6 @@ namespace Knowledge_Repository.Api.Controllers
             return Ok(contributions ?? new List<ActivityLogDto>());
         }
 
-
-        // Get contribution details by ID
         [HttpGet("preview/{itemId}")]
         public async Task<IActionResult> GetContributionDetails(Guid itemId)
         {
@@ -61,8 +55,6 @@ namespace Knowledge_Repository.Api.Controllers
             if (item == null) return NotFound("Knowledge item not found.");
             return Ok(item);
         }
-
-        // Get user favourites
         [HttpGet("my/favourites")]
         public async Task<IActionResult> GetMyFavourites()
         {
@@ -73,7 +65,6 @@ namespace Knowledge_Repository.Api.Controllers
             return Ok(favourites ?? new List<KnowledgeItemDto>());
         }
 
-        // Filtered contributions
         [HttpGet("my/filter")]
         public async Task<IActionResult> GetMyContributionsFiltered(
             [FromQuery] string domain = null,
@@ -95,7 +86,6 @@ namespace Knowledge_Repository.Api.Controllers
             return Ok(contributions ?? new List<ActivityLogDto>());
         }
 
-        // Paged contributions
         [HttpGet("my/paged")]
         public async Task<IActionResult> GetMyContributionsPaged(
             [FromQuery] int pageNumber = 1,
@@ -119,7 +109,6 @@ namespace Knowledge_Repository.Api.Controllers
             });
         }
 
-        // Distinct domains
         [HttpGet("my/domains")]
         public async Task<IActionResult> GetUserDomains()
         {
@@ -130,7 +119,6 @@ namespace Knowledge_Repository.Api.Controllers
             return Ok(domains ?? new List<string>());
         }
 
-        // Distinct categories
         [HttpGet("my/categories")]
         public async Task<IActionResult> GetUserCategories()
         {
@@ -141,7 +129,6 @@ namespace Knowledge_Repository.Api.Controllers
             return Ok(categories ?? new List<string>());
         }
 
-        // Distinct titles
         [HttpGet("my/titles")]
         public async Task<IActionResult> GetUserTitles()
         {

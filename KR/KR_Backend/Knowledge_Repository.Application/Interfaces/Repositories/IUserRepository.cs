@@ -10,5 +10,6 @@ namespace Knowledge_Repository.Application.Interfaces.Repositories
         Task<User?> GetByEmailAsync(string email);
         Task<bool> ExistsByEmailAsync(string email);
         Task<User?> GetUserWithRolesByEmailAsync(string email);
+        Task<List<User>> GetUsersByIdsAsync(List<Guid> userIds);
     }
 }

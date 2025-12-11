@@ -7,11 +7,12 @@ public interface IEngagementService
     Task<KnowledgeItemEngagementDto> GetEngagementSummaryAsync(Guid itemId, Guid userId);
     Task<List<UserEngagementDto>> GetUserEngagementsAsync(Guid userId);
     Task<int> GetLikesCountAsync(Guid itemId);
-    Task<List<LeaderboardDto>> GetTopLikedItemsAsync(int top = 5);
+
+    Task<List<UserLeaderboardDto>> GetTopUsersByLikesAsync(int top = 3);
+
     Task<List<CommentDto>> GetCommentsByItemAsync(Guid itemId);
     Task<List<CommentDto>> GetRepliesAsync(Guid parentCommentId);
     Task AddCommentAsync(CommentDto dto);
     Task DeleteCommentAsync(Guid engagementId);
     Task UpdateCommentAsync(Guid engagementId, string newText);
-
 }

@@ -134,18 +134,19 @@ namespace Knowledge_Repository.Controllers
             return Ok(engagements);
         }
 
-        [HttpGet("top-liked")]
-        public async Task<IActionResult> GetTopLikedItems([FromQuery] int top = 5)
+        [HttpGet("top-users")]
+        public async Task<IActionResult> GetTopUsersByLikes([FromQuery] int top = 3)
         {
             try
             {
-                var leaderboard = await _service.GetTopLikedItemsAsync(top);
+                var leaderboard = await _service.GetTopUsersByLikesAsync(top);
                 return Ok(leaderboard);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Failed to retrieve leaderboard", error = ex.Message });
+                return StatusCode(500, new { message = "Failed to retrieve user leaderboard", error = ex.Message });
             }
         }
+
     }
 }
