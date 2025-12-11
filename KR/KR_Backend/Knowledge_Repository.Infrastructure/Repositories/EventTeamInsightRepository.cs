@@ -31,9 +31,9 @@ namespace Knowledge_Repository.Infrastructure.Repositories
         {
             return await _context.EventKnowledgeItems
                 .Include(e => e.Item)
-                    .ThenInclude(i => i.Owner) // Use Owner instead of CreatedByNavigation
+                    .ThenInclude(i => i.Owner) 
                 .Include(e => e.Item)
-                    .ThenInclude(i => i.KnowledgeTags) // KnowledgeTags no longer needs .Tag
+                    .ThenInclude(i => i.KnowledgeTags)
                 .Include(e => e.Item)
                     .ThenInclude(i => i.Attachments)
                 .Include(e => e.Event)
@@ -87,34 +87,29 @@ namespace Knowledge_Repository.Infrastructure.Repositories
                 .AsNoTracking()
                 .ToListAsync();
         }
-
-        public async Task<Guid> GetTeamIdByFeedbackAsync(Guid feedbackId)
+        public async Task<IEnumerable<TeamMember>> GetTeamMembersAsync(Guid teamId)
         {
-            var teamId = await _context.TeamFeedbacks
-                .Where(f => f.FeedbackId == feedbackId)
-                .Select(f => f.TeamId)
-                .FirstOrDefaultAsync();
-
-            if (teamId == Guid.Empty)
-                throw new KeyNotFoundException("No team found for the provided feedback ID.");
-
-            return teamId;
+            return await _context.TeamMembers
+                .Include(tm => tm.User)   
+                .Where(tm => tm.TeamId == teamId)
+                .AsNoTracking()
+                .Select(tm => new TeamMember
+                {
+                    TeamMemberId = tm.TeamMemberId, 
+                    TeamId = tm.TeamId,
+                    UserId = tm.UserId,
+                    Role = tm.Role,
+                
+                    User = new User
+                    {
+                        UserId = tm.User.UserId,
+                        Name = tm.User.Name,
+                        Email = tm.User.Email
+                    }
+                })
+                .ToListAsync();
         }
 
-        public async Task<TeamFeedbackReply> AddFeedbackReplyAsync(TeamFeedbackReply reply)
-        {
-            _context.TeamFeedbackReplies.Add(reply);
-            await _context.SaveChangesAsync();
-            return reply;
-        }
 
-        public async Task<EventKnowledgeItem> AddTeamSubmissionAsync(EventKnowledgeItem submission)
-        {
-            _context.EventKnowledgeItems.Add(submission);
-            await _context.SaveChangesAsync();
-            return submission;
-        }
-
-        public async Task SaveChangesAsync() => await _context.SaveChangesAsync();
     }
 }

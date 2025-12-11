@@ -50,7 +50,7 @@ namespace Knowledge_Repository.Infrastructure.Repositories
         }
         public async Task<List<Event>> GetCurrentIdeathonsAsync(DateTime todayUtc)
         {
-            var today = DateOnly.FromDateTime(todayUtc.ToLocalTime()); 
+            var today = DateOnly.FromDateTime(todayUtc.ToLocalTime());
 
             return await _context.Events
                 .Where(e => e.EventType == "Ideathon"

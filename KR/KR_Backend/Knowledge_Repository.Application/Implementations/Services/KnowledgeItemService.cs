@@ -1,11 +1,13 @@
 ﻿using Knowledge_Repository.Application.Dtos;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Knowledge_Repository.Application.Interfaces.Repositories;
 using Knowledge_Repository.Application.Interfaces.Services;
 using Knowledge_Repository.Domain.Entities;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -24,10 +26,11 @@ namespace Knowledge_Repository.Application.Implementations.Services
         private readonly IUserRepository _userRepository;
         private readonly IFileStorageService _fileStorageService;
         private readonly ILogger<KnowledgeItemService> _logger;
-
+  
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public KnowledgeItemService(
-           IKnowledgeItemRepository knowledgeItemRepository,
+            IKnowledgeItemRepository knowledgeItemRepository,
             IKnowledgeVersionRepository knowledgeVersionRepository,
             IAttachmentRepository attachmentRepository,
             IKnowledgeTagRepository knowledgeTagRepository,
@@ -35,8 +38,8 @@ namespace Knowledge_Repository.Application.Implementations.Services
             IEventKnowledgeItemRepository eventKnowledgeItemRepository,
             IUserRepository userRepository,
             IFileStorageService fileStorageService,
-            ILogger<KnowledgeItemService> logger
-            )
+            ILogger<KnowledgeItemService> logger,
+            IHttpContextAccessor httpContextAccessor)
         {
             _knowledgeItemRepository = knowledgeItemRepository;
             _knowledgeVersionRepository = knowledgeVersionRepository;
@@ -47,8 +50,8 @@ namespace Knowledge_Repository.Application.Implementations.Services
             _userRepository = userRepository;
             _fileStorageService = fileStorageService;
             _logger = logger;
+            _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
         }
-
         public async Task<KnowledgeItemDetailsDto?> GetKnowledgeItemDetailsAsync(Guid itemId)
         {
             var item = await _knowledgeItemRepository.GetByIdWithDetailsAsync(itemId);
@@ -109,27 +112,25 @@ namespace Knowledge_Repository.Application.Implementations.Services
         {
             if (string.IsNullOrWhiteSpace(dto.Title))
                 throw new ArgumentException("Title is required.");
-
-            // 1️⃣ Check if KnowledgeItem exists for the same title & user
             var knowledgeItem = await _knowledgeItemRepository.GetByTitleAndUserAsync(dto.Title, userId);
 
             int newVersionNumber = 1;
 
             if (knowledgeItem != null)
             {
-                // Existing item → update description & metadata
+                
                 knowledgeItem.Description = dto.Description;
                 knowledgeItem.UpdatedOn = DateTime.UtcNow;
                 knowledgeItem.UpdatedBy = userId;
                 await _knowledgeItemRepository.UpdateAsync(knowledgeItem);
 
-                // Get last version
+
                 var lastVersion = await _knowledgeVersionRepository.GetLastVersionByItemIdAsync(knowledgeItem.ItemId);
                 newVersionNumber = (lastVersion?.VersionNumber ?? 0) + 1;
             }
             else
             {
-                // New KnowledgeItem
+
                 knowledgeItem = new KnowledgeItem
                 {
                     ItemId = Guid.NewGuid(),
@@ -150,8 +151,6 @@ namespace Knowledge_Repository.Application.Implementations.Services
                 };
                 await _knowledgeItemRepository.AddAsync(knowledgeItem);
             }
-
-            // 2️⃣ Create new version
             var version = new KnowledgeVersion
             {
                 VersionId = Guid.NewGuid(),
@@ -162,12 +161,12 @@ namespace Knowledge_Repository.Application.Implementations.Services
                 CreatedOn = DateTime.UtcNow
             };
             await _knowledgeVersionRepository.AddAsync(version);
-            // 3️⃣ Handle attachments
+           
             if (dto.Attachments?.Count > 0)
             {
                 foreach (var file in dto.Attachments)
                 {
-                    // Save file using FileStorageService
+                    
                     string publicPath = await _fileStorageService.SaveFileAsync(file.FileData, file.FileName);
 
                     var attachment = new Attachment
@@ -176,7 +175,7 @@ namespace Knowledge_Repository.Application.Implementations.Services
                         ItemId = knowledgeItem.ItemId,
                         VersionId = version.VersionId,
                         FileName = file.FileName,
-                        FilePath = publicPath, // returned from FileStorageService
+                        FilePath = publicPath, 
                         MimeType = file.MimeType,
                         FileSize = file.FileSize,
                         CreatedOn = DateTime.UtcNow,
@@ -190,7 +189,7 @@ namespace Knowledge_Repository.Application.Implementations.Services
             }
 
 
-            // 4️⃣ Add tags
+
             if (dto.Tags?.Count > 0)
             {
                 var tags = dto.Tags.Select(tag => new KnowledgeTag
@@ -208,7 +207,7 @@ namespace Knowledge_Repository.Application.Implementations.Services
                 await _knowledgeTagRepository.AddRangeAsync(tags);
             }
 
-            // 5️⃣ Handle Event Knowledge Item
+
             if (dto.IsEventItem && dto.EventId.HasValue)
             {
                 var team = await _teamRepository.GetTeamByEventAndUserAsync(dto.EventId.Value, userId);
@@ -243,22 +242,19 @@ namespace Knowledge_Repository.Application.Implementations.Services
         {
             if (dto == null) throw new ArgumentNullException(nameof(dto));
 
-            // 1. Load item with related details (attachments, tags, versions, owner)
+         
             var knowledgeItem = await _knowledgeItemRepository.GetByIdWithDetailsAsync(itemId);
             if (knowledgeItem == null)
                 throw new KeyNotFoundException("Knowledge item not found.");
 
-            // 2. Authorization: owner (or later allow admin)
+
             if (knowledgeItem.OwnerId != userId)
                 throw new UnauthorizedAccessException("You are not authorized to update this item.");
 
-            // Note: If you want DB-level transaction, inject your DbContext and use
-            // using var tx = await _dbContext.Database.BeginTransactionAsync();
-            // then commit/rollback after SaveChanges. Here we assume repos save changes.
-
+          
             try
             {
-                // 3. Update core fields (partial update)
+              
                 var changed = false;
 
                 if (!string.IsNullOrWhiteSpace(dto.Title) && dto.Title != knowledgeItem.Title)
@@ -291,7 +287,7 @@ namespace Knowledge_Repository.Application.Implementations.Services
                     changed = true;
                 }
 
-                // 4. Serialize framework/language like Upload flow
+
                 if (dto.Framework != null && dto.Framework.Any())
                 {
                     knowledgeItem.Framework = JsonSerializer.Serialize(dto.Framework);
@@ -304,7 +300,7 @@ namespace Knowledge_Repository.Application.Implementations.Services
                     changed = true;
                 }
 
-                // 5. Merge/replace Metadata (Visibility example)
+          
                 if (!string.IsNullOrWhiteSpace(dto.Visibility))
                 {
                     try
@@ -324,7 +320,7 @@ namespace Knowledge_Repository.Application.Implementations.Services
                     }
                 }
 
-                // 6. KnowledgeText and Embedding (optional)
+                
                 if (!string.IsNullOrWhiteSpace(dto.KnowledgeText))
                 {
                     knowledgeItem.KnowledgeText = dto.KnowledgeText;
@@ -337,15 +333,13 @@ namespace Knowledge_Repository.Application.Implementations.Services
                     changed = true;
                 }
 
-                // Audit
+              
                 knowledgeItem.UpdatedOn = DateTime.UtcNow;
                 knowledgeItem.UpdatedBy = userId;
 
                 if (changed)
                     await _knowledgeItemRepository.UpdateAsync(knowledgeItem);
-                // Ensure your repository persists changes (SaveChanges) as appropriate.
-
-                // 7. Create a new KnowledgeVersion for this update
+                
                 var lastVersion = await _knowledgeVersionRepository.GetLastVersionByItemIdAsync(knowledgeItem.ItemId);
                 var newVersionNumber = (lastVersion?.VersionNumber ?? 0) + 1;
 
@@ -365,7 +359,7 @@ namespace Knowledge_Repository.Application.Implementations.Services
 
                 await _knowledgeVersionRepository.AddAsync(newVersion);
 
-                // 8. Tags — add tags for the new version (keeps version history)
+
                 if (dto.Tags != null && dto.Tags.Any())
                 {
                     var tagEntities = dto.Tags
@@ -386,10 +380,7 @@ namespace Knowledge_Repository.Application.Implementations.Services
                     if (tagEntities.Count > 0)
                         await _knowledgeTagRepository.AddRangeAsync(tagEntities);
                 }
-
-                // 9. Attachments handling:
-                //    Controller populates dto.Attachments (FileAttachmentDto) from IFormFile; service consumes that.
-                var replace = dto.ReplaceAttachments; // read flag from DTO
+                var replace = dto.ReplaceAttachments; 
 
                 if (replace)
                 {
@@ -410,17 +401,11 @@ namespace Knowledge_Repository.Application.Implementations.Services
                                 _logger?.LogWarning(ex, "Failed to delete storage file {Path}", att.FilePath);
                             }
 
-                            // IMPORTANT: adjust this line to match your repository signature:
-                            // if DeleteAsync accepts Guid id:
                             await _attachmentRepository.DeleteAsync(att);
 
-                            // if DeleteAsync accepts Attachment entity, use:
-                            // await _attachmentRepository.DeleteAsync(att);
                         }
                     }
                 }
-
-                // Add new attachments from dto.Attachments (each contains FileData + FileName)
                 if (dto.Attachments != null && dto.Attachments.Count > 0)
                 {
                     foreach (var file in dto.Attachments)
@@ -446,7 +431,7 @@ namespace Knowledge_Repository.Application.Implementations.Services
                     }
                 }
 
-                // 10. Return updated DTO
+                
                 return new KnowledgeItemDto
                 {
                     ItemId = knowledgeItem.ItemId,
@@ -457,7 +442,7 @@ namespace Knowledge_Repository.Application.Implementations.Services
             }
             catch
             {
-                // If you used a DbContext transaction, rollback here.
+                
                 throw;
             }
         }
@@ -550,5 +535,64 @@ namespace Knowledge_Repository.Application.Implementations.Services
                 })
                 .ToList();
         }
+        public async Task<List<KnowledgeItemDto>> GetApprovedEventItemsAsync()
+        {
+            var items = await _knowledgeItemRepository.GetApprovedEventItemsAsync();
+
+            return items.Select(k => new KnowledgeItemDto
+            {
+                ItemId = k.ItemId,
+                Title = k.Title,
+                Description = k.Description,
+                CreatedOn = k.CreatedOn ?? DateTime.MinValue,
+
+                DomainId = k.DomainId,
+                DomainName = k.Domain?.DomainName,
+                CategoryId = k.CategoryId,
+                CategoryName = k.Category?.CategoryName,
+
+                OwnerId = k.OwnerId,
+                OwnerName = k.Owner?.Name,
+                SubmittedBy = k.Owner?.Name,
+
+                Status = k.Status,
+                Visibility = ExtractVisibility(k.Metadata),
+
+                IsEventItem = true, 
+
+                Tags = k.KnowledgeTags?.Select(t => t.TagName).ToList() ?? new List<string>(),
+                Framework = k.Framework,
+                Language = k.Language,
+                EngagementScore = k.Engagements?.Count ?? 0
+
+            }).ToList();
+        }
+
+
+
+        public async Task<AttachmentInfoDto?> GetAttachmentByIdAsync(Guid attachmentId)
+        {
+            var att = await _attachmentRepository.GetAttachmentByIdAsync(attachmentId);
+            if (att == null) return null;
+
+            return new AttachmentInfoDto
+            {
+                AttachmentId = att.AttachmentId,
+                FileName = att.FileName,
+                MimeType = att.MimeType,
+                FileSize = att.FileSize,
+                FilePath = att.FilePath, 
+                FileUrl = BuildPublicFileUrl(att.FilePath),
+                FileData = att.FileData 
+            };
+        }
+        private string? BuildPublicFileUrl(string? filePath)
+        {
+            if (string.IsNullOrWhiteSpace(filePath)) return null;
+          
+            var trimmed = filePath.TrimStart('/', '\\');
+            return "/" + trimmed; 
+        }
+
     }
 }

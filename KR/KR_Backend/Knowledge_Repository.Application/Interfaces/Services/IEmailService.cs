@@ -10,5 +10,7 @@ namespace Knowledge_Repository.Application.Interfaces.Services
     {
         Task SendEmailAsync(string toEmail, string subject, string htmlBody);
         Task SendEmailBulkAsync(IEnumerable<string> toEmails, string subject, string htmlBody);
+
+        Task SendAsync(string to, string subject, string body);
     }
 }

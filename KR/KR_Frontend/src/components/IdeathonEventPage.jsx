@@ -3,12 +3,6 @@ import { toast } from "react-hot-toast";
 import api from "../api"; 
 import debounce from "lodash.debounce";
 
-/**
- * IdeathonAdminDashboard (Ideathon Hub)
- * - Always shows the month/event cards under a prominent "Ideathon Hub" heading.
- * - Selecting an event opens its Teams / Jury / Presentations / Audit panes.
- * - Tabs remain hidden until an event is selected.
- */
 
 export default function IdeathonAdminDashboard() {
   const [events, setEvents] = useState([]); // fallback

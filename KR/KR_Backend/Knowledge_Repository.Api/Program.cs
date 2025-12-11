@@ -1,12 +1,14 @@
-﻿using Knowledge_Repository.Application.Implementations.Services;
+﻿using Knowledge_Repository.Application.Services;
+using Knowledge_Repository.Application.Implementations.Services;
 using Knowledge_Repository.Application.Interfaces.Repositories;
 using Knowledge_Repository.Application.Interfaces.Services;
+using Knowledge_Repository.Application.Interfaces;
+using Knowledge_Repository.Application.Services;
 using Knowledge_Repository.Infrastructure.Data;
 using Knowledge_Repository.Infrastructure.Repositories;
 using Knowledge_Repository.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Tokens;
@@ -50,6 +52,11 @@ builder.Services.AddScoped<IKnowledgeVersionRepository, KnowledgeVersionReposito
 builder.Services.AddScoped<IEventKnowledgeItemRepository, EventKnowledgeItemRepository>();
 builder.Services.AddScoped<IKnowledgeTagRepository, KnowledgeTagRepository>();
 builder.Services.AddScoped<IKnowledgeVersionRepository, KnowledgeVersionRepository>();
+builder.Services.AddScoped<IPasswordResetRepository, PasswordResetRepository>();
+builder.Services.AddScoped<IJuryFinalScoreRepository, JuryFinalScoreRepository>();
+builder.Services.AddScoped<IJuryChatRepository, JuryChatRepository>();
+builder.Services.AddScoped<IEventJuryRepository, EventJuryRepository>();
+builder.Services.AddScoped<ICommunicationRepository, CommunicationRepository>();
 
 // Register Services
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -62,7 +69,6 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IKnowledgeItemService, KnowledgeItemService>();
 builder.Services.AddScoped<IActivityLogService, ActivityLogService>();
 builder.Services.AddScoped<IDaySpotlightService, DaySpotlightService>();
-builder.Services.AddScoped<IFileStorageService, FileStorageService>();
 builder.Services.AddScoped<IFreshPickService, FreshPickService>();
 builder.Services.AddScoped<IGlobalSearchService, GlobalSearchService>();
 builder.Services.AddScoped<ITopicHighlightService, TopicHighlightService>();
@@ -76,6 +82,18 @@ builder.Services.AddScoped<IMentorService, MentorService>();
 builder.Services.AddScoped<IVLearnTopicService, VLearnTopicService>();
 builder.Services.AddScoped<IVLearnModuleService, VLearnModuleService>();
 builder.Services.AddScoped<IEventTeamInsightService, EventTeamInsightService>();
+builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
+builder.Services.AddTransient<IEmailService, SmtpEmailService>();
+builder.Services.AddScoped<IJuryFinalScoreService,JuryFinalScoreService>();
+builder.Services.AddScoped<IJuryChatService, JuryChatService>();
+builder.Services.AddScoped<IJuryPanelService, JuryPanelService>();
+builder.Services.AddScoped<ICommunicationService, CommunicationService>();
+builder.Services.AddHttpContextAccessor();
+
+
+
+
+
 
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 builder.Services.AddCors(options =>
@@ -161,13 +179,16 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorization();
+var uploadsPhysicalPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot", "uploads");
+Directory.CreateDirectory(uploadsPhysicalPath);
+builder.Services.AddScoped<IFileStorageService>(sp =>
+{
+    var logger = sp.GetRequiredService<ILogger<FileStorageService>>();
+    return new FileStorageService(uploadsPhysicalPath, logger);
+});
 
 var app = builder.Build();
-var uploadsPhysicalPath = Path.Combine(AppContext.BaseDirectory, "uploads");
-if (!Directory.Exists(uploadsPhysicalPath))
-{
-    Directory.CreateDirectory(uploadsPhysicalPath);
-}
+app.UseStaticFiles();
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(uploadsPhysicalPath),
@@ -175,7 +196,6 @@ app.UseStaticFiles(new StaticFileOptions
     ServeUnknownFileTypes = true,            
     DefaultContentType = "application/octet-stream"
 });
-
 
 if (app.Environment.IsDevelopment())
 {

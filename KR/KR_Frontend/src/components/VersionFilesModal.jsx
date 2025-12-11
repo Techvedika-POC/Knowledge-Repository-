@@ -1,5 +1,6 @@
+// VersionFilesModal.jsx
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../api"; // adjust if needed
 import {
   X,
   FileText,
@@ -9,8 +10,8 @@ import {
   FileSpreadsheet,
   FileType,
   ChevronDown,
-  ChevronUp,
   ExternalLink,
+  // optional: Download icon from lucide-react if you want
 } from "lucide-react";
 
 export default function VersionFilesModal({ itemId, onClose }) {
@@ -18,69 +19,18 @@ export default function VersionFilesModal({ itemId, onClose }) {
   const [openVersion, setOpenVersion] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const token = typeof window !== "undefined" ? localStorage.getItem("jwtToken") : null;
-
-  const openFile = async (attachment) => {
-    try {
-      const url = attachment.fileUrl || attachment.filePath;
-      console.log("Opening file URL:", url);
-
-      if (!url) {
-        console.warn("No URL available for attachment", attachment);
-        return;
-      }
-
-      if (url.startsWith("http://") || url.startsWith("https://")) {
-        const requiresAuth = false;
-        if (!requiresAuth) {
-          window.open(url, "_blank");
-          return;
-        }
-      }
-
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      const res = await axios.get(url, { headers, responseType: "blob" });
-
-      const contentType = (res.headers && (res.headers["content-type"] || res.headers["Content-Type"])) || attachment.mimeType || "application/octet-stream";
-      const filename = attachment.fileName || "download";
-
-      const blob = new Blob([res.data], { type: contentType });
-      const blobUrl = window.URL.createObjectURL(blob);
-
-      const newWindow = window.open(blobUrl, "_blank");
-      if (newWindow) {
-        setTimeout(() => window.URL.revokeObjectURL(blobUrl), 60 * 1000);
-      } else {
-        const a = document.createElement("a");
-        a.href = blobUrl;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        setTimeout(() => window.URL.revokeObjectURL(blobUrl), 60 * 1000);
-      }
-    } catch (err) {
-      console.error("Failed to open file:", err);
-    }
-  };
-
   useEffect(() => {
     if (!itemId) return;
     setLoading(true);
-    const headers = token ? { Authorization: `Bearer ${token}` } : {};
-    axios
-      .get(`/api/KnowledgeItem/${itemId}/versions`, { headers })
+    api
+      .get(`/KnowledgeItem/${itemId}/versions`)
       .then((res) => setVersions(res.data || []))
       .catch((err) => {
         console.error("Failed to load versions:", err);
         setVersions([]);
       })
       .finally(() => setLoading(false));
-  }, [itemId, token]);
-
-  const toggle = (v) => {
-    setOpenVersion(openVersion === v ? null : v);
-  };
+  }, [itemId]);
 
   const formatDate = (iso) => {
     if (!iso) return "";
@@ -95,16 +45,14 @@ export default function VersionFilesModal({ itemId, onClose }) {
     if (!bytes && bytes !== 0) return "";
     const sizes = ["B", "KB", "MB", "GB", "TB"];
     if (bytes === 0) return "0 B";
-    const i = Math.floor(Math.log(bytes) / Math.log(1024));
+    const i = Math.floor(Math.log(bytes) / Math.log(1024)) || 0;
     return `${(bytes / Math.pow(1024, i)).toFixed(i ? 1 : 0)} ${sizes[i]}`;
   };
 
   const getFileIcon = (fileName) => {
     if (!fileName) return <FileType size={18} className="text-gray-400" />;
-
     const ext = fileName.split(".").pop().toLowerCase();
     const baseProps = { size: 18 };
-
     switch (ext) {
       case "pdf":
         return <FileText {...baseProps} className="text-red-500" />;
@@ -133,10 +81,155 @@ export default function VersionFilesModal({ itemId, onClose }) {
     }
   };
 
+  const toggle = (v) => setOpenVersion(openVersion === v ? null : v);
+
+  const extFromName = (name = "") => (name.split(".").pop() || "").toLowerCase();
+
+  const isPreviewableByBrowser = (mimeOrName = "", fileName = "") => {
+    const lc = (mimeOrName || "").toLowerCase();
+    const ext = extFromName(fileName);
+    return (
+      lc.includes("pdf") ||
+      lc.startsWith("image/") ||
+      lc.startsWith("text/") ||
+      lc.startsWith("video/") ||
+      lc.startsWith("audio/") ||
+      /\.(pdf|txt|log|json|xml|html|htm|jpg|jpeg|png|gif|mp4|webm|mp3)$/i.test(fileName) ||
+      /\.(pdf|txt|json|xml|html|htm)$/i.test(lc)
+    );
+  };
+
+  const isOfficeFile = (fileName = "") => /\.(docx|xlsx|pptx|doc|ppt)$/i.test(fileName);
+
+ 
+  const normalizeToAbsolute = (path) => {
+    if (!path) return "";
+    if (/^https?:\/\//i.test(path)) return path;
+
+    const base = api.defaults.baseURL || (process.env.REACT_APP_API_URL || window.location.origin);
+    const backendOrigin = base.replace(/\/api\/?$/i, "");
+    if (!path.startsWith("/")) path = "/" + path;
+    return backendOrigin + path;
+  };
+
+
+  const previewFile = async (attachment) => {
+    try {
+      let fileUrl = attachment.fileUrl || attachment.filePath || "";
+      if (fileUrl && fileUrl.startsWith("/")) fileUrl = normalizeToAbsolute(fileUrl);
+
+
+      if (!fileUrl) {
+        fileUrl = normalizeToAbsolute(`/api/KnowledgeItem/attachment/${attachment.attachmentId}`);
+      }
+
+      const filename = attachment.fileName || "";
+      const mime = (attachment.mimeType || "").toLowerCase();
+
+     
+      if (isOfficeFile(filename) && /^https?:\/\//i.test(fileUrl)) {
+        const officeViewer = `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(fileUrl)}`;
+        const w = window.open("", "_blank", "noopener,noreferrer");
+        if (w) {
+          try {
+            w.document.write(`<html><body style="font-family:system-ui;padding:20px"><h3>Opening ${filename}…</h3><div style="color:#666">Redirecting to Office viewer</div></body></html>`);
+          } catch {}
+          w.location.href = officeViewer;
+          return;
+        }
+    
+      }
+
+      if (isPreviewableByBrowser(mime, filename) && /^https?:\/\//i.test(fileUrl)) {
+        const newWin = window.open(fileUrl, "_blank", "noopener,noreferrer");
+        if (newWin) return;
+
+      }
+
+
+      const res = await api.get(`/KnowledgeItem/attachment/${attachment.attachmentId}`, { responseType: "blob" });
+      const contentType = (res.headers && (res.headers["content-type"] || res.headers["Content-Type"])) || attachment.mimeType || "application/octet-stream";
+      const blob = new Blob([res.data], { type: contentType });
+      const blobUrl = window.URL.createObjectURL(blob);
+
+
+      const newWin = window.open("", "_blank", "noopener,noreferrer");
+      if (newWin) {
+        try {
+          const low = (contentType || "").toLowerCase();
+          let embedHtml = "";
+          if (low.includes("pdf") || low.startsWith("text/") || low.includes("json") || low.includes("xml")) {
+            embedHtml = `<iframe src="${blobUrl}" style="border:0;width:100%;height:100vh"></iframe>`;
+          } else if (low.startsWith("image/")) {
+            embedHtml = `<div style="display:flex;align-items:center;justify-content:center;height:100vh;margin:0;"><img src="${blobUrl}" alt="${filename}" style="max-width:100%;max-height:100%;"/></div>`;
+          } else if (low.startsWith("video/")) {
+            embedHtml = `<video src="${blobUrl}" controls style="width:100%;height:100vh;object-fit:contain"></video>`;
+          } else if (low.startsWith("audio/")) {
+            embedHtml = `<audio src="${blobUrl}" controls style="width:100%"></audio>`;
+          } else {
+   
+            embedHtml = `<iframe src="${blobUrl}" style="border:0;width:100%;height:100vh"></iframe>`;
+          }
+
+          const html = `<html><head><title>${filename}</title><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0">${embedHtml}</body></html>`;
+          newWin.document.open();
+          newWin.document.write(html);
+          newWin.document.close();
+
+          setTimeout(() => { try { window.URL.revokeObjectURL(blobUrl); } catch {} }, 2 * 60 * 1000);
+          return;
+        } catch (e) {
+   
+          try { newWin.location.href = blobUrl; } catch {}
+          setTimeout(() => { try { window.URL.revokeObjectURL(blobUrl); } catch {} }, 2 * 60 * 1000);
+          return;
+        }
+      } else {
+     
+        window.location.href = blobUrl;
+      }
+    } catch (err) {
+      console.error("Preview failed:", err);
+
+      try {
+        const fallback = normalizeToAbsolute(`/api/KnowledgeItem/attachment/${attachment.attachmentId}`);
+        window.open(fallback, "_blank", "noopener,noreferrer");
+      } catch (e) {
+        console.error("Fallback open also failed:", e);
+      }
+    }
+  };
+
+
+  const downloadFile = async (attachment) => {
+    try {
+      const res = await api.get(`/KnowledgeItem/attachment/${attachment.attachmentId}`, { responseType: "blob" });
+      const contentType = (res.headers && (res.headers["content-type"] || res.headers["Content-Type"])) || attachment.mimeType || "application/octet-stream";
+      const filename = attachment.fileName || "file";
+      const blob = new Blob([res.data], { type: contentType });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => { try { window.URL.revokeObjectURL(url); } catch {} }, 60 * 1000);
+    } catch (err) {
+      console.error("Download failed:", err);
+  
+      try {
+        const fallback = normalizeToAbsolute(`/api/KnowledgeItem/attachment/${attachment.attachmentId}`);
+        window.open(fallback, "_blank", "noopener,noreferrer");
+      } catch (e) {
+        console.error("Fallback download open failed:", e);
+      }
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl w-full max-w-3xl shadow-2xl overflow-hidden max-h-[90vh]">
-        {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-indigo-600 to-blue-500 text-white">
           <div className="flex items-center gap-4">
             <div className="bg-white/20 p-2 rounded-lg">
@@ -144,30 +237,25 @@ export default function VersionFilesModal({ itemId, onClose }) {
             </div>
             <div>
               <h3 className="text-lg font-semibold">Version Files</h3>
-              <p className="text-sm opacity-90">All uploaded files for this item — preview or download</p>
+              <p className="text-sm opacity-90">Preview or download files</p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <button
-              onClick={onClose}
-              aria-label="Close"
-              className="p-2 rounded-md bg-white/20 hover:bg-white/30 transition"
-            >
+            <button onClick={onClose} aria-label="Close" className="p-2 rounded-md bg-white/20 hover:bg-white/30 transition">
               <X size={18} />
             </button>
           </div>
         </div>
 
-        {/* Body */}
-        <div className="p-6">
+        <div className="p-6 overflow-auto" style={{ maxHeight: "60vh" }}>
           {loading ? (
             <div className="text-center py-10 text-gray-500">Loading versions…</div>
           ) : (!versions || versions.length === 0) ? (
             <div className="text-center py-8 text-gray-500">No versions found.</div>
           ) : (
             <div className="space-y-4">
-              {(versions || []).map((v) => (
+              {versions.map((v) => (
                 <div key={v.versionId} className="border rounded-xl bg-gray-50 overflow-hidden shadow-sm">
                   <button
                     onClick={() => toggle(v.versionNumber)}
@@ -186,9 +274,7 @@ export default function VersionFilesModal({ itemId, onClose }) {
 
                     <div className="flex items-center gap-4">
                       <div className="text-xs text-gray-500 mr-2">{v.attachments?.length || 0} file(s)</div>
-                      <div
-                        className={`transform transition-transform ${openVersion === v.versionNumber ? "rotate-180" : "rotate-0"}`}
-                      >
+                      <div className={`transform transition-transform ${openVersion === v.versionNumber ? "rotate-180" : "rotate-0"}`}>
                         <ChevronDown size={18} />
                       </div>
                     </div>
@@ -200,11 +286,8 @@ export default function VersionFilesModal({ itemId, onClose }) {
                         <div className="text-sm text-gray-500 p-3">No files uploaded for this version.</div>
                       ) : (
                         <ul className="space-y-2">
-                          {(v.attachments || []).map((att) => (
-                            <li
-                              key={att.attachmentId}
-                              className="flex items-center justify-between bg-white rounded-lg p-3 shadow-sm border hover:shadow-md transition"
-                            >
+                          {v.attachments.map((att) => (
+                            <li key={att.attachmentId} className="flex items-center justify-between bg-white rounded-lg p-3 shadow-sm border hover:shadow-md transition">
                               <div className="flex items-center gap-3 min-w-0">
                                 <div className="flex-shrink-0">{getFileIcon(att.fileName)}</div>
                                 <div className="min-w-0">
@@ -216,13 +299,21 @@ export default function VersionFilesModal({ itemId, onClose }) {
                                 </div>
                               </div>
 
-                              <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-2">
                                 <button
-                                  onClick={() => openFile(att)}
+                                  onClick={() => previewFile(att)}
                                   className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition"
-                                  aria-label={`Open ${att.fileName}`}
+                                  aria-label={`Preview ${att.fileName}`}
                                 >
-                                  <ExternalLink size={14} /> Open
+                                  <ExternalLink size={14} /> Preview
+                                </button>
+
+                                <button
+                                  onClick={() => downloadFile(att)}
+                                  className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-gray-100 text-gray-800 text-sm font-medium hover:bg-gray-200 transition"
+                                  aria-label={`Download ${att.fileName}`}
+                                >
+                                  Download
                                 </button>
                               </div>
                             </li>
@@ -237,12 +328,8 @@ export default function VersionFilesModal({ itemId, onClose }) {
           )}
         </div>
 
-        {/* Footer */}
         <div className="px-6 py-4 border-t text-right">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
-          >
+          <button onClick={onClose} className="px-4 py-2 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
             Close
           </button>
         </div>

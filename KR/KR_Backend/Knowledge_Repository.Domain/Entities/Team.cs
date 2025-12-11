@@ -23,6 +23,8 @@ public partial class Team
 
     public virtual ICollection<EventKnowledgeItem> EventKnowledgeItems { get; set; } = new List<EventKnowledgeItem>();
 
+    public virtual ICollection<JuryFinalScore> JuryFinalScores { get; set; } = new List<JuryFinalScore>();
+
     public virtual ICollection<Mentor> Mentors { get; set; } = new List<Mentor>();
 
     public virtual ICollection<Presentation> Presentations { get; set; } = new List<Presentation>();

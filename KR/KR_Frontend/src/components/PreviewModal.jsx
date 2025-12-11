@@ -9,12 +9,12 @@ export default function PreviewModal({ item, onClose }) {
   const parseDbJsonArray = (str) => {
     if (!str) return [];
     try {
-      // Remove outer quotes if they exist
+
       let cleaned = str.trim();
       if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
         cleaned = cleaned.slice(1, -1);
       }
-      // Replace double quotes with single quotes for valid JSON
+
       cleaned = cleaned.replace(/""/g, '"');
       const parsed = JSON.parse(cleaned);
       return Array.isArray(parsed) ? parsed.filter(Boolean) : [];

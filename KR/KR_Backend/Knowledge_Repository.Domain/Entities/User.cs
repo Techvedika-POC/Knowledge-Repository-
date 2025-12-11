@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 
 namespace Knowledge_Repository.Domain.Entities;
-
 public partial class User
 {
     public Guid UserId { get; set; }
@@ -77,6 +76,8 @@ public partial class User
 
     public virtual ICollection<User> InverseUpdatedByNavigation { get; set; } = new List<User>();
 
+    public virtual ICollection<JuryFinalScore> JuryFinalScores { get; set; } = new List<JuryFinalScore>();
+
     public virtual ICollection<KnowledgeItem> KnowledgeItemCreatedByNavigations { get; set; } = new List<KnowledgeItem>();
 
     public virtual ICollection<KnowledgeItem> KnowledgeItemOwners { get; set; } = new List<KnowledgeItem>();
@@ -102,6 +103,8 @@ public partial class User
     public virtual ICollection<Module> ModuleCreatedByNavigations { get; set; } = new List<Module>();
 
     public virtual ICollection<Module> ModuleUpdatedByNavigations { get; set; } = new List<Module>();
+
+    public virtual ICollection<PasswordReset> PasswordResets { get; set; } = new List<PasswordReset>();
 
     public virtual ICollection<Role> RoleCreatedByNavigations { get; set; } = new List<Role>();
 
@@ -136,4 +139,5 @@ public partial class User
     public virtual ICollection<UserRole> UserRoleUpdatedByNavigations { get; set; } = new List<UserRole>();
 
     public virtual ICollection<UserRole> UserRoleUsers { get; set; } = new List<UserRole>();
+    public virtual ICollection<JuryChatMessage> JuryChatMessages { get; set; } = new List<JuryChatMessage>();
 }

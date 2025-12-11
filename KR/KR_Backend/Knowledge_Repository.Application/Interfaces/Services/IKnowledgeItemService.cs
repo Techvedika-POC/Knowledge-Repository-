@@ -23,6 +23,9 @@ namespace Knowledge_Repository.Application.Interfaces.Services
      KnowledgeItemUpdateDto dto,
      Guid userId);
         Task<List<VersionWithAttachmentsDto>> GetVersionsWithFilesAsync(Guid itemId);
+        Task<AttachmentInfoDto?> GetAttachmentByIdAsync(Guid attachmentId);
+        Task<List<KnowledgeItemDto>> GetApprovedEventItemsAsync();
+
     }
 
 }

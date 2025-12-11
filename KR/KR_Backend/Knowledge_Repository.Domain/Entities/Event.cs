@@ -13,8 +13,6 @@ public partial class Event
 
     public string Description { get; set; }
 
-    public string EventType { get; set; }
-
     public DateOnly? StartDate { get; set; }
 
     public DateOnly? EndDate { get; set; }
@@ -28,6 +26,8 @@ public partial class Event
     public Guid? CreatedBy { get; set; }
 
     public Guid? UpdatedBy { get; set; }
+
+    public string EventType { get; set; }
 
     public DateOnly? RegistrationCloseDate { get; set; }
 
@@ -55,6 +55,8 @@ public partial class Event
 
     public virtual ICollection<EventKnowledgeItem> EventKnowledgeItems { get; set; } = new List<EventKnowledgeItem>();
 
+    public virtual ICollection<JuryFinalScore> JuryFinalScores { get; set; } = new List<JuryFinalScore>();
+
     public virtual ICollection<Mentor> Mentors { get; set; } = new List<Mentor>();
 
     public virtual User Owner { get; set; }
@@ -64,6 +66,7 @@ public partial class Event
     public virtual ICollection<TeamFeedback> TeamFeedbacks { get; set; } = new List<TeamFeedback>();
 
     public virtual ICollection<Team> Teams { get; set; } = new List<Team>();
+    public virtual ICollection<JuryChatMessage> JuryChatMessages { get; set; } = new List<JuryChatMessage>();
 
     public virtual User UpdatedByNavigation { get; set; }
 }

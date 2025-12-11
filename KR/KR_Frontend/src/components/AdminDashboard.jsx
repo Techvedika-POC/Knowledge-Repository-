@@ -72,7 +72,7 @@ export default function AdminDashboard() {
                 : "bg-white border border-blue-200 hover:bg-blue-50"
             }`}
           >
-            Knowledge Quest
+        Learning Management
           </button>
           <button
             onClick={() => setActiveTab("ideathon")}

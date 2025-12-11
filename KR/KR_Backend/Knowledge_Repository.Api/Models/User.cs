@@ -77,6 +77,12 @@ public partial class User
 
     public virtual ICollection<User> InverseUpdatedByNavigation { get; set; } = new List<User>();
 
+    public virtual ICollection<JuryCommunication> JuryCommunications { get; set; } = new List<JuryCommunication>();
+
+    public virtual ICollection<JuryFinalScore> JuryFinalScores { get; set; } = new List<JuryFinalScore>();
+
+    public virtual ICollection<JuryReply> JuryReplies { get; set; } = new List<JuryReply>();
+
     public virtual ICollection<KnowledgeItem> KnowledgeItemCreatedByNavigations { get; set; } = new List<KnowledgeItem>();
 
     public virtual ICollection<KnowledgeItem> KnowledgeItemOwners { get; set; } = new List<KnowledgeItem>();
@@ -103,11 +109,15 @@ public partial class User
 
     public virtual ICollection<Module> ModuleUpdatedByNavigations { get; set; } = new List<Module>();
 
+    public virtual ICollection<PasswordReset> PasswordResets { get; set; } = new List<PasswordReset>();
+
     public virtual ICollection<Role> RoleCreatedByNavigations { get; set; } = new List<Role>();
 
     public virtual ICollection<Role> RoleUpdatedByNavigations { get; set; } = new List<Role>();
 
     public virtual ICollection<SpotlightItem> SpotlightItems { get; set; } = new List<SpotlightItem>();
+
+    public virtual ICollection<TeamFeedbackReply> TeamFeedbackReplies { get; set; } = new List<TeamFeedbackReply>();
 
     public virtual ICollection<TeamMember> TeamMembers { get; set; } = new List<TeamMember>();
 

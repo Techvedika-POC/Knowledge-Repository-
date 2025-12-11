@@ -23,5 +23,21 @@ namespace Knowledge_Repository.Infrastructure.Repositories
                 .Include(tm => tm.Team) 
                 .AnyAsync(tm => tm.UserId == userId && tm.Team.EventId == eventId);
         }
+        public async Task<List<TeamMember>> GetMembersByTeamIdAsync(Guid teamId)
+        {
+            return await _context.TeamMembers
+                .Where(m => m.TeamId == teamId)
+                .Include(m => m.User) 
+                .ToListAsync();
+        }
+        public async Task<bool> IsUserInTeamAsync(Guid teamId, Guid userId)
+        {
+            if (teamId == Guid.Empty || userId == Guid.Empty) return false;
+
+            return await _context.TeamMembers
+                .AsNoTracking()
+                .AnyAsync(tm => tm.TeamId == teamId && tm.UserId == userId);
+        }
+
     }
 }
