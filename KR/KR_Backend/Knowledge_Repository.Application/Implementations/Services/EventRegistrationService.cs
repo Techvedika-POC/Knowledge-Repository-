@@ -113,21 +113,18 @@ namespace Knowledge_Repository.Application.Implementations.Services
             {
                 var identicalTeams = (await _teamRepository.GetAllAsync(t => identicalTeamIds.Contains(t.TeamId))).ToList();
 
-                var conflictsAcrossEvents = identicalTeams
-                    .Where(t => t.EventId != dto.EventId) 
+                var identicalInSameEvent = identicalTeams
+                    .Where(t => t.EventId == dto.EventId)
                     .ToList();
 
-                if (conflictsAcrossEvents.Any())
+                if (identicalInSameEvent.Any())
                 {
-                    var conflictingTeamInfo = conflictsAcrossEvents
-                        .Select(t => $"Team '{t.TeamName}' (EventId: {t.EventId})")
-                        .ToList();
-
-                    throw new Exception($"An identical team (same members) is already registered for another event: {string.Join("; ", conflictingTeamInfo)}");
+                    throw new Exception("An identical team (same members) is already registered for this event.");
                 }
 
-                throw new Exception("An identical team (same members) is already registered for this event.");
+       
             }
+
             bool duplicateTeamName = (await _teamRepository.GetAllAsync(
                 t => t.EventId == dto.EventId && t.TeamName.ToLower() == dto.TeamName.ToLower()))
                 .Any();
@@ -172,7 +169,7 @@ namespace Knowledge_Repository.Application.Implementations.Services
                 });
             }
 
-            // Final race-check (best-effort without transaction) — optional but helpful
+            // Final race-check
             var memberIds = teamMembers.Select(tm => tm.UserId).ToList();
             var raceConflicts = (await _teamMemberRepository.GetAllAsync(
                 tm => memberIds.Contains(tm.UserId) && tm.Team.EventId == dto.EventId)).ToList();

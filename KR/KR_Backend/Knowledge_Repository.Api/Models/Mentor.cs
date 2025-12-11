@@ -21,5 +21,7 @@ public partial class Mentor
 
     public virtual Event Event { get; set; }
 
+    public virtual ICollection<TeamFeedback> TeamFeedbacks { get; set; } = new List<TeamFeedback>();
+
     public virtual User User { get; set; }
 }

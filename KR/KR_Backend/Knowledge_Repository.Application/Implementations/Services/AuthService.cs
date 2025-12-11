@@ -11,7 +11,6 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
-using System.Threading.Tasks;
 using BCryptNet = BCrypt.Net.BCrypt;
 
 namespace Knowledge_Repository.Application.Implementations.Services
@@ -25,14 +24,17 @@ namespace Knowledge_Repository.Application.Implementations.Services
         private readonly IUserRoleRepository _userRoleRepository;
         private readonly IConfiguration _configuration;
         private readonly ILogger<AuthService> _logger;
-
+        private readonly IEventJuryRepository _eventJuryRepo;
         public AuthService(
             IUserRepository userRepository,
             IDepartmentRepository departmentRepository,
             IRoleRepository roleRepository,
             IUserRoleRepository userRoleRepository,
             IConfiguration configuration,
-            ILogger<AuthService> logger)
+            
+            ILogger<AuthService> logger,
+            IEventJuryRepository eventJuryRepo)
+
         {
             _userRepository = userRepository;
             _departmentRepository = departmentRepository;
@@ -40,6 +42,7 @@ namespace Knowledge_Repository.Application.Implementations.Services
             _userRoleRepository = userRoleRepository;
             _configuration = configuration;
             _logger = logger;
+            _eventJuryRepo = eventJuryRepo;
         }
 
 
@@ -107,6 +110,9 @@ namespace Knowledge_Repository.Application.Implementations.Services
                 return null;
             }
 
+  
+            var eventIds = await _eventJuryRepo.GetEventIdsForUserAsync(user.UserId);
+
             var secretKey = _configuration["JwtSettings:SecretKey"];
             var issuer = _configuration["JwtSettings:Issuer"];
             var audience = _configuration["JwtSettings:Audience"];
@@ -114,19 +120,24 @@ namespace Knowledge_Repository.Application.Implementations.Services
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
             var claims = new List<Claim>
-            {
-                new Claim(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub, user.UserId.ToString()),
-                new Claim(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Email, user.Email),
-                new Claim(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(ClaimTypes.Name, user.Name)
-            };
+    {
+        new Claim(JwtRegisteredClaimNames.Sub, user.UserId.ToString()),
+        new Claim(JwtRegisteredClaimNames.Email, user.Email),
+        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+        new Claim(ClaimTypes.Name, user.Name)
+    };
 
+        
             foreach (var role in user.UserRoleUsers.Select(ur => ur.Role.RoleName))
-            {
                 claims.Add(new Claim(ClaimTypes.Role, role));
-            }
 
+      
+            foreach (var eid in eventIds)
+                claims.Add(new Claim("event_jury", eid.ToString()));
+
+        
             var token = new JwtSecurityToken(
                 issuer: issuer,
                 audience: audience,
@@ -135,6 +146,7 @@ namespace Knowledge_Repository.Application.Implementations.Services
                 signingCredentials: creds
             );
 
+ 
             var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
 
             _logger.LogInformation("Login successful for user: {Email}", dto.Email);
@@ -145,8 +157,10 @@ namespace Knowledge_Repository.Application.Implementations.Services
                 Name = user.Name,
                 Email = user.Email,
                 Roles = user.UserRoleUsers.Select(ur => ur.Role.RoleName).ToList(),
-                UserId = user.UserId
+                UserId = user.UserId,
+                EventJuryIds = eventIds
             };
         }
+
     }
 }

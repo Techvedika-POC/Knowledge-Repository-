@@ -41,7 +41,6 @@ namespace Knowledge_Repository.Api.Controllers
         }
 
         // Get contributions of current user in current month
-        // New route to match frontend call
         [HttpGet("user/contributions/month")]
         public async Task<IActionResult> GetMyContributionsThisMonth()
         {

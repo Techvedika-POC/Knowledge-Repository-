@@ -42,7 +42,7 @@ export default function UploadKnowledgeItem() {
     teamId: "", // prefilled
     teamMemberEmails: "", // prefilled
   });
-
+const isEventFlow = !!(location.state?.eventId || form.isEventItem);
   // ------------------- Prefill event & team info -------------------
   useEffect(() => {
     if (location.state?.eventId) {
@@ -217,11 +217,19 @@ export default function UploadKnowledgeItem() {
     }
   };
 
-  // ------------------- JSX (kept structure + added existing attachments UI) -------------------
+
   return (
     <div className="max-w-[1000px] mx-auto mt-5 p-6 bg-white rounded-[12px] shadow-md font-inter text-[#1f2937]">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-[22px] font-semibold">{editItemId ? "Edit Knowledge Item" : "Upload Knowledge Articles"}</h2>
+     
+        <h2 className="text-[22px] font-semibold">
+  {editItemId
+    ? "Edit Knowledge Item"
+    : isEventFlow
+      ? "Event Knowledge Upload"
+      : "Upload Knowledge Articles"}
+</h2>
+
       </div>
 
       <div className="flex items-center gap-2 bg-[#fef3c7] p-3 rounded-[8px] text-[#92400e] text-sm mb-5">

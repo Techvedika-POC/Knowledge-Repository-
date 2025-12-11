@@ -57,31 +57,6 @@ namespace Knowledge_Repository.Api.Controllers
                 return StatusCode(500, new { message = "Failed to load event insights.", detail = ex.Message });
             }
         }
-        [HttpPost("feedback/{feedbackId:guid}/reply")]
-        public async Task<IActionResult> PostFeedbackReply(Guid feedbackId, [FromQuery] Guid userId, [FromBody] string replyText)
-        {
-            try
-            {
-                var result = await _insightService.SubmitTeamReplyAsync(feedbackId, userId, replyText);
-                return Ok(new { success = result, message = "Reply submitted successfully." });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { success = false, message = "Failed to submit reply.", detail = ex.Message });
-            }
-        }
-        [HttpPost("team/{teamId:guid}/event/{eventId:guid}/submit")]
-        public async Task<IActionResult> SubmitTeamEntry(Guid teamId, Guid eventId, [FromQuery] Guid userId, [FromBody] SubmissionRequestDto request)
-        {
-            try
-            {
-                var result = await _insightService.SubmitTeamSubmissionAsync(teamId, eventId, request.Title, request.Description, userId);
-                return Ok(new { success = result, message = "Submission uploaded successfully." });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { success = false, message = "Failed to submit item.", detail = ex.Message });
-            }
-        }
+   
     }
 }

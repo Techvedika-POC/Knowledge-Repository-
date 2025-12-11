@@ -93,11 +93,38 @@ namespace Knowledge_Repository.Application.Implementations.Services
             await _eventRepository.DeleteAsync(existing);
             return true;
         }
-        public async Task<List<Event>> GetCurrentIdeathonsAsync()
+        public async Task<List<EventWithTimelineDto>> GetCurrentIdeathonsAsync()
         {
             var todayUtc = DateTime.UtcNow.Date;
-            return await _eventRepository.GetCurrentIdeathonsAsync(todayUtc);
+            var events = await _eventRepository.GetCurrentIdeathonsAsync(todayUtc);
+
+            return events.Select(e => new EventWithTimelineDto
+            {
+                EventId = e.EventId,
+                Title = e.Title,
+                Description = e.Description,
+                StartDate = e.StartDate,
+                EndDate = e.EndDate,
+
+                RegistrationCloseDate = e.RegistrationCloseDate,
+                MentorCheckpointStart = e.MentorCheckpointStart,
+                MentorCheckpointEnd = e.MentorCheckpointEnd,
+                FinalSubmissionDeadline = e.FinalSubmissionDeadline,
+                IdeaPresentationStart = e.IdeaPresentationStart,
+                IdeaPresentationEnd = e.IdeaPresentationEnd,
+                WinnersAnnouncementDate = e.WinnersAnnouncementDate,
+
+                ContactEmail = e.ContactEmail,
+                Notes = e.Notes,
+                EventType = e.EventType,
+
+                CreatedOn = e.CreatedOn,
+                UpdatedOn = e.UpdatedOn
+
+            }).ToList();
         }
+
+
 
         public async Task<List<Event>> GetIdeathonsForMonthAsync(int year, int month)
         {

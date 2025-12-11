@@ -9,7 +9,9 @@ import {
   BookOpenCheck,
   Briefcase,
   GraduationCap, 
+   ShieldCheck, Award
 } from "lucide-react";
+
 import { useNavigate, useLocation } from "react-router-dom";
 
 export default function Sidebar() {
@@ -69,15 +71,9 @@ export default function Sidebar() {
       />
       <MenuItem
         icon={<Upload size={16} />}
-        label="Upload"
+        label="Knowledge Article Upload"
         active={location.pathname === "/app/upload-knowledge"}
         onClick={() => navigate("/app/upload-knowledge")}
-      />
-      <MenuItem
-        icon={<Bot size={16} />}
-        label="AI Assistant"
-        active={location.pathname === "/app/ai"}
-        onClick={() => navigate("/app/ai")}
       />
       <MenuItem
         icon={<FileText size={16} />}
@@ -85,7 +81,12 @@ export default function Sidebar() {
         active={location.pathname === "/app/contributions"}
         onClick={() => navigate("/app/contributions")}
       />
-
+   <MenuItem
+        icon={<BookOpenCheck size={16} />}
+        label="Event Knowledge Articles"
+        active={location.pathname === "/app/event-items"}
+        onClick={() => navigate("/app/event-items")}
+      />
       {/* Manager */}
       {roles.includes("Mentor") && (
         <MenuItem
@@ -107,12 +108,22 @@ export default function Sidebar() {
       {/* Approver */}
       {roles.includes("Approver") && (
         <MenuItem
-          icon={<Star size={16} />}
+          icon={<ShieldCheck size={16} />}   
           label="Approver Dashboard"
           active={location.pathname === "/app/approver"}
           onClick={() => navigate("/app/approver")}
         />
       )}
+      {/* Jury Dashboard */}
+{roles.includes("Jury Member") && (
+  <MenuItem
+    icon={<GraduationCap size={16} />}
+    label="Jury Dashboard"
+    active={location.pathname === "/app/jury-dashboard"}
+    onClick={() => navigate("/app/jury-dashboard")}
+  />
+)}
+
     </nav>
   </div>
 

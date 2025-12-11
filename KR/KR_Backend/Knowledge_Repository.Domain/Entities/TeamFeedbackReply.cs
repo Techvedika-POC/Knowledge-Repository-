@@ -24,4 +24,6 @@ public partial class TeamFeedbackReply
     public virtual Team Team { get; set; }
 
     public virtual User User { get; set; }
+    public DateTime? EditedOn { get; set; }
+    public bool IsDeleted { get; set; } = false;
 }

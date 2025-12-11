@@ -13,8 +13,9 @@ public partial class Knowledge_Repository_dbContext : DbContext
         : base(options)
     {
     }
-
+    public virtual DbSet<TeamChatMessage> TeamChatMessages { get; set; }
     public virtual DbSet<ActivityLog> ActivityLogs { get; set; }
+    public virtual DbSet<JuryChatMessage> JuryChatMessages { get; set; }
 
     public virtual DbSet<Announcement> Announcements { get; set; }
 
@@ -33,6 +34,10 @@ public partial class Knowledge_Repository_dbContext : DbContext
     public virtual DbSet<Event> Events { get; set; }
 
     public virtual DbSet<EventJury> EventJuries { get; set; }
+
+    public virtual DbSet<JuryFinalScore> JuryFinalScores { get; set; }
+
+
 
     public virtual DbSet<EventKnowledgeItem> EventKnowledgeItems { get; set; }
 
@@ -75,6 +80,7 @@ public partial class Knowledge_Repository_dbContext : DbContext
     public virtual DbSet<UserModuleProgress> UserModuleProgresses { get; set; }
 
     public virtual DbSet<UserRole> UserRoles { get; set; }
+    public virtual DbSet<PasswordReset> PasswordResets { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -99,6 +105,7 @@ public partial class Knowledge_Repository_dbContext : DbContext
             .HasPostgresExtension("pgcrypto")
             .HasPostgresExtension("uuid-ossp")
             .HasPostgresExtension("vector");
+
 
         modelBuilder.Entity<ActivityLog>(entity =>
         {
@@ -131,6 +138,55 @@ public partial class Knowledge_Repository_dbContext : DbContext
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("activity_log_user_id_fkey");
+        });
+        modelBuilder.Entity<JuryChatMessage>(entity =>
+        {
+            entity.ToTable("jury_chat_messages", "public");
+
+            entity.HasKey(e => e.MessageId).HasName("jury_chat_messages_pkey");
+
+            entity.Property(e => e.MessageId)
+                  .HasColumnName("message_id")
+                  .HasDefaultValueSql("gen_random_uuid()");
+
+            entity.Property(e => e.EventId)
+                  .HasColumnName("event_id")
+                  .IsRequired();
+
+            entity.Property(e => e.SenderJuryId)
+                  .HasColumnName("sender_jury_id")
+                  .IsRequired();
+
+            entity.Property(e => e.Message)
+                  .HasColumnName("message")
+                  .HasColumnType("text")
+                  .IsRequired();
+
+            entity.Property(e => e.CreatedOn)
+                  .HasColumnName("created_on")
+                  .HasColumnType("timestamptz")
+                  .HasDefaultValueSql("now()");
+
+            entity.HasOne(d => d.Event)
+                  .WithMany(e => e.JuryChatMessages)
+                  .HasForeignKey(d => d.EventId)
+                  .HasConstraintName("fk_jury_chat_messages_event")
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(d => d.Sender)
+                  .WithMany(u => u.JuryChatMessages)
+                  .HasForeignKey(d => d.SenderJuryId)
+                  .HasConstraintName("fk_jury_chat_messages_sender")
+                  .OnDelete(DeleteBehavior.Restrict);
+            entity.Property(e => e.ReplyToMessageId)
+      .HasColumnName("reply_to_message_id");
+
+            entity.HasOne(e => e.ReplyTo)
+                  .WithMany(e => e.Replies)
+                  .HasForeignKey(e => e.ReplyToMessageId)
+                  .HasConstraintName("fk_jury_chat_messages_replyto")
+                  .OnDelete(DeleteBehavior.SetNull); // matches the SQL above
+
         });
 
         modelBuilder.Entity<Announcement>(entity =>
@@ -986,6 +1042,9 @@ public partial class Knowledge_Repository_dbContext : DbContext
                 .HasColumnName("reply_text");
             entity.Property(e => e.TeamId).HasColumnName("team_id");
             entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.EditedOn).HasColumnName("edited_on").HasColumnType("timestamptz");
+            entity.Property(e => e.IsDeleted).HasColumnName("is_deleted").HasDefaultValue(false);
+
 
             entity.HasOne(d => d.Feedback).WithMany(p => p.TeamFeedbackReplies)
                 .HasForeignKey(d => d.FeedbackId)
@@ -1193,8 +1252,65 @@ public partial class Knowledge_Repository_dbContext : DbContext
                 .HasForeignKey(d => d.UserId)
                 .HasConstraintName("fk_user_module_progress_user");
         });
+        modelBuilder.Entity<PasswordReset>(entity =>
+        {
+            entity.ToTable("password_reset");
 
-        modelBuilder.Entity<UserRole>(entity =>
+            entity.HasKey(e => e.PasswordResetId)
+                .HasName("pk_password_reset");
+
+            entity.Property(e => e.PasswordResetId)
+                .HasColumnName("password_reset_id")
+                .HasDefaultValueSql("gen_random_uuid()");
+
+            entity.Property(e => e.UserId)
+                .HasColumnName("user_id");
+
+            entity.Property(e => e.CodeHash)
+                .HasColumnName("code_hash")
+                .HasMaxLength(512);
+
+            entity.Property(e => e.CodeExpiresAt)
+                .HasColumnName("code_expires_at");
+
+            entity.Property(e => e.CodeUsed)
+                .HasColumnName("code_used");
+
+            entity.Property(e => e.ResetTokenHash)
+                .HasColumnName("reset_token_hash")
+                .HasMaxLength(512);
+
+            entity.Property(e => e.ResetTokenExpiresAt)
+                .HasColumnName("reset_token_expires_at");
+
+            entity.Property(e => e.ResetTokenUsed)
+                .HasColumnName("reset_token_used");
+
+            entity.Property(e => e.CreatedOn)
+                .HasColumnName("created_on")
+                .HasDefaultValueSql("NOW()");
+
+            entity.Property(e => e.UpdatedOn)
+                .HasColumnName("updated_on");
+
+            entity.HasIndex(e => e.UserId)
+                .HasDatabaseName("idx_passwordreset_userid");
+
+            entity.HasIndex(e => e.CodeHash)
+                .HasDatabaseName("idx_passwordreset_codehash");
+
+            entity.HasIndex(e => e.ResetTokenHash)
+                .HasDatabaseName("idx_passwordreset_resettokenhash");
+
+            entity.HasOne(d => d.User)
+                .WithMany(p => p.PasswordResets)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("fk_password_reset_user");
+        });
+     
+
+            modelBuilder.Entity<UserRole>(entity =>
         {
             entity.HasKey(e => e.UserRoleId).HasName("user_roles_pkey");
 
@@ -1231,6 +1347,57 @@ public partial class Knowledge_Repository_dbContext : DbContext
             entity.HasOne(d => d.User).WithMany(p => p.UserRoleUsers)
                 .HasForeignKey(d => d.UserId)
                 .HasConstraintName("user_roles_user_id_fkey");
+           
+
+            modelBuilder.Entity<JuryFinalScore>(entity =>
+            {
+                entity.HasKey(e => e.FinalId).HasName("pk_jury_final_scores");
+
+                entity.ToTable("jury_final_scores");
+
+                entity.Property(e => e.FinalId)
+                    .HasDefaultValueSql("gen_random_uuid()")
+                    .HasColumnName("final_id");
+                entity.Property(e => e.ApprovedBy).HasColumnName("approved_by");
+                entity.Property(e => e.ApprovedOn)
+                    .HasDefaultValueSql("now()")
+                    .HasColumnName("approved_on");
+                entity.Property(e => e.EventId).HasColumnName("event_id");
+                entity.Property(e => e.Remarks).HasColumnName("remarks");
+                entity.Property(e => e.TeamId).HasColumnName("team_id");
+                entity.Property(e => e.TotalScore).HasColumnName("total_score");
+
+                entity.HasOne(d => d.ApprovedByNavigation).WithMany(p => p.JuryFinalScores)
+                    .HasForeignKey(d => d.ApprovedBy)
+                    .OnDelete(DeleteBehavior.SetNull)
+                    .HasConstraintName("fk_final_admin");
+
+                entity.HasOne(d => d.Event).WithMany(p => p.JuryFinalScores)
+                    .HasForeignKey(d => d.EventId)
+                    .HasConstraintName("fk_final_event");
+
+                entity.HasOne(d => d.Team).WithMany(p => p.JuryFinalScores)
+                    .HasForeignKey(d => d.TeamId)
+                    .HasConstraintName("fk_final_team");
+            });
+            modelBuilder.Entity<TeamChatMessage>(entity =>
+            {
+                entity.ToTable("team_chat_message");
+                entity.HasKey(x => x.MessageId).HasName("team_chat_message_pkey");
+                entity.Property(x => x.MessageId).HasColumnName("message_id");
+                entity.Property(x => x.TeamId).HasColumnName("team_id");
+                entity.Property(x => x.SenderId).HasColumnName("sender_id");
+                entity.Property(x => x.SenderName).HasColumnName("sender_name");
+                entity.Property(x => x.MessageText).HasColumnName("message_text");
+                entity.Property(x => x.CreatedOn).HasColumnName("created_on");
+                entity.Property(x => x.IsDeleted).HasColumnName("is_deleted");
+
+              
+                entity.Property(x => x.EditedOn).HasColumnName("EditedOn");
+            });
+
+
+
         });
 
         OnModelCreatingPartial(modelBuilder);

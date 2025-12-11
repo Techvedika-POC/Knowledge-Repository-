@@ -15,7 +15,7 @@ public partial class KnowledgeItem
 
     public Guid? DomainId { get; set; }
 
-    public string KnowledgeItem1 { get; set; }
+    public string KnowledgeText { get; set; }
 
     public Guid? CategoryId { get; set; }
 

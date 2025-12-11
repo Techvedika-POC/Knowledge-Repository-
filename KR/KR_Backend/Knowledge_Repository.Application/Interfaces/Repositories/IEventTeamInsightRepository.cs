@@ -13,10 +13,6 @@ namespace Knowledge_Repository.Application.Interfaces.Repositories
         Task<double> GetTeamAverageRatingAsync(Guid teamId);
         Task<IEnumerable<Team>> GetTeamsWithDetailsByEventAsync(Guid eventId);
 
-        // 🆕 New methods
-        Task<Guid> GetTeamIdByFeedbackAsync(Guid feedbackId);
-        Task<TeamFeedbackReply> AddFeedbackReplyAsync(TeamFeedbackReply reply);
-        Task<EventKnowledgeItem> AddTeamSubmissionAsync(EventKnowledgeItem submission);
-        Task SaveChangesAsync();
+     
     }
 }

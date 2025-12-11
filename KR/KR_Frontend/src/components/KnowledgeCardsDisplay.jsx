@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import EngagementButtons from "./EngagementButtons";
-import VersionFilesModal from "./VersionFilesModal"; // <-- make sure path is correct
+import VersionFilesModal from "./VersionFilesModal"; // 
 import {
   FileText,
   Tag,

@@ -1,8 +1,6 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
-
-// Components
 import Sidebar from "./components/SideBar";
 import UploadKnowledgeItem from "./components/UploadKnowledgeItem";
 import MainContent from "./components/MainContent";
@@ -18,16 +16,22 @@ import Recents from "./components/Recents";
 import FavouritesPage from "./components/FavouritesPage";
 import EventRegistration from "./components/EventRegistration";
 import AppHighlights from "./components/AppHighlights";
+import VerifyOtp from "./components/VerifyOtp";
+import ResetPassword from "./components/ResetPassword";
+import ForgotPassword from "./components/ForgotPassword";
+import EventKnowledgeItemsPage from "./components/EventKnowledgeItemsPage";
+import JuryDashboard from "./components/JuryDashboard";
+
 
 // Event Pages
 import IdeathonPage from "./components/IdeathonPage";
 import HackathonPage from "./components/HackathonPage";
 import CodingChallengePage from "./components/CodingChallengePage";
-import KnowledgeQuestPage from "./components/KnowledgeQuestPage";
+import LearningManagement from "./components/LearningManagement";
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
-// ------------------- PROTECTED APP SHELL -------------------
+
 function AppShell() {
   return (
     <div className="flex h-screen w-screen overflow-hidden">
@@ -44,16 +48,18 @@ function AppShell() {
           <Route path="events/ideathon" element={<IdeathonPage />} />
           <Route path="events/hackathon" element={<HackathonPage />} />
           <Route path="events/coding-challenge" element={<CodingChallengePage />} />
-          <Route path="events/knowledge-quest" element={<KnowledgeQuestPage />} />
+          <Route path="events/learning-Management" element={<LearningManagement />} />
           <Route path="events/event-registration" element={<EventRegistration />} />
 
           {/* Upload & Contributions */}
           <Route path="upload-knowledge" element={<UploadKnowledgeItem />} />
+          <Route path="event-items" element={<EventKnowledgeItemsPage />} />
+          <Route path="jury-dashboard" element={<JuryDashboard/>}/>
           <Route path="contributions" element={<MyContributions />} />
           <Route path="recents" element={<Recents />} />
           <Route path="favorites" element={<FavouritesPage />} />
 
-          {/* ✅ Manager Dashboard */}
+          {/*  Manager Dashboard */}
           <Route
             path="mentor-dashboard"
             element={
@@ -104,6 +110,10 @@ export default function App() {
         <Route path="/signup" element={<SignUp />} />
         <Route path="/login" element={<Login />} />
         <Route path="/features" element={<AppHighlights />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/verify-otp" element={<VerifyOtp />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+
 
         {/* Protected App Shell */}
         <Route

@@ -17,7 +17,7 @@ export default function Signup() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // ✅ Validation function
+  //  Validation function
   const validateForm = () => {
     const newErrors = {};
 
@@ -36,7 +36,7 @@ export default function Signup() {
       newErrors.DepartmentName = "Department name must contain only letters";
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0; // ✅ Return true if valid
+    return Object.keys(newErrors).length === 0; 
   };
 
   const handleSubmit = async (e) => {

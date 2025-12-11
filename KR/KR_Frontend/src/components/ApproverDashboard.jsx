@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from "react";
 import api from "../api";
 import { Check, X, Eye, ChevronLeft, ChevronRight } from "lucide-react";
+import PreviewModal from "./PreviewModal"; 
 
 export default function ApproverPage() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(null);
-  const [previewItem, setPreviewItem] = useState(null);
   const [error, setError] = useState("");
+
+  const [compactPreviewItem, setCompactPreviewItem] = useState(null); 
+  const [fullPreviewItem, setFullPreviewItem] = useState(null); 
 
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize] = useState(10);
@@ -59,11 +62,71 @@ export default function ApproverPage() {
   };
 
   const handlePrevPage = () => {
-    if (pageNumber > 1) setPageNumber(pageNumber - 1);
+    if (pageNumber > 1) setPageNumber((p) => p - 1);
   };
 
   const handleNextPage = () => {
-    if (pageNumber < totalPages) setPageNumber(pageNumber + 1);
+    if (pageNumber < totalPages) setPageNumber((p) => p + 1);
+  };
+
+  const CompactPreview = ({ item, onClose, onOpenFull }) => {
+    if (!item) return null;
+    const description = item.description || "No description available.";
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 border border-gray-200 relative animate-fade-in">
+          <button
+            className="absolute top-4 right-4 text-gray-500 hover:text-gray-900"
+            onClick={onClose}
+          >
+            <X size={20} />
+          </button>
+
+          <h3 className="text-2xl font-bold text-indigo-700 mb-3">{item.title}</h3>
+
+          <p className="text-sm text-gray-700 mb-4 line-clamp-6 break-words">
+            {description}
+          </p>
+
+          <div className="grid grid-cols-2 gap-3 text-sm text-gray-700 border-t pt-3 mt-3">
+            <div>
+              <strong>Domain:</strong>{" "}
+              <span className="text-blue-600">{item.domainName || "N/A"}</span>
+            </div>
+            <div>
+              <strong>Category:</strong>{" "}
+              <span className="text-purple-600">{item.categoryName || "N/A"}</span>
+            </div>
+            <div>
+              <strong>Framework:</strong>{" "}
+              <span className="text-cyan-600">{item.framework || "N/A"}</span>
+            </div>
+            <div>
+              <strong>Language:</strong>{" "}
+              <span className="text-pink-600">{item.language || "N/A"}</span>
+            </div>
+          </div>
+
+          <div className="mt-6 flex justify-end gap-3">
+            <button
+              onClick={() => {
+                onClose();
+                onOpenFull(item);
+              }}
+              className="px-4 py-2 rounded-full bg-indigo-600 text-white text-sm hover:bg-indigo-700 transition"
+            >
+              Open full preview
+            </button>
+            <button
+              onClick={onClose}
+              className="px-4 py-2 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -79,51 +142,54 @@ export default function ApproverPage() {
           <p className="text-sm text-gray-500 text-center">Loading...</p>
         ) : items.length === 0 ? (
           <div className="bg-white rounded-lg shadow p-6 text-center text-gray-600">
-            No pending items 
+            No pending items
           </div>
         ) : (
           <>
-          <div className="bg-white rounded-lg shadow overflow-x-auto border border-gray-200">
-            <table className="min-w-full text-sm">
-              <thead className="bg-indigo-100 text-indigo-800">
-                <tr>
-                  <th className="py-3 px-4 font-medium">Title</th>
-                  <th className="py-3 px-4 font-medium">Submitted By</th>
-                  <th className="py-3 px-4 font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {items.map((item) => (
+            <div className="bg-white rounded-lg shadow overflow-x-auto border border-gray-200">
+              <table className="min-w-full text-sm">
+                <thead className="bg-indigo-100 text-indigo-800">
+                  <tr>
+                    <th className="py-3 px-4 font-medium text-left">Title</th>
+                    <th className="py-3 px-4 font-medium text-left">Submitted By</th>
+                    <th className="py-3 px-4 font-medium text-left">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {items.map((item) => (
                     <tr key={item.itemId} className="hover:bg-indigo-50 transition-all">
                       <td className="py-3 px-4 font-medium text-gray-800">{item.title}</td>
                       <td className="py-3 px-4 text-gray-700">{item.createdByName}</td>
-                    <td className="py-3 px-4 flex gap-2 flex-wrap">
-                      <button
-                        onClick={() => handleAction(item.itemId, "approve")}
-                        disabled={actionLoading === item.itemId}
-                        className="flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-green-100 text-green-800 hover:bg-green-200 transition"
-                      >
-                        <Check size={14} /> Approve
-                      </button>
-                      <button
-                        onClick={() => handleAction(item.itemId, "reject")}
-                        disabled={actionLoading === item.itemId}
-                        className="flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-rose-100 text-rose-800 hover:bg-rose-200 transition"
-                      >
-                        <X size={14} /> Reject
-                      </button>
-                      <button
-                        onClick={() => setPreviewItem(item)}
-                        className="flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-indigo-200 text-indigo-800 hover:bg-indigo-300 transition"
-                      >
-                        <Eye size={14} /> Preview
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                      <td className="py-3 px-4 flex gap-2 flex-wrap">
+                        <button
+                          onClick={() => handleAction(item.itemId, "approve")}
+                          disabled={actionLoading === item.itemId}
+                          className="flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-green-100 text-green-800 hover:bg-green-200 transition"
+                        >
+                          <Check size={14} /> Approve
+                        </button>
+
+                        <button
+                          onClick={() => handleAction(item.itemId, "reject")}
+                          disabled={actionLoading === item.itemId}
+                          className="flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-rose-100 text-rose-800 hover:bg-rose-200 transition"
+                        >
+                          <X size={14} /> Reject
+                        </button>
+
+              
+                        <button
+                          onClick={() => setCompactPreviewItem(item)}
+                          className="flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-indigo-200 text-indigo-800 hover:bg-indigo-300 transition"
+                        >
+                          <Eye size={14} /> Preview
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
             {/* Pagination */}
             <div className="flex justify-end items-center gap-2 mt-3">
@@ -148,56 +214,21 @@ export default function ApproverPage() {
           </>
         )}
 
-        {/* Preview Modal */}
-        {previewItem && (
-          <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 border border-gray-200 relative animate-fade-in">
-              <button
-                className="absolute top-4 right-4 text-gray-500 hover:text-gray-900"
-                onClick={() => setPreviewItem(null)}
-              >
-                <X size={20} />
-              </button>
-              <h3 className="text-2xl font-bold text-indigo-700 mb-4 border-b pb-2">
-                {previewItem.title}
-              </h3>
-              <div className="space-y-3 text-sm text-gray-700">
-                <p>
-                  <strong>Description:</strong> {previewItem.description}
-                </p>
-                <p>
-                  <strong>Submitted By:</strong> {previewItem.createdByName}
-                </p>
-                <div className="grid grid-cols-2 gap-3 border-t pt-3 mt-3">
-                  <div>
-                    <strong>Domain:</strong>{" "}
-                    <span className="text-blue-600">{previewItem.domainName || "N/A"}</span>
-                  </div>
-                  <div>
-                    <strong>Category:</strong>{" "}
-                    <span className="text-purple-600">{previewItem.categoryName || "N/A"}</span>
-                  </div>
-                  <div>
-                    <strong>Framework:</strong>{" "}
-                    <span className="text-cyan-600">{previewItem.framework || "N/A"}</span>
-                  </div>
-                  <div>
-                    <strong>Language:</strong>{" "}
-                    <span className="text-pink-600">{previewItem.language || "N/A"}</span>
-                  </div>
-                </div>
-              </div>
+        {/* Compact preview modal */}
+        {compactPreviewItem && (
+          <CompactPreview
+            item={compactPreviewItem}
+            onClose={() => setCompactPreviewItem(null)}
+            onOpenFull={(item) => setFullPreviewItem(item)}
+          />
+        )}
 
-              <div className="mt-6 flex justify-end">
-                <button
-                  onClick={() => setPreviewItem(null)}
-                  className="px-4 py-2 rounded-full bg-indigo-600 text-white text-sm hover:bg-indigo-700 transition"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
+        {/* Full preview modal */}
+        {fullPreviewItem && (
+          <PreviewModal
+            item={fullPreviewItem}
+            onClose={() => setFullPreviewItem(null)}
+          />
         )}
       </div>
     </div>

@@ -1,14 +1,14 @@
-﻿using Knowledge_Repository.Application.Dtos.Mentor;
-using Knowledge_Repository.Application.Dtos;
+﻿using Knowledge_Repository.Application.Dtos;
+using Knowledge_Repository.Application.Dtos.EventInsight;
+using Knowledge_Repository.Application.Dtos.Mentor;
 using Knowledge_Repository.Application.Interfaces.Repositories;
 using Knowledge_Repository.Application.Interfaces.Services;
-using Knowledge_Repository.Application.Dtos.EventInsight;
-
 using Knowledge_Repository.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security;
 using System.Threading.Tasks;
 
 namespace Knowledge_Repository.Application.Implementations.Services
@@ -109,7 +109,7 @@ namespace Knowledge_Repository.Application.Implementations.Services
             if (team == null)
                 throw new KeyNotFoundException("Team not found.");
 
-            var feedbacks = await _mentorRepo.GetTeamFeedbacksAsync(teamId);
+       
 
             var members = team.TeamMembers?.Select(m => new MemberDto
             {
@@ -167,29 +167,6 @@ namespace Knowledge_Repository.Application.Implementations.Services
                 })
                 .ToList();
 
-
-            var feedbackDtos = feedbacks.Select(f => new FeedbackResponseDto
-            {
-                FeedbackId = f.FeedbackId,
-                MentorId = f.MentorId,
-                TeamId = f.TeamId,
-                FeedbackText = f.FeedbackText,
-                ProgressRating = f.ProgressRating,
-                CreatedOn = f.CreatedOn,
-
-                Replies = team.TeamFeedbackReplies
-                    .Where(r => r.FeedbackId == f.FeedbackId)
-                    .Select(r => new FeedbackReplyDto
-                    {
-                        ReplyId = r.ReplyId,
-                        ReplyText = r.ReplyText,
-                        UserName = r.User?.Name,
-                        CreatedOn = r.CreatedOn
-                    })
-                    .ToList()
-            }).ToList();
-
-
             return new TeamDetailsDto
             {
                 TeamId = team.TeamId,
@@ -198,107 +175,11 @@ namespace Knowledge_Repository.Application.Implementations.Services
                 Description = team.Event?.Description,
                 ProjectTitle = null,
                 Members = members,
-                Feedbacks = feedbackDtos,
+               
                 Submissions = submissions
             };
         }
 
-
-        public async Task<FeedbackResponseDto> AddFeedbackAsync(AddFeedbackRequestDto request)
-        {
-            if (request == null)
-                throw new ArgumentNullException(nameof(request));
-            if (request.TeamId == Guid.Empty)
-                throw new ArgumentException("Invalid team ID.", nameof(request.TeamId));
-            if (request.EventId == Guid.Empty)
-                throw new ArgumentException("Invalid event ID.", nameof(request.EventId));
-            if (string.IsNullOrWhiteSpace(request.FeedbackText))
-                throw new ArgumentException("Feedback text cannot be empty.", nameof(request.FeedbackText));
-
-            var mentor = await _mentorRepo.GetMentorByUserIdAsync(request.MentorId);
-            if (mentor == null)
-                throw new KeyNotFoundException("Mentor record not found for the given user ID.");
-
-            var feedback = new TeamFeedback
-            {
-                FeedbackId = Guid.NewGuid(),
-                MentorId = mentor.MentorId,
-                TeamId = request.TeamId,
-                EventId = request.EventId,
-                FeedbackText = request.FeedbackText.Trim(),
-                ProgressRating = request.ProgressRating,
-                CreatedOn = DateTime.UtcNow
-            };
-
-            await _mentorRepo.AddFeedbackAsync(feedback);
-
-            return new FeedbackResponseDto
-            {
-                FeedbackId = feedback.FeedbackId,
-                MentorId = mentor.MentorId,
-                TeamId = feedback.TeamId,
-                FeedbackText = feedback.FeedbackText,
-                ProgressRating = feedback.ProgressRating,
-                CreatedOn = feedback.CreatedOn
-            };
-        }
-
-        public async Task<bool> UpdateFeedbackAsync(UpdateFeedbackRequestDto request)
-        {
-            if (request == null)
-                throw new ArgumentNullException(nameof(request));
-            if (request.FeedbackId == Guid.Empty)
-                throw new ArgumentException("Invalid feedback ID.", nameof(request.FeedbackId));
-            if (string.IsNullOrWhiteSpace(request.FeedbackText))
-                throw new ArgumentException("Feedback text cannot be empty.", nameof(request.FeedbackText));
-
-            var feedback = await _mentorRepo.GetFeedbackByIdAsync(request.FeedbackId);
-            if (feedback == null)
-                return false;
-
-            feedback.FeedbackText = request.FeedbackText.Trim();
-            feedback.ProgressRating = request.ProgressRating;
-            feedback.UpdatedOn = DateTime.UtcNow;
-
-            await _mentorRepo.UpdateFeedbackAsync(feedback);
-            return true;
-        }
-
-        public async Task<IEnumerable<FeedbackResponseDto>> GetFeedbacksByMentorAsync(Guid mentorId)
-        {
-            if (mentorId == Guid.Empty)
-                throw new ArgumentException("Invalid mentor ID.", nameof(mentorId));
-
-            var feedbacks = await _mentorRepo.GetFeedbacksByMentorAsync(mentorId);
-            return feedbacks.Select(f => new FeedbackResponseDto
-            {
-                FeedbackId = f.FeedbackId,
-                MentorId = f.MentorId,
-                TeamId = f.TeamId,
-                FeedbackText = f.FeedbackText,
-                ProgressRating = f.ProgressRating,
-                CreatedOn = f.CreatedOn
-            }).ToList();
-        }
-
-        public async Task<FeedbackResponseDto> GetFeedbackByIdAsync(Guid feedbackId)
-        {
-            if (feedbackId == Guid.Empty)
-                throw new ArgumentException("Invalid feedback ID.", nameof(feedbackId));
-
-            var feedback = await _mentorRepo.GetFeedbackByIdAsync(feedbackId);
-            if (feedback == null)
-                throw new KeyNotFoundException("Feedback not found.");
-
-            return new FeedbackResponseDto
-            {
-                FeedbackId = feedback.FeedbackId,
-                MentorId = feedback.MentorId,
-                TeamId = feedback.TeamId,
-                FeedbackText = feedback.FeedbackText,
-                ProgressRating = feedback.ProgressRating,
-                CreatedOn = feedback.CreatedOn
-            };
-        }
     }
+
 }

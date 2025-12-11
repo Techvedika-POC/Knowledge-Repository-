@@ -10,8 +10,6 @@ namespace Knowledge_Repository.Application.Interfaces.Services
         Task<UserEventInsightDto> GetUserEventInsightAsync(Guid userId, Guid eventId);
         Task<List<UserEventInsightDto>> GetEventInsightsAsync(Guid eventId);
 
-        // 🆕 New actions
-        Task<bool> SubmitTeamReplyAsync(Guid feedbackId, Guid userId, string replyText);
-        Task<bool> SubmitTeamSubmissionAsync(Guid teamId, Guid eventId, string title, string description, Guid createdBy);
+      
     }
 }

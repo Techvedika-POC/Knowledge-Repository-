@@ -167,12 +167,23 @@ namespace Knowledge_Repository.Application.Implementations.Services
                 CategoryName = k.Category?.CategoryName,
                 OwnerId = k.OwnerId,
                 OwnerName = k.Owner?.Name,
+                SubmittedBy = k.Owner?.Name ?? "Unknown",
                 Status = k.Status,
                 CreatedOn = k.CreatedOn ?? DateTime.UtcNow,
                 Tags = k.KnowledgeTags?.Select(t => t.TagName).ToList() ?? new List<string>(),
                 Views = k.Engagements.Count(e => e.EngagementType == "View"),
                 Likes = k.Engagements.Count(e => e.EngagementType == "Like"),
-                Comments = k.Engagements.Count(e => e.EngagementType == "Comment")
+                Comments = k.Engagements.Count(e => e.EngagementType == "Comment"),
+                Attachments = k.Attachments?.Select(a => new AttachmentDto
+                  {
+                      AttachmentId = a.AttachmentId,
+                      FileName = a.FileName ?? "",
+                      MimeType = a.MimeType ?? "",
+                      FileUrl = a.FilePath ?? "",
+                      FileSize = a.FileSize ?? 0
+                  }).ToList() ?? new List<AttachmentDto>(),
+                Framework = k.Framework,
+                Language = k.Language,
             };
         }
     }
