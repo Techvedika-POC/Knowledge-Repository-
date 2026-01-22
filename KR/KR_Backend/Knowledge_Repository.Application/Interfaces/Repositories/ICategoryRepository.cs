@@ -1,4 +1,4 @@
-﻿// Application/Interfaces/Repositories/ICategoryRepository.cs
+﻿
 using Knowledge_Repository.Domain.Entities;
 
 namespace Knowledge_Repository.Application.Interfaces.Repositories

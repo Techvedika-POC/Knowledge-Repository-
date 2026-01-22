@@ -1,5 +1,4 @@
-﻿// Infrastructure/Services/SmtpEmailService.cs
-using Knowledge_Repository.Application.Interfaces.Services;
+﻿using Knowledge_Repository.Application.Interfaces.Services;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.Extensions.Configuration;
@@ -16,8 +15,8 @@ namespace Knowledge_Repository.Infrastructure.Services
     {
         private readonly string _host;
         private readonly int _port;
-        private readonly string _user;
-        private readonly string _pass;
+        private readonly string? _user;
+        private readonly string? _pass;
         private readonly bool _useSsl;
         private readonly string _fromAddress;
         private readonly string _fromName;
@@ -25,83 +24,96 @@ namespace Knowledge_Repository.Infrastructure.Services
 
         public SmtpEmailService(IConfiguration config, ILogger<SmtpEmailService> logger)
         {
-            _logger = logger;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
             _host = config["Smtp:Host"] ?? throw new ArgumentNullException("Smtp:Host");
             _port = int.TryParse(config["Smtp:Port"], out var p) ? p : 587;
             _useSsl = bool.TryParse(config["Smtp:UseSsl"], out var s) ? s : true;
             _user = config["Smtp:User"];
             _pass = config["Smtp:Pass"];
-            _fromAddress = config["Smtp:FromAddress"] ?? _user;
+            _fromAddress = config["Smtp:FromAddress"] ?? _user ?? throw new ArgumentNullException("Smtp:FromAddress or Smtp:User");
             _fromName = config["Smtp:FromDisplayName"] ?? "Knowledge Repo";
         }
 
         public async Task SendEmailAsync(string toEmail, string subject, string htmlBody)
         {
-            if (string.IsNullOrWhiteSpace(toEmail))
-                throw new ArgumentException("toEmail is required", nameof(toEmail));
+            if (string.IsNullOrWhiteSpace(toEmail)) throw new ArgumentException("toEmail is required", nameof(toEmail));
+            if (string.IsNullOrWhiteSpace(subject)) subject = "(no subject)";
 
             var message = new MimeMessage();
             message.From.Add(new MailboxAddress(_fromName, _fromAddress));
-            message.To.Add(MailboxAddress.Parse(toEmail));
-            message.Subject = subject ?? "(no subject)";
+            message.To.Add(MailboxAddress.Parse(toEmail.Trim()));
 
-            var body = new BodyBuilder { HtmlBody = htmlBody ?? string.Empty };
-            message.Body = body.ToMessageBody();
+            message.Subject = subject;
 
-            using var client = new MailKit.Net.Smtp.SmtpClient();
+            var bodyBuilder = new BodyBuilder
+            {
+                HtmlBody = htmlBody ?? string.Empty,
+                TextBody = StripHtml(htmlBody) 
+            };
+
+            message.Body = bodyBuilder.ToMessageBody();
+
+            using var client = new SmtpClient();
 
             try
             {
-                // choose secure socket option depending on port
-                SecureSocketOptions sockOpt = SecureSocketOptions.StartTls;
-                if (_port == 465) sockOpt = SecureSocketOptions.SslOnConnect;
-                // If user set UseSsl = false, use StartTlsWhenAvailable (or None)
-                if (!_useSsl) sockOpt = SecureSocketOptions.None;
+                await client.ConnectAsync(_host, _port, SecureSocketOptions.StartTls);
 
-                _logger?.LogDebug("Connecting SMTP {Host}:{Port}, Secure={Secure}", _host, _port, sockOpt);
-                await client.ConnectAsync(_host, _port, sockOpt);
 
                 if (!string.IsNullOrWhiteSpace(_user))
                 {
-                    _logger?.LogDebug("Authenticating SMTP user {User}", _user);
-                    await client.AuthenticateAsync(_user, _pass);
+                    _logger.LogDebug("SMTP authenticate {User}", _user);
+                    await client.AuthenticateAsync(_user, _pass ?? string.Empty).ConfigureAwait(false);
                 }
 
-                await client.SendAsync(message);
-                _logger?.LogInformation("Email sent to {To}", toEmail);
+                await client.SendAsync(message).ConfigureAwait(false);
+                _logger.LogInformation("Email sent to {To}", toEmail);
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex, "Failed to send email to {To}", toEmail);
-                throw; // bubble up so caller can log/track failure
+                _logger.LogError(ex, "Failed to send email to {To}", toEmail);
+                throw; 
             }
             finally
             {
-                try { await client.DisconnectAsync(true); } catch { /* ignore */ }
+                try { await client.DisconnectAsync(true).ConfigureAwait(false); } catch { /* ignore */ }
             }
         }
 
         public async Task SendEmailBulkAsync(IEnumerable<string> toEmails, string subject, string htmlBody)
         {
-            var recipients = toEmails?.Where(e => !string.IsNullOrWhiteSpace(e)).Distinct().ToList();
+            var recipients = toEmails?.Where(e => !string.IsNullOrWhiteSpace(e)).Select(e => e.Trim()).Distinct().ToList();
             if (recipients == null || recipients.Count == 0) return;
 
-            // Option A: send one message with BCC — simpler but exposes emails to mail server
-            // Option B: send individually (we do individually so logs show per-recipient)
-            var tasks = recipients.Select(async to =>
+            var tasks = recipients.Select(to => Task.Run(async () =>
             {
                 try
                 {
-                    await SendEmailAsync(to, subject, htmlBody);
+                    await SendEmailAsync(to, subject, htmlBody).ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {
-                    // log but continue
-                    _logger?.LogError(ex, "Failed to send bulk email to {To}", to);
+                    _logger.LogError(ex, "Failed to send bulk email to {To}", to);
                 }
-            });
+            }));
 
-            await Task.WhenAll(tasks);
+            await Task.WhenAll(tasks).ConfigureAwait(false);
+        }
+
+        public Task SendAsync(string to, string subject, string body) => SendEmailAsync(to, subject, body);
+        private static string StripHtml(string? html)
+        {
+            if (string.IsNullOrEmpty(html)) return string.Empty;
+            var sb = new System.Text.StringBuilder();
+            var inside = false;
+            foreach (var ch in html)
+            {
+                if (ch == '<') inside = true;
+                else if (ch == '>') { inside = false; sb.Append(' '); }
+                else if (!inside) sb.Append(ch);
+            }
+            return System.Text.RegularExpressions.Regex.Replace(sb.ToString(), @"\s+", " ").Trim();
         }
     }
 }

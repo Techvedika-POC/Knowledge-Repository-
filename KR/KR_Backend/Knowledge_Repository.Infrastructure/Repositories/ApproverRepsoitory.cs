@@ -86,18 +86,38 @@ namespace Knowledge_Repository.Infrastructure.Repositories
             return true;
         }
 
-        public async Task<bool> RejectAsync(Guid itemId, Guid approverId)
+        public async Task<bool> RejectAsync(Guid itemId, Guid approverId, string feedback)
         {
-            var item = await _context.KnowledgeItems.FindAsync(itemId);
-            if (item == null) return false;
+            // 1. Direct SQL update (NO tracking, NO concurrency)
+            var rows = await _context.KnowledgeItems
+                .Where(x => x.ItemId == itemId)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(x => x.Status, "Rejected")
+                    .SetProperty(x => x.UpdatedBy, approverId)
+                    .SetProperty(x => x.UpdatedOn, DateTime.UtcNow)
+                );
 
-            item.Status = "Rejected";
-            item.UpdatedBy = approverId;
-            item.UpdatedOn = DateTime.UtcNow;
+            if (rows == 0)
+                return false;   // item not found or already gone
 
+            // 2. Insert review/feedback
+            var review = new KnowledgeReview
+            {
+                ReviewId = Guid.NewGuid(),
+                ItemId = itemId,
+                ReviewerId = approverId,
+                Decision = "Rejected",
+                Comments = feedback,
+                ReviewedOn = DateTime.UtcNow
+            };
+
+            _context.KnowledgeReviews.Add(review);
             await _context.SaveChangesAsync();
+
             return true;
         }
+
+
         public async Task<IEnumerable<string>> GetEventTypesAsync()
         {
             return await _context.Events

@@ -50,18 +50,21 @@ namespace Knowledge_Repository.Infrastructure.Repositories
         }
         public async Task<List<Event>> GetCurrentIdeathonsAsync(DateTime todayUtc)
         {
-            var today = DateOnly.FromDateTime(todayUtc.ToLocalTime()); 
+            var today = DateOnly.FromDateTime(todayUtc);
 
             return await _context.Events
-                .Where(e => e.EventType == "Ideathon"
-                            && e.StartDate.HasValue
-                            && e.EndDate.HasValue
-                            && e.StartDate.Value <= today
-                            && e.EndDate.Value >= today)
+                .Where(e =>
+                    e.EventType.Trim().ToLower() == "ideathon"
+                    && e.StartDate.HasValue
+                    && e.EndDate.HasValue
+                    && e.StartDate.Value <= today
+                    && e.EndDate.Value >= today
+                )
                 .AsNoTracking()
                 .OrderBy(e => e.StartDate)
                 .ToListAsync();
         }
+
 
         public async Task<List<Event>> GetIdeathonsForMonthAsync(int year, int month)
         {

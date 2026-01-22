@@ -51,7 +51,7 @@ namespace Knowledge_Repository.Infrastructure.Repositories
           .ThenInclude(i => i.KnowledgeTags)
       .Include(e => e.Item)
           .ThenInclude(i => i.Engagements)
-      .ToListAsync(); // tracking query
+      .ToListAsync(); 
 
         }
 

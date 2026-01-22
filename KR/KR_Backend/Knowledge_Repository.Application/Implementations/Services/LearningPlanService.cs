@@ -1,5 +1,4 @@
-﻿// File: Knowledge_Repository.Application.Implementations.Services/LearningPlanService.cs
-using Application.Interfaces;
+﻿using Application.Interfaces;
 using Knowledge_Repository.Application.Dtos;
 using Knowledge_Repository.Application.Interfaces.Repositories;
 using Knowledge_Repository.Application.Interfaces.Services;
@@ -39,12 +38,12 @@ namespace Knowledge_Repository.Application.Implementations.Services
             _userProgressRepo = userProgressRepo ?? throw new ArgumentNullException(nameof(userProgressRepo));
         }
 
-        // -------------------------
-        // READ
-        // -------------------------
+
         public async Task<List<LearningPlanDto>> GetAllPlansAsync()
         {
-            var plans = await _planRepo.GetAllAsync();
+            var plans = (await _planRepo.GetAllAsync())
+                .OrderByDescending(p => p.UpdatedOn ?? p.CreatedOn)
+                .ToList();
 
             return plans.Select(x => new LearningPlanDto
             {
@@ -58,8 +57,8 @@ namespace Knowledge_Repository.Application.Implementations.Services
                 Prerequisites = x.Prerequisites ?? string.Empty,
                 TechnicalRequirements = x.TechnicalRequirements ?? string.Empty,
                 SelfAssessmentChecklist = x.SelfAssessmentChecklist ?? string.Empty,
-
-                // optional: keep empty because this endpoint doesn’t load hierarchy
+                CreatedOn = x.CreatedOn,
+                UpdatedOn = x.UpdatedOn,
                 Weeks = new List<WeekFullDto>()
             }).ToList();
         }
@@ -203,9 +202,7 @@ namespace Knowledge_Repository.Application.Implementations.Services
         public async Task<bool> IsPlanCompletedAsync(Guid planId, Guid userId)
             => await _planRepo.IsPlanCompletedByUser(planId, userId);
 
-        // -------------------------
-        // CREATE
-        // -------------------------
+  
         public async Task<LearningPlanDto> GenerateLearningPlanAsync(string title, bool useAI)
         {
             var plan = new LearningPlan
@@ -382,9 +379,6 @@ namespace Knowledge_Repository.Application.Implementations.Services
             };
         }
 
-        // -------------------------
-        // UPDATE
-        // -------------------------
         public async Task<bool> UpdateLearningPlanAsync(LearningPlanFullDto dto)
         {
             var plan = await _planRepo.GetByIdAsync(dto.PlanId);
@@ -449,9 +443,7 @@ namespace Knowledge_Repository.Application.Implementations.Services
             return true;
         }
 
-        // -------------------------
-        // DELETE
-        // -------------------------
+    
         public async Task<bool> DeleteLearningPlanAsync(Guid planId)
         {
             var plan = await _planRepo.GetByIdAsync(planId);

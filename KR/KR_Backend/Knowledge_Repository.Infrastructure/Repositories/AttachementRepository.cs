@@ -29,5 +29,12 @@ namespace Knowledge_Repository.Infrastructure.Repositories
             await _context.Attachments.AddRangeAsync(attachments);
             await _context.SaveChangesAsync();
         }
+        public async Task<Attachment> GetAttachmentByIdAsync(Guid attachmentId)
+        {
+            return await _context.Attachments
+                         .AsNoTracking()
+                         .FirstOrDefaultAsync(a => a.AttachmentId == attachmentId);
+        }
+
     }
 }

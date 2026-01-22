@@ -14,10 +14,6 @@ namespace Knowledge_Repository.Controllers
         {
             _departmentService = departmentService;
         }
-
-        /// <summary>
-        /// Retrieves all departments.
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetDepartments()
         {

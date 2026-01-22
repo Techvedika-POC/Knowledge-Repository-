@@ -57,14 +57,25 @@ namespace Knowledge_Repository.Application.Implementations.Services
                 }).ToList();
 
                 var assessments = await _assessmentRepo.GetByModuleIdAsync(module.ModuleId);
-                var assessmentDtos = assessments.Select(a => new AssessmentProgressDto
+                var assessmentDtos = new List<AssessmentProgressDto>();
+
+                foreach (var a in assessments)
                 {
-                    AssessmentId = a.AssessmentId,
-                    Title = a.Title,
-                    Difficulty = a.Difficulty ?? 0,
-                    IsCompleted = progress?.TestStatus == "Passed",
-                    IsUnlocked = isUnlocked
-                }).ToList();
+                    var latestResult =
+                        await _assessmentRepo.GetLatestResultAsync(userId, a.AssessmentId);
+
+                    assessmentDtos.Add(new AssessmentProgressDto
+                    {
+                        AssessmentId = a.AssessmentId,
+                        Title = a.Title,
+                        Difficulty = a.Difficulty ?? 0,
+                        IsUnlocked = isUnlocked,
+                        IsCompleted = latestResult?.Passed == true,
+                        LatestResult = latestResult
+                    });
+                }
+
+
 
                 var resources = await _resourceRepo.GetByTopicOrModuleAsync(Guid.Empty, module.ModuleId);
                 var resourceDtos = resources.Select(r => new ResourceProgressDto

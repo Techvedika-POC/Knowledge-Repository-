@@ -35,6 +35,12 @@ public partial class Knowledge_RepositoryContext : DbContext
 
     public virtual DbSet<EventKnowledgeItem> EventKnowledgeItems { get; set; }
 
+    public virtual DbSet<JuryCommunication> JuryCommunications { get; set; }
+
+    public virtual DbSet<JuryFinalScore> JuryFinalScores { get; set; }
+
+    public virtual DbSet<JuryReply> JuryReplies { get; set; }
+
     public virtual DbSet<KnowledgeItem> KnowledgeItems { get; set; }
 
     public virtual DbSet<KnowledgeReview> KnowledgeReviews { get; set; }
@@ -51,6 +57,8 @@ public partial class Knowledge_RepositoryContext : DbContext
 
     public virtual DbSet<Module> Modules { get; set; }
 
+    public virtual DbSet<PasswordReset> PasswordResets { get; set; }
+
     public virtual DbSet<Presentation> Presentations { get; set; }
 
     public virtual DbSet<Role> Roles { get; set; }
@@ -58,6 +66,10 @@ public partial class Knowledge_RepositoryContext : DbContext
     public virtual DbSet<SpotlightItem> SpotlightItems { get; set; }
 
     public virtual DbSet<Team> Teams { get; set; }
+
+    public virtual DbSet<TeamFeedback> TeamFeedbacks { get; set; }
+
+    public virtual DbSet<TeamFeedbackReply> TeamFeedbackReplies { get; set; }
 
     public virtual DbSet<TeamMember> TeamMembers { get; set; }
 
@@ -515,6 +527,96 @@ public partial class Knowledge_RepositoryContext : DbContext
                 .HasConstraintName("event_knowledge_items_updated_by_fkey");
         });
 
+        modelBuilder.Entity<JuryCommunication>(entity =>
+        {
+            entity.HasKey(e => e.CommunicationId).HasName("pk_jury_communication");
+
+            entity.ToTable("jury_communication");
+
+            entity.Property(e => e.CommunicationId)
+                .HasDefaultValueSql("gen_random_uuid()")
+                .HasColumnName("communication_id");
+            entity.Property(e => e.Comment).HasColumnName("comment");
+            entity.Property(e => e.CreatedOn)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("created_on");
+            entity.Property(e => e.EventId).HasColumnName("event_id");
+            entity.Property(e => e.JuryId).HasColumnName("jury_id");
+            entity.Property(e => e.Score).HasColumnName("score");
+            entity.Property(e => e.TeamId).HasColumnName("team_id");
+
+            entity.HasOne(d => d.Event).WithMany(p => p.JuryCommunications)
+                .HasForeignKey(d => d.EventId)
+                .HasConstraintName("fk_jury_comm_event");
+
+            entity.HasOne(d => d.Jury).WithMany(p => p.JuryCommunications)
+                .HasForeignKey(d => d.JuryId)
+                .HasConstraintName("fk_jury_comm_jury");
+
+            entity.HasOne(d => d.Team).WithMany(p => p.JuryCommunications)
+                .HasForeignKey(d => d.TeamId)
+                .HasConstraintName("fk_jury_comm_team");
+        });
+
+        modelBuilder.Entity<JuryFinalScore>(entity =>
+        {
+            entity.HasKey(e => e.FinalId).HasName("pk_jury_final_scores");
+
+            entity.ToTable("jury_final_scores");
+
+            entity.Property(e => e.FinalId)
+                .HasDefaultValueSql("gen_random_uuid()")
+                .HasColumnName("final_id");
+            entity.Property(e => e.ApprovedBy).HasColumnName("approved_by");
+            entity.Property(e => e.ApprovedOn)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("approved_on");
+            entity.Property(e => e.EventId).HasColumnName("event_id");
+            entity.Property(e => e.Remarks).HasColumnName("remarks");
+            entity.Property(e => e.TeamId).HasColumnName("team_id");
+            entity.Property(e => e.TotalScore).HasColumnName("total_score");
+
+            entity.HasOne(d => d.ApprovedByNavigation).WithMany(p => p.JuryFinalScores)
+                .HasForeignKey(d => d.ApprovedBy)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("fk_final_admin");
+
+            entity.HasOne(d => d.Event).WithMany(p => p.JuryFinalScores)
+                .HasForeignKey(d => d.EventId)
+                .HasConstraintName("fk_final_event");
+
+            entity.HasOne(d => d.Team).WithMany(p => p.JuryFinalScores)
+                .HasForeignKey(d => d.TeamId)
+                .HasConstraintName("fk_final_team");
+        });
+
+        modelBuilder.Entity<JuryReply>(entity =>
+        {
+            entity.HasKey(e => e.ReplyId).HasName("pk_jury_replies");
+
+            entity.ToTable("jury_replies");
+
+            entity.Property(e => e.ReplyId)
+                .HasDefaultValueSql("gen_random_uuid()")
+                .HasColumnName("reply_id");
+            entity.Property(e => e.CommunicationId).HasColumnName("communication_id");
+            entity.Property(e => e.CreatedOn)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("created_on");
+            entity.Property(e => e.ReplyMessage)
+                .IsRequired()
+                .HasColumnName("reply_message");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+
+            entity.HasOne(d => d.Communication).WithMany(p => p.JuryReplies)
+                .HasForeignKey(d => d.CommunicationId)
+                .HasConstraintName("fk_reply_communication");
+
+            entity.HasOne(d => d.User).WithMany(p => p.JuryReplies)
+                .HasForeignKey(d => d.UserId)
+                .HasConstraintName("fk_reply_user");
+        });
+
         modelBuilder.Entity<KnowledgeItem>(entity =>
         {
             entity.HasKey(e => e.ItemId).HasName("knowledge_items_pkey");
@@ -537,7 +639,7 @@ public partial class Knowledge_RepositoryContext : DbContext
             entity.Property(e => e.IsEventItem)
                 .HasDefaultValue(false)
                 .HasColumnName("is_event_item");
-            entity.Property(e => e.KnowledgeItem1).HasColumnName("knowledge_item");
+            entity.Property(e => e.KnowledgeText).HasColumnName("knowledge_text");
             entity.Property(e => e.Language)
                 .HasColumnType("jsonb")
                 .HasColumnName("language");
@@ -785,7 +887,7 @@ public partial class Knowledge_RepositoryContext : DbContext
         {
             entity.HasKey(e => e.ModuleId).HasName("modules_pkey");
 
-            entity.ToTable("modules");
+            entity.ToTable("module");
 
             entity.Property(e => e.ModuleId)
                 .HasDefaultValueSql("gen_random_uuid()")
@@ -817,6 +919,48 @@ public partial class Knowledge_RepositoryContext : DbContext
                 .HasForeignKey(d => d.UpdatedBy)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("modules_updated_by_fkey");
+        });
+
+        modelBuilder.Entity<PasswordReset>(entity =>
+        {
+            entity.HasKey(e => e.PasswordResetId).HasName("pk_password_reset");
+
+            entity.ToTable("password_reset");
+
+            entity.Property(e => e.PasswordResetId)
+                .HasDefaultValueSql("gen_random_uuid()")
+                .HasColumnName("password_reset_id");
+            entity.Property(e => e.CodeExpiresAt)
+                .HasPrecision(3)
+                .HasColumnName("code_expires_at");
+            entity.Property(e => e.CodeHash)
+                .IsRequired()
+                .HasMaxLength(512)
+                .HasColumnName("code_hash");
+            entity.Property(e => e.CodeUsed)
+                .HasDefaultValue(false)
+                .HasColumnName("code_used");
+            entity.Property(e => e.CreatedOn)
+                .HasPrecision(3)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("created_on");
+            entity.Property(e => e.ResetTokenExpiresAt)
+                .HasPrecision(3)
+                .HasColumnName("reset_token_expires_at");
+            entity.Property(e => e.ResetTokenHash)
+                .HasMaxLength(512)
+                .HasColumnName("reset_token_hash");
+            entity.Property(e => e.ResetTokenUsed)
+                .HasDefaultValue(false)
+                .HasColumnName("reset_token_used");
+            entity.Property(e => e.UpdatedOn)
+                .HasPrecision(3)
+                .HasColumnName("updated_on");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+
+            entity.HasOne(d => d.User).WithMany(p => p.PasswordResets)
+                .HasForeignKey(d => d.UserId)
+                .HasConstraintName("fk_password_reset_user");
         });
 
         modelBuilder.Entity<Presentation>(entity =>
@@ -934,6 +1078,74 @@ public partial class Knowledge_RepositoryContext : DbContext
                 .HasConstraintName("teams_event_id_fkey");
         });
 
+        modelBuilder.Entity<TeamFeedback>(entity =>
+        {
+            entity.HasKey(e => e.FeedbackId).HasName("team_feedback_pkey");
+
+            entity.ToTable("team_feedback");
+
+            entity.Property(e => e.FeedbackId)
+                .HasDefaultValueSql("gen_random_uuid()")
+                .HasColumnName("feedback_id");
+            entity.Property(e => e.CreatedOn)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("created_on");
+            entity.Property(e => e.EventId).HasColumnName("event_id");
+            entity.Property(e => e.FeedbackText).HasColumnName("feedback_text");
+            entity.Property(e => e.LastReplyOn).HasColumnName("last_reply_on");
+            entity.Property(e => e.MentorId).HasColumnName("mentor_id");
+            entity.Property(e => e.ProgressRating).HasColumnName("progress_rating");
+            entity.Property(e => e.TeamId).HasColumnName("team_id");
+            entity.Property(e => e.UpdatedOn).HasColumnName("updated_on");
+
+            entity.HasOne(d => d.Event).WithMany(p => p.TeamFeedbacks)
+                .HasForeignKey(d => d.EventId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_team_feedback_event");
+
+            entity.HasOne(d => d.Mentor).WithMany(p => p.TeamFeedbacks)
+                .HasForeignKey(d => d.MentorId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_team_feedback_mentor");
+
+            entity.HasOne(d => d.Team).WithMany(p => p.TeamFeedbacks)
+                .HasForeignKey(d => d.TeamId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_team_feedback_team");
+        });
+
+        modelBuilder.Entity<TeamFeedbackReply>(entity =>
+        {
+            entity.HasKey(e => e.ReplyId).HasName("team_feedback_reply_pkey");
+
+            entity.ToTable("team_feedback_reply");
+
+            entity.Property(e => e.ReplyId)
+                .HasDefaultValueSql("gen_random_uuid()")
+                .HasColumnName("reply_id");
+            entity.Property(e => e.CreatedOn)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("created_on");
+            entity.Property(e => e.FeedbackId).HasColumnName("feedback_id");
+            entity.Property(e => e.ReplyText)
+                .IsRequired()
+                .HasColumnName("reply_text");
+            entity.Property(e => e.TeamId).HasColumnName("team_id");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+
+            entity.HasOne(d => d.Feedback).WithMany(p => p.TeamFeedbackReplies)
+                .HasForeignKey(d => d.FeedbackId)
+                .HasConstraintName("fk_team_feedback_reply_feedback");
+
+            entity.HasOne(d => d.Team).WithMany(p => p.TeamFeedbackReplies)
+                .HasForeignKey(d => d.TeamId)
+                .HasConstraintName("fk_team_feedback_reply_team");
+
+            entity.HasOne(d => d.User).WithMany(p => p.TeamFeedbackReplies)
+                .HasForeignKey(d => d.UserId)
+                .HasConstraintName("fk_team_feedback_reply_user");
+        });
+
         modelBuilder.Entity<TeamMember>(entity =>
         {
             entity.HasKey(e => e.TeamMemberId).HasName("team_members_pkey");
@@ -968,7 +1180,7 @@ public partial class Knowledge_RepositoryContext : DbContext
         {
             entity.HasKey(e => e.TopicId).HasName("topics_pkey");
 
-            entity.ToTable("topics");
+            entity.ToTable("topic");
 
             entity.HasIndex(e => e.TopicName, "topics_name_key").IsUnique();
 

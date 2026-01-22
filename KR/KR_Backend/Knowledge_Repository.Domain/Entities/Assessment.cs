@@ -33,9 +33,19 @@ public partial class Assessment
 
     public string Description { get; set; }
 
+    public Guid? WeekId { get; set; }
+
+    public string AssessmentScope { get; set; }
+
+    public string SkillsTested { get; set; }
+
+    public int? TotalMarks { get; set; }
+
     public virtual ICollection<AssessmentQuestion> AssessmentQuestions { get; set; } = new List<AssessmentQuestion>();
 
     public virtual Module Module { get; set; }
 
     public virtual ICollection<UserAssessmentResult> UserAssessmentResults { get; set; } = new List<UserAssessmentResult>();
+
+    public virtual Week Week { get; set; }
 }

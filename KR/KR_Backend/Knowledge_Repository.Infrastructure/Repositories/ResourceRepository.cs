@@ -9,9 +9,6 @@ using System.Threading.Tasks;
 
 namespace Knowledge_Repository.Infrastructure.Repositories
 {
-    /// <summary>
-    /// Repository for managing Resource entities.
-    /// </summary>
     public class ResourceRepository : GenericRepository<Resource>, IResourceRepository
     {
         private readonly Knowledge_Repository_dbContext _context;
@@ -22,12 +19,6 @@ namespace Knowledge_Repository.Infrastructure.Repositories
             _context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
-        /// <summary>
-        /// Retrieves resources filtered by topic and optional module.
-        /// </summary>
-        /// <param name="topicId">Topic ID to filter resources.</param>
-        /// <param name="moduleId">Optional Module ID filter.</param>
-        /// <returns>List of matching resources ordered by Title.</returns>
         public async Task<IEnumerable<Resource>> GetByTopicOrModuleAsync(Guid topicId, Guid? moduleId)
         {
             var query = _dbSet
@@ -42,11 +33,6 @@ namespace Knowledge_Repository.Infrastructure.Repositories
                 .ToListAsync();
         }
 
-        /// <summary>
-        /// Adds a batch of resources to the database.
-        /// Converts DateTimes to Unspecified for PostgreSQL timestamp compatibility.
-        /// </summary>
-        /// <param name="resources">Resources to add.</param>
         public async Task AddBatchAsync(IEnumerable<Resource> resources)
         {
             if (resources == null || !resources.Any())

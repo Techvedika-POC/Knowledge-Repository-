@@ -93,10 +93,32 @@ namespace Knowledge_Repository.Application.Implementations.Services
             await _eventRepository.DeleteAsync(existing);
             return true;
         }
-        public async Task<List<Event>> GetCurrentIdeathonsAsync()
+        public async Task<List<EventWithTimelineDto>> GetCurrentIdeathonsAsync()
         {
-            var todayUtc = DateTime.UtcNow.Date;
-            return await _eventRepository.GetCurrentIdeathonsAsync(todayUtc);
+            var todayUtc = DateTime.UtcNow;
+
+            var events = await _eventRepository.GetCurrentIdeathonsAsync(todayUtc);
+
+            return events.Select(e => new EventWithTimelineDto
+            {
+                EventId = e.EventId,
+                Title = e.Title,
+                Description = e.Description,
+                StartDate = e.StartDate,
+                EndDate = e.EndDate,
+                RegistrationCloseDate = e.RegistrationCloseDate,
+                MentorCheckpointStart = e.MentorCheckpointStart,
+                MentorCheckpointEnd = e.MentorCheckpointEnd,
+                FinalSubmissionDeadline = e.FinalSubmissionDeadline,
+                IdeaPresentationStart = e.IdeaPresentationStart,
+                IdeaPresentationEnd = e.IdeaPresentationEnd,
+                WinnersAnnouncementDate = e.WinnersAnnouncementDate,
+                ContactEmail = e.ContactEmail,
+                Notes = e.Notes,
+                EventType = e.EventType,
+                CreatedOn = e.CreatedOn,
+                UpdatedOn = e.UpdatedOn
+            }).ToList();
         }
 
         public async Task<List<Event>> GetIdeathonsForMonthAsync(int year, int month)
@@ -117,8 +139,8 @@ namespace Knowledge_Repository.Application.Implementations.Services
                     Title = e.Title ?? string.Empty,
                     Description = e.Description ?? string.Empty,
                     EventType = string.IsNullOrWhiteSpace(e.EventType) ? "Unknown" : e.EventType.Trim(),
-                    StartDate = e.StartDate,   
-                    EndDate = e.EndDate,      
+                    StartDate = e.StartDate,
+                    EndDate = e.EndDate,
                     OwnerId = e.OwnerId,
                     CreatedOn = e.CreatedOn,
                     UpdatedOn = e.UpdatedOn,
@@ -136,19 +158,19 @@ namespace Knowledge_Repository.Application.Implementations.Services
 
             var result = new List<EventsByTypeDto>();
 
-            
+
             var groupedByType = mapped
                 .GroupBy(x => x.EventType)
                 .OrderBy(g => g.Key);
 
             foreach (var typeGroup in groupedByType)
             {
-               
+
                 var monthBuckets = new Dictionary<(int Year, int Month), EventsByMonthDto>();
 
                 foreach (var ev in typeGroup)
                 {
-                    DateOnly? groupDate = ev.StartDate ?? ev.EndDate; 
+                    DateOnly? groupDate = ev.StartDate ?? ev.EndDate;
 
                     int year, month;
                     if (groupDate.HasValue)
@@ -158,7 +180,7 @@ namespace Knowledge_Repository.Application.Implementations.Services
                     }
                     else
                     {
-                        year = 1; month = 1; 
+                        year = 1; month = 1;
                     }
 
                     var key = (Year: year, Month: month);

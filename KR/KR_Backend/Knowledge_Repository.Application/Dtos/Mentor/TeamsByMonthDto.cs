@@ -8,6 +8,7 @@ namespace Knowledge_Repository.Application.Dtos.Mentor
 {
     public class TeamsByMonthDto
     {
+     
         public int Year { get; set; }
         public int Month { get; set; }
         public string MonthLabel { get; set; } = string.Empty;

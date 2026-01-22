@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { toast, Toaster } from "react-hot-toast";
 import api from "../api";
+import { Plus, SquarePen, Trash2, List } from "lucide-react";
 
 const eventTypes = [
   "Hackathon",
@@ -180,7 +181,6 @@ export default function EventManagement() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-slate-50 text-gray-800 font-sans">
       <Toaster position="top-right" />
-
       {/* Header */}
       <div className="max-w-6xl mx-auto px-6 pt-8">
         <div className="rounded-2xl bg-white shadow-sm border border-gray-100 p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -198,19 +198,31 @@ export default function EventManagement() {
                 setActiveTab("add");
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition ${activeTab === "add" ? "bg-indigo-600 text-white shadow-md" : "bg-white text-indigo-700 border border-indigo-100 hover:shadow-sm"
+              className={`px-3 py-2 rounded-md text-sm font-medium transition
+    flex items-center gap-2 whitespace-nowrap
+    ${activeTab === "add"
+                  ? "bg-blue-500 text-white shadow-md"
+                  : "bg-white text-indigo-700 border border-indigo-100 hover:shadow-sm"
                 }`}
             >
+              <Plus size={16} />
               Add Event
             </button>
 
             <button
               onClick={() => setActiveTab("view")}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition ${activeTab === "view" ? "bg-indigo-600 text-white shadow-md" : "bg-white text-indigo-700 border border-indigo-100 hover:shadow-sm"
+              className={`px-3 py-2 rounded-md text-sm font-medium transition
+    flex items-center gap-2 whitespace-nowrap
+    ${activeTab === "view"
+                  ? "bg-blue-600 text-white shadow-md"
+                  : "bg-white text-indigo-700 border border-indigo-100 hover:shadow-sm"
                 }`}
             >
+              <List size={16} />
               Events List
             </button>
+
+
           </div>
         </div>
       </div>
@@ -374,7 +386,7 @@ export default function EventManagement() {
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-sky-500 text-white font-semibold shadow"
+                  className="px-4 py-1 rounded-md bg-green-600 text-white font-semibold shadow"
                 >
                   {form.eventId ? "Update Event" : "Add Event"}
                 </button>
@@ -426,17 +438,23 @@ export default function EventManagement() {
                           <td className="px-4 py-4 text-center">
                             <div className="inline-flex gap-2">
                               <button
-                                className="px-3 py-1 rounded-lg bg-amber-50 text-amber-800 hover:bg-amber-100 text-sm"
+                                className=" text-sm p-1"
                                 onClick={() => handleEdit(evt)}
+                                aria-label="Edit"
+                                title="Edit"
                               >
-                                Edit
+                                <SquarePen size={16} />
                               </button>
+
                               <button
-                                className="px-3 py-1 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 text-sm"
+                                className="text-red-600 hover:text-red-800 text-sm p-1"
                                 onClick={() => handleDelete(evt.eventId)}
+                                aria-label="Delete"
+                                title="Delete"
                               >
-                                Delete
+                                <Trash2 size={16} />
                               </button>
+
                             </div>
                           </td>
                         </tr>

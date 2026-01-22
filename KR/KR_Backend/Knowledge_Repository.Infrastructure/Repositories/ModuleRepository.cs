@@ -39,7 +39,7 @@ namespace Knowledge_Repository.Infrastructure.Repositories
         public async Task<Module?> GetModuleFullAsync(Guid moduleId)
         {
             var module = await _dbSet
-                .AsNoTracking() // faster read-only query
+                .AsNoTracking() 
                 .Include(m => m.Lessons.OrderBy(l => l.OrderIndex))
                 .Include(m => m.Resources)
                 .Include(m => m.Assessments)
@@ -48,23 +48,16 @@ namespace Knowledge_Repository.Infrastructure.Repositories
 
             return module;
         }
-
-
-
         public async Task<bool> IsModuleUnlockedAsync(Guid moduleId, Guid userId)
         {
             var module = await _dbSet.Include(m => m.Week).FirstOrDefaultAsync(m => m.ModuleId == moduleId);
             if (module == null) return false;
-
-            // First module of the week is always unlocked
             var firstModuleOrder = await _dbSet
                 .Where(m => m.WeekId == module.WeekId)
                 .MinAsync(m => m.OrderNo);
 
             if (module.OrderNo == firstModuleOrder)
                 return true;
-
-            // Check previous module completion
             var previousModule = await _dbSet
                 .Where(m => m.WeekId == module.WeekId && m.OrderNo == module.OrderNo - 1)
                 .FirstOrDefaultAsync();

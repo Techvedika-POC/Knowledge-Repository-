@@ -3,6 +3,17 @@ import { toast } from "react-hot-toast";
 import api from "../api";
 import debounce from "lodash.debounce";
 
+import {
+  PencilSquareIcon,
+  TrashIcon,
+  PlusIcon,
+  XMarkIcon,
+  DocumentCheckIcon,
+  Cog6ToothIcon,
+  ArrowLeftIcon,
+  ArrowRightIcon,
+} from "@heroicons/react/24/outline";
+
 export default function RoleManagement() {
   const [roles, setRoles] = useState([]);
   const [users, setUsers] = useState([]);
@@ -13,18 +24,23 @@ export default function RoleManagement() {
   const [form, setForm] = useState({ id: "", roleName: "", description: "" });
   const [loading, setLoading] = useState(false);
   const [auditLog, setAuditLog] = useState([]);
-  const [roleFilter, setRoleFilter] = useState("");
-
   const emptyForm = { id: "", roleName: "", description: "" };
-  const usersPerPage = 5;
+  const [showRoleForm, setShowRoleForm] = useState(false);
+  const usersPerPage = 6;
   const [page, setPage] = useState(1);
+
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [roleRes, userRes] = await Promise.all([api.get("/Roles"), api.get("/Users")]);
+      const [roleRes, userRes] = await Promise.all([
+        api.get("/Roles"),
+        api.get("/Users"),
+      ]);
       setRoles(roleRes.data);
       setUsers(userRes.data);
       setFilteredUsers(userRes.data);
+      setPage(1);
+
     } catch {
       toast.error("Failed to load roles or users.");
     } finally {
@@ -45,16 +61,23 @@ export default function RoleManagement() {
       toast.error("Failed to fetch user roles.");
     }
   };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.roleName.trim()) return toast.error("Role name is required.");
     try {
       if (form.id) {
-        await api.put(`/Roles/${form.id}`, { roleName: form.roleName.trim(), description: form.description });
-        toast.success("Role updated successfully.");
+        await api.put(`/Roles/${form.id}`, {
+          roleName: form.roleName.trim(),
+          description: form.description,
+        });
+        toast.success("Role updated.");
       } else {
-        await api.post("/Roles", { roleName: form.roleName.trim(), description: form.description });
-        toast.success("Role created successfully.");
+        await api.post("/Roles", {
+          roleName: form.roleName.trim(),
+          description: form.description,
+        });
+        toast.success("Role created.");
       }
       setForm(emptyForm);
       fetchData();
@@ -63,10 +86,17 @@ export default function RoleManagement() {
     }
   };
 
-  const handleEdit = (role) => setForm({ id: role.roleId, roleName: role.roleName, description: role.description || "" });
+  const handleEdit = (role) => {
+    setForm({
+      id: role.roleId,
+      roleName: role.roleName,
+      description: role.description || "",
+    });
+    setShowRoleForm(true); 
+  };
 
   const handleDelete = async (roleId) => {
-    if (!window.confirm("Are you sure you want to delete this role?")) return;
+    if (!window.confirm("Delete this role?")) return;
     try {
       await api.delete(`/Roles/${roleId}`);
       toast.success("Role deleted.");
@@ -83,216 +113,288 @@ export default function RoleManagement() {
       const user = users.find((u) => u.userId === selectedUser);
 
       if (assigned) {
-        await api.delete(`/UserRole/remove`, { data: { userId: selectedUser, roleId } });
-        toast.success(`Removed ${role.roleName} from ${user.name}.`);
-        addAuditLog(`${user.name} had "${role.roleName}" removed.`);
+        await api.delete(`/UserRole/remove`, {
+          data: { userId: selectedUser, roleId },
+        });
+        addAuditLog(`${user.name} lost role "${role.roleName}".`);
       } else {
         await api.post(`/UserRole/assign`, { userId: selectedUser, roleId });
-        toast.success(`Assigned ${role.roleName} to ${user.name}.`);
-        addAuditLog(`${user.name} was assigned "${role.roleName}".`);
+        addAuditLog(`${user.name} gained role "${role.roleName}".`);
       }
+
       fetchUserRoles(selectedUser);
     } catch {
       toast.error("Action failed.");
     }
   };
 
-  const addAuditLog = (message) => setAuditLog((prev) => [
-    { id: Date.now(), message, timestamp: new Date().toLocaleString() },
-    ...prev.slice(0, 19),
-  ]);
+  const addAuditLog = (msg) =>
+    setAuditLog((prev) => [
+      { id: Date.now(), message: msg, timestamp: new Date().toLocaleString() },
+      ...prev.slice(0, 19),
+    ]);
+
   const handleSearch = useMemo(
     () =>
-      debounce((query) => {
-        if (!query.trim()) return setFilteredUsers(users);
-        const q = query.toLowerCase();
-        setFilteredUsers(users.filter((u) => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)));
-      }, 300),
+      debounce((q) => {
+        if (!q.trim()) return setFilteredUsers(users);
+        const s = q.toLowerCase();
+        setFilteredUsers(
+          users.filter(
+            (u) =>
+              u.name.toLowerCase().includes(s) ||
+              u.email.toLowerCase().includes(s)
+          )
+        );
+      }, 250),
     [users]
   );
+  useEffect(() => {
+    if (!searchUser.trim()) return; 
+    handleSearch(searchUser);
+    setPage(1);
+  }, [searchUser, handleSearch]);
 
-  useEffect(() => handleSearch(searchUser), [searchUser, handleSearch]);
 
-  const resetUserSearch = () => {
-    setSearchUser("");
-    setFilteredUsers(users);
-  };
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredUsers.length / usersPerPage)
+  );
 
-  const resetRoleFilter = () => setRoleFilter("");
-  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
-  const paginatedUsers = filteredUsers.slice((page - 1) * usersPerPage, page * usersPerPage);
-
-  const visibleRoles = roleFilter
-    ? roles.filter((r) => r.roleName.toLowerCase().includes(roleFilter.toLowerCase()))
-    : roles;
+  const paginatedUsers = filteredUsers.slice(
+    (page - 1) * usersPerPage,
+    page * usersPerPage
+  );
 
   return (
-    <div className="bg-white p-8 rounded-xl shadow-md border border-gray-200 space-y-6">
-      <h2 className="text-2xl font-bold text-gray-800">Role Management</h2>
-
-      {/* Role Form */}
-      <div className="p-4 rounded-lg border bg-gray-50 shadow-sm">
-        <h3 className="text-lg font-semibold mb-3">Create / Edit Role</h3>
-        <form onSubmit={handleSubmit} className="flex flex-wrap gap-4 items-end">
-          <div>
+    <div className="max-w-4xl mx-auto py-6 space-y-10">
+      <section className="space-y-4">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-semibold text-gray-900 tracking-tight">
+            Role Management
+          </h1>
+          {/* Add Role Button */}
+          <button
+            onClick={() => {
+              setForm(emptyForm);       
+              setShowRoleForm(true);    
+            }}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium
+                 bg-green-600 text-white hover:bg-green-700"
+          >
+            <PlusIcon className="w-4 h-4" />
+            Add Role
+          </button>
+        </div>
+        {showRoleForm && (
+          <form
+            onSubmit={handleSubmit}
+            className="flex items-center gap-4 flex-wrap border rounded-md p-4 bg-gray-50"
+          >
             <input
-              placeholder="Role Name"
+              placeholder="Role name"
               value={form.roleName}
-              onChange={(e) => setForm({ ...form, roleName: e.target.value })}
-              className="border p-2 rounded-md w-64"
+              onChange={(e) =>
+                setForm({ ...form, roleName: e.target.value })
+              }
+              className="border rounded-md p-2 w-64"
+              required
             />
-          </div>
-          <div>
+
             <input
               placeholder="Description"
               value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              className="border p-2 rounded-md w-64"
+              onChange={(e) =>
+                setForm({ ...form, description: e.target.value })
+              }
+              className="border rounded-md p-2 w-64"
             />
+
+            {/* Save */}
+            <button type="submit" title="Save">
+              <DocumentCheckIcon className="w-6 h-6 text-green-600 hover:text-green-700" />
+            </button>
+
+            {/* Close */}
+            <button
+              type="button"
+              title="Close"
+              onClick={() => {
+                setForm(emptyForm);
+                setShowRoleForm(false);  
+              }}
+            >
+              <XMarkIcon className="w-6 h-6 text-gray-600 hover:text-gray-800" />
+            </button>
+          </form>
+        )}
+
+        {/* Roles List */}
+        {roles.map((role) => (
+          <div
+            key={role.roleId}
+            className="flex justify-between items-center py-2 border-b border-gray-200"
+          >
+            <div>
+              <p className="font-medium text-gray-900">{role.roleName}</p>
+              <p className="text-sm text-gray-600">
+                {role.description || "No description"}
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              {/* Edit */}
+              <button
+                onClick={() => handleEdit(role)} 
+                title="Edit"
+              >
+                <PencilSquareIcon className="w-5 h-5 text-gray-700 hover:text-black" />
+              </button>
+
+              {/* Delete */}
+              <button
+                onClick={() => handleDelete(role.roleId)}
+                title="Delete"
+              >
+                <TrashIcon className="w-5 h-5 text-red-600 hover:text-red-800" />
+              </button>
+            </div>
           </div>
-          <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
-            {form.id ? "Update" : "Add"}
-          </button>
-          <button type="button" onClick={() => setForm(emptyForm)} className="px-4 py-2 rounded-md border hover:bg-gray-100">
-            Reset
-          </button>
-        </form>
-      </div>
+        ))}
+      </section>
 
-      {/* Role Table with Filter */}
-      <div className="p-4 rounded-lg border bg-gray-50 shadow-sm">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-lg font-semibold">Roles</h3>
-          <div className="flex gap-2">
-            <input
-              placeholder="Search roles..."
-              value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
-              className="border p-2 rounded-md"
-            />
-            <button onClick={resetRoleFilter} className="px-3 py-1 border rounded hover:bg-gray-100">Reset</button>
-          </div>
-        </div>
-        <table className="w-full border-collapse text-sm text-left">
-          <thead>
-            <tr className="bg-blue-50 text-blue-900 uppercase">
-              <th className="border px-3 py-2">Role Name</th>
-              <th className="border px-3 py-2">Description</th>
-              <th className="border px-3 py-2 text-center">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {visibleRoles.map((r) => (
-              <tr key={r.roleId} className="hover:bg-blue-50">
-                <td className="border px-3 py-2">{r.roleName}</td>
-                <td className="border px-3 py-2">{r.description || "—"}</td>
-                <td className="border px-3 py-2 text-center space-x-2">
-                  <button onClick={() => handleEdit(r)} className="px-3 py-1 bg-yellow-200 rounded hover:bg-yellow-300">Edit</button>
-                  <button onClick={() => handleDelete(r.roleId)} className="px-3 py-1 bg-red-200 rounded hover:bg-red-300">Delete</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
 
-      {/* Assign Roles to Users */}
-      <div className="p-4 rounded-lg border bg-gray-50 shadow-sm">
-        <h3 className="text-lg font-semibold mb-4">Assign Roles to Users</h3>
+      {/* --- USERS --------------------------------------------------------- */}
+      <section className="space-y-3">
+        <h2 className="text-xl font-semibold text-gray-800">Users</h2>
 
-        {/* Search Users */}
-        <div className="flex flex-wrap gap-2 items-center mb-3">
+        <div className="flex gap-3 items-center">
           <input
             placeholder="Search users..."
             value={searchUser}
             onChange={(e) => setSearchUser(e.target.value)}
-            className="border p-2 rounded-md w-64"
+            className="border rounded-md p-2 w-64"
           />
-          <button
-            onClick={resetUserSearch}
-            className="px-3 py-1 border rounded hover:bg-gray-100"
-          >
-            Reset
+          <button title="Clear" onClick={() => setSearchUser("")}>
+            <XMarkIcon className="w-5 h-5 text-gray-600 hover:text-gray-900" />
           </button>
         </div>
 
-        {/* Users List with Pagination */}
-        <div className="mb-3">
-          {paginatedUsers.length === 0 ? (
-            <p className="text-sm text-gray-500">No users found.</p>
-          ) : (
-            <div className="space-y-1">
-              {paginatedUsers.map((u) => (
-                <div
-                  key={u.userId}
-                  className="flex justify-between items-center border rounded p-2 bg-white hover:bg-gray-50"
-                >
-                  <span>{u.name} ({u.email})</span>
-                  <button
-                    onClick={() => { setSelectedUser(u.userId); fetchUserRoles(u.userId); }}
-                    className="px-3 py-1 bg-blue-200 hover:bg-blue-300 rounded text-sm"
-                  >
-                    Manage Roles
-                  </button>
-                </div>
-              ))}
+        <div className="space-y-2">
+          {paginatedUsers.map((user) => (
+            <div
+              key={user.userId}
+              className="flex justify-between items-center py-2 border-b border-gray-200"
+            >
+              <span>
+                {user.name} <span className="text-gray-500">({user.email})</span>
+              </span>
+
+              <button
+                onClick={() => {
+                  setSelectedUser(user.userId);
+                  fetchUserRoles(user.userId);
+                }}
+                title="Manage roles"
+              >
+                <Cog6ToothIcon className="w-5 h-5 text-blue-600 hover:text-blue-800" />
+              </button>
             </div>
-          )}
+          ))}
         </div>
 
-        {/* Pagination Controls */}
-        {totalPages > 1 && (
-          <div className="flex gap-2 mb-4">
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-              <button
-                key={p}
-                onClick={() => setPage(p)}
-                className={`px-3 py-1 rounded border ${p === page ? "bg-blue-200" : "bg-gray-100 hover:bg-gray-200"}`}
-              >
-                {p}
-              </button>
-            ))}
-          </div>
-        )}
+        {/* Pagination */}
+        <div className="flex gap-4 items-center mt-3">
+          <button
+            disabled={page === 1}
+            onClick={() => setPage(page - 1)}
+            title="Previous"
+          >
+            <ArrowLeftIcon
+              className={`w-5 h-5 ${page === 1 ? "text-gray-300" : "text-gray-700 hover:text-black"
+                }`}
+            />
+          </button>
 
-        {/* Assigned Roles Section */}
-        {selectedUser && (
-          <div className="mt-4 border rounded-lg p-4 bg-white shadow-sm">
-            <h4 className="font-medium mb-3 text-gray-800">
-              Manage Roles for {users.find(u => u.userId === selectedUser)?.name}
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+          <span className="text-gray-700">
+            Page {page} / {totalPages}
+          </span>
+
+          <button
+            disabled={page === totalPages}
+            onClick={() => setPage(page + 1)}
+            title="Next"
+          >
+            <ArrowRightIcon
+              className={`w-5 h-5 ${page === totalPages
+                  ? "text-gray-300"
+                  : "text-gray-700 hover:text-black"
+                }`}
+            />
+          </button>
+        </div>
+      </section>
+
+      {/* --- ASSIGN ROLES -------------------------------------------------- */}
+      {selectedUser && (
+        <>
+          <hr className="border-gray-300" />
+          <section className="space-y-4">
+            <h2 className="text-xl font-semibold text-gray-800">
+              Manage Roles for{" "}
+              {users.find((u) => u.userId === selectedUser)?.name}
+            </h2>
+
+            <div className="space-y-2">
               {roles.map((role) => {
-                const assigned = userRoles.some((ur) => ur.roleId === role.roleId);
+                const assigned = userRoles.some(
+                  (ur) => ur.roleId === role.roleId
+                );
                 return (
                   <div
                     key={role.roleId}
-                    className={`flex justify-between items-center border p-2 rounded-md ${assigned ? "bg-green-50 border-green-300" : "bg-gray-50"}`}
+                    className="flex justify-between items-center py-2 border-b border-gray-200"
                   >
-                    <span>{role.roleName}</span>
+                    <span className={assigned ? "font-medium text-green-700" : ""}>
+                      {role.roleName}
+                    </span>
+
                     <button
+                      title={assigned ? "Remove role" : "Assign role"}
                       onClick={() => toggleUserRole(role.roleId, assigned)}
-                      className={`px-3 py-1 text-sm rounded ${assigned ? "bg-red-200 hover:bg-red-300" : "bg-blue-200 hover:bg-blue-300"}`}
                     >
-                      {assigned ? "Remove" : "Assign"}
+                      {assigned ? (
+                        <XMarkIcon className="w-5 h-5 text-red-600 hover:text-red-800" />
+                      ) : (
+                        <PlusIcon className="w-5 h-5 text-blue-600 hover:text-blue-800" />
+                      )}
                     </button>
                   </div>
                 );
               })}
             </div>
-          </div>
-        )}
-      </div>
+          </section>
+        </>
+      )}
 
+      {/* --- AUDIT LOG ----------------------------------------------------- */}
+      <hr className="border-gray-300" />
 
-      {/* Audit Log */}
-      <div className="p-4 rounded-lg border bg-gray-50 shadow-sm">
-        <h3 className="text-lg font-semibold mb-2">Audit Log</h3>
-        <ul className="max-h-48 overflow-y-auto text-sm text-gray-600 space-y-1">
-          {auditLog.length === 0 ? <li>No recent actions.</li> :
-            auditLog.map((log) => <li key={log.id}>{log.timestamp} — {log.message}</li>)}
+      <section>
+        <h2 className="text-xl font-semibold text-gray-800">Audit Log</h2>
+        <ul className="text-gray-700 text-sm mt-3 space-y-1 max-h-48 overflow-y-auto">
+          {auditLog.length === 0 ? (
+            <li>No recent actions.</li>
+          ) : (
+            auditLog.map((log) => (
+              <li key={log.id}>
+                {log.timestamp} — {log.message}
+              </li>
+            ))
+          )}
         </ul>
-      </div>
+      </section>
     </div>
   );
 }

@@ -55,6 +55,10 @@ public partial class Event
 
     public virtual ICollection<EventKnowledgeItem> EventKnowledgeItems { get; set; } = new List<EventKnowledgeItem>();
 
+    public virtual ICollection<JuryChatMessage> JuryChatMessages { get; set; } = new List<JuryChatMessage>();
+
+    public virtual ICollection<JuryFinalScore> JuryFinalScores { get; set; } = new List<JuryFinalScore>();
+
     public virtual ICollection<Mentor> Mentors { get; set; } = new List<Mentor>();
 
     public virtual User Owner { get; set; }

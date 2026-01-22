@@ -103,7 +103,6 @@ namespace Knowledge_Repository.API.Controllers
             }
         }
 
-        // Full DTO endpoints
         [HttpGet("full/{weekId}")]
         public async Task<IActionResult> GetWeekFull(Guid weekId, [FromQuery] Guid? userId = null)
         {

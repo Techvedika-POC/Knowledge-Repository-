@@ -16,6 +16,8 @@ export default function Signup() {
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
+
+  //  Validation function
   const validateForm = () => {
     const newErrors = {};
 
@@ -34,7 +36,7 @@ export default function Signup() {
       newErrors.DepartmentName = "Department name must contain only letters";
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return Object.keys(newErrors).length === 0; 
   };
 
   const handleSubmit = async (e) => {

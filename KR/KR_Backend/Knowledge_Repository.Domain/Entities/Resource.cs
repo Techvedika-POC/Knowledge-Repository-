@@ -29,5 +29,11 @@ public partial class Resource
 
     public string Metadata { get; set; }
 
+    public int? Difficulty { get; set; }
+
+    public int? EstimatedDurationMinutes { get; set; }
+
+    public string Source { get; set; }
+
     public virtual Module Module { get; set; }
 }

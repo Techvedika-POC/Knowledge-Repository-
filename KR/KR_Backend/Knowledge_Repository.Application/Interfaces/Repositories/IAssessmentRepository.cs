@@ -1,4 +1,5 @@
-﻿using Knowledge_Repository.Domain.Entities;
+﻿using Knowledge_Repository.Application.Dtos;
+using Knowledge_Repository.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -15,6 +16,7 @@ namespace Knowledge_Repository.Application.Interfaces.Repositories
         Task<AssessmentQuestion?> GetQuestionByIdAsync(Guid questionId);
 
         Task AddQuestionAsync(AssessmentQuestion question);
+        Task<AssessmentResultDto?> GetLatestResultAsync(Guid userId, Guid assessmentId);
         Task AddQuestionsAsync(IEnumerable<AssessmentQuestion> questions);
 
         Task UpdateQuestionAsync(AssessmentQuestion question);

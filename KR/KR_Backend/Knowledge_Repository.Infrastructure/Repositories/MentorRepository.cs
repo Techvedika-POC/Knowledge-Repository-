@@ -15,16 +15,17 @@ namespace Knowledge_Repository.Infrastructure.Repositories
 
         public MentorRepository(Knowledge_Repository_dbContext context)
         {
-            _context = context;
+            _context = context ?? throw new ArgumentNullException(nameof(context));
         }
+
         public async Task<IEnumerable<Team>> GetAssignedTeamsAsync(Guid mentorId)
         {
             return await _context.Mentors
+                .Where(m => m.UserId == mentorId)
                 .Include(m => m.AssignedTeam)
                     .ThenInclude(t => t.TeamMembers)
                         .ThenInclude(tm => tm.User)
                 .Include(m => m.AssignedTeam.Event)
-                .Where(m => m.UserId == mentorId)
                 .Select(m => m.AssignedTeam)
                 .Distinct()
                 .ToListAsync();
@@ -40,12 +41,14 @@ namespace Knowledge_Repository.Infrastructure.Repositories
 
                 .Include(t => t.Mentors)
                     .ThenInclude(m => m.User)
+
                 .Include(t => t.TeamFeedbacks)
                     .ThenInclude(f => f.Mentor)
                         .ThenInclude(m => m.User)
 
                 .Include(t => t.TeamFeedbackReplies)
                     .ThenInclude(r => r.User)
+
                 .Include(t => t.EventKnowledgeItems)
                     .ThenInclude(eki => eki.Item)
                         .ThenInclude(k => k.KnowledgeTags)
@@ -68,95 +71,59 @@ namespace Knowledge_Repository.Infrastructure.Repositories
 
                 .FirstOrDefaultAsync(t => t.TeamId == teamId);
         }
-
-
-
-
-        public async Task<IEnumerable<TeamFeedback>> GetTeamFeedbacksAsync(Guid teamId)
+        public async Task<string> GetMentorNameAsync(Guid mentorId)
         {
-            return await _context.Set<TeamFeedback>()
-                .Include(f => f.Mentor)
-                    .ThenInclude(m => m.User)
-                .Where(f => f.TeamId == teamId)
-                .OrderByDescending(f => f.CreatedOn)
-                .ToListAsync();
+            if (mentorId == Guid.Empty) return null;
+
+            return await _context.Mentors
+                .Where(m => m.MentorId == mentorId)
+                .Select(m => m.User.Name)   
+                .FirstOrDefaultAsync();
         }
 
-        public async Task<IEnumerable<TeamFeedback>> GetFeedbacksByMentorAsync(Guid mentorId)
+        public async Task<string> GetUserNameAsync(Guid userId)
         {
-            return await _context.Set<TeamFeedback>()
-                .Include(f => f.Team)
-                .Where(f => f.MentorId == mentorId)
-                .OrderByDescending(f => f.CreatedOn)
-                .ToListAsync();
+            if (userId == Guid.Empty) return null;
+
+            return await _context.Users
+                .Where(u => u.UserId == userId)
+                .Select(u => u.Name)
+                .FirstOrDefaultAsync();
         }
 
-        public async Task<TeamFeedback> GetFeedbackByIdAsync(Guid feedbackId)
+        public async Task<Mentor?> GetByUserIdAsync(Guid userId)
         {
-            return await _context.Set<TeamFeedback>()
-                .Include(f => f.Team)
-                .Include(f => f.Mentor)
-                .FirstOrDefaultAsync(f => f.FeedbackId == feedbackId);
-        }
-
-        public async Task AddFeedbackAsync(TeamFeedback feedback)
-        {
-            feedback.CreatedOn = DateTime.UtcNow;
-            await _context.Set<TeamFeedback>().AddAsync(feedback);
-            await _context.SaveChangesAsync();
-        }
-        public async Task<Mentor> GetMentorByUserIdAsync(Guid userId)
-        {
+            if (userId == Guid.Empty) return null;
             return await _context.Mentors
                 .FirstOrDefaultAsync(m => m.UserId == userId);
         }
 
-        public async Task UpdateFeedbackAsync(TeamFeedback feedback)
+        public async Task<Mentor?> GetByUserAndEventAsync(Guid userId, Guid eventId)
         {
-            var existing = await _context.Set<TeamFeedback>().FindAsync(feedback.FeedbackId);
-            if (existing != null)
-            {
-                existing.FeedbackText = feedback.FeedbackText;
-                existing.ProgressRating = feedback.ProgressRating;
-                existing.UpdatedOn = DateTime.UtcNow;
-
-                _context.Set<TeamFeedback>().Update(existing);
-                await _context.SaveChangesAsync();
-            }
+            if (userId == Guid.Empty || eventId == Guid.Empty) return null;
+            return await _context.Mentors
+                .FirstOrDefaultAsync(m => m.UserId == userId && m.EventId == eventId);
+        }
+        public async Task<Mentor?> GetByIdAsync(Guid mentorId)
+        {
+            if (mentorId == Guid.Empty) return null;
+            return await _context.Mentors.FirstOrDefaultAsync(m => m.MentorId == mentorId);
         }
 
-        public async Task DeleteFeedbackAsync(Guid feedbackId)
+        public async Task<Mentor?> GetByUserAndTeamAsync(Guid userId, Guid teamId)
         {
-            var feedback = await _context.Set<TeamFeedback>().FindAsync(feedbackId);
-            if (feedback != null)
-            {
-                _context.Set<TeamFeedback>().Remove(feedback);
-                await _context.SaveChangesAsync();
-            }
+            if (userId == Guid.Empty || teamId == Guid.Empty) return null;
+
+            
+            var byAssigned = await _context.Mentors.FirstOrDefaultAsync(m => m.UserId == userId && m.AssignedTeamId == teamId);
+            if (byAssigned != null) return byAssigned;
+     
+            return null;
         }
-
-        public async Task<double> GetAverageTeamRatingAsync(Guid teamId)
+        public async Task<IEnumerable<Mentor>> GetByUserAsync(Guid userId)
         {
-            var ratings = await _context.Set<TeamFeedback>()
-                .Where(f => f.TeamId == teamId && f.ProgressRating.HasValue)
-                .Select(f => f.ProgressRating.Value)
-                .ToListAsync();
-
-            return ratings.Any() ? ratings.Average() : 0.0;
-        }
-
-        public async Task<IEnumerable<(Team team, double averageRating)>> GetTeamsWithProgressAsync(Guid mentorId)
-        {
-            var teams = await GetAssignedTeamsAsync(mentorId);
-            var result = new List<(Team, double)>();
-
-            foreach (var team in teams)
-            {
-                double avg = await GetAverageTeamRatingAsync(team.TeamId);
-                result.Add((team, avg));
-            }
-
-            return result;
+            if (userId == Guid.Empty) return Enumerable.Empty<Mentor>();
+            return await _context.Mentors.Where(m => m.UserId == userId).ToListAsync();
         }
     }
 }

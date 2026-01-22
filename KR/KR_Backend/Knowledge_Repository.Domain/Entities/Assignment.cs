@@ -29,5 +29,13 @@ public partial class Assignment
 
     public int? EstimatedDurationMinutes { get; set; }
 
+    public string SkillsEvaluated { get; set; }
+
+    public string SubmissionFormat { get; set; }
+
+    public string GradingStrategy { get; set; }
+
+    public string Metadata { get; set; }
+
     public virtual Week Week { get; set; }
 }

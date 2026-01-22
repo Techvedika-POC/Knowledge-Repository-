@@ -12,8 +12,6 @@ namespace Application.Interfaces
         Task<IEnumerable<Week>> GetByPlanIdAsync(Guid planId);
         Task<Week?> GetWeekWithModulesAsync(Guid weekId);
         Task<bool> IsWeekUnlockedAsync(Guid weekId, Guid userId);
-
-        // New methods for full DTOs
         Task<Week?> GetWeekFullByIdAsync(Guid weekId);
         Task<IEnumerable<Week>> GetWeeksFullByPlanAsync(Guid planId);
     }

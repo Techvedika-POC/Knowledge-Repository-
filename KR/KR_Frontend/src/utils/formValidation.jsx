@@ -1,5 +1,3 @@
-// src/utils/formValidation.js
-
 export default class FormValidator {
 
   static validateSignup(form) {

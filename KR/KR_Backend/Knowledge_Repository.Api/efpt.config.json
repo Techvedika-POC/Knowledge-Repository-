@@ -7,7 +7,7 @@
    "MinimumProductVersion": "2.6.1166",
    "ModelNamespace": null,
    "OutputContextPath": null,
-   "OutputPath": "Models",
+   "OutputPath": "tables",
    "PreserveCasingWithRegex": true,
    "ProjectRootNamespace": "Knowledge_Repository.Api",
    "Schemas": null,
@@ -60,6 +60,18 @@
          "ObjectType": 0
       },
       {
+         "Name": "public.jury_communication",
+         "ObjectType": 0
+      },
+      {
+         "Name": "public.jury_final_scores",
+         "ObjectType": 0
+      },
+      {
+         "Name": "public.jury_replies",
+         "ObjectType": 0
+      },
+      {
          "Name": "public.knowledge_items",
          "ObjectType": 0
       },
@@ -88,7 +100,11 @@
          "ObjectType": 0
       },
       {
-         "Name": "public.modules",
+         "Name": "public.module",
+         "ObjectType": 0
+      },
+      {
+         "Name": "public.password_reset",
          "ObjectType": 0
       },
       {
@@ -104,6 +120,14 @@
          "ObjectType": 0
       },
       {
+         "Name": "public.team_feedback",
+         "ObjectType": 0
+      },
+      {
+         "Name": "public.team_feedback_reply",
+         "ObjectType": 0
+      },
+      {
          "Name": "public.team_members",
          "ObjectType": 0
       },
@@ -112,7 +136,7 @@
          "ObjectType": 0
       },
       {
-         "Name": "public.topics",
+         "Name": "public.topic",
          "ObjectType": 0
       },
       {

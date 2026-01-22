@@ -33,5 +33,9 @@ public partial class AssessmentQuestion
 
     public string Hint1 { get; set; }
 
+    public int? Marks { get; set; }
+
+    public string EvaluationStrategy { get; set; }
+
     public virtual Assessment Assessment { get; set; }
 }

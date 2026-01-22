@@ -2,12 +2,12 @@ import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import api from "../api";
 import {
-  ChevronLeft,
-  PlusCircle,
-  Trash,
+  PlusIcon,
+  TrashIcon,
   Loader2,
   Save,
-  ArrowLeftCircle,
+  Upload,
+  ArrowLeftCircle
 } from "lucide-react";
 
 export default function ModuleModal({
@@ -177,8 +177,6 @@ export default function ModuleModal({
 
     return "file";
   }
-
-  // ---------- Module Info Save ----------
   const saveModuleInfo = async () => {
     if (isViewOnly) return;
     if (!moduleName.trim()) return toast.error("Module name is required");
@@ -186,7 +184,6 @@ export default function ModuleModal({
     try {
       let saved;
       if (localModuleId) {
-        // update
         await api.put(`/Module/${localModuleId}`, {
           moduleName,
           description,
@@ -220,8 +217,6 @@ export default function ModuleModal({
       setSavingModule(false);
     }
   };
-
-  // ---------- Lesson CRUD ----------
   const addLessonLocal = () => {
     setLessons((prev) => {
       const next = [...prev, createEmptyLesson(prev.length + 1)];
@@ -237,7 +232,6 @@ export default function ModuleModal({
       return copy;
     });
   };
-
   const removeLessonLocal = async (index) => {
     if (!window.confirm("Delete this lesson?")) return;
     const lesson = lessons[index];
@@ -636,7 +630,7 @@ export default function ModuleModal({
               {!isViewOnly && (
                 <button
                   type="submit"
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded bg-[#0A2342] text-white"
+                  className="inline-flex items-center gap-2 px-4 py-1 rounded-md bg-blue-500 text-white"
                 >
                   <Save size={16} /> Save All
                 </button>
@@ -769,8 +763,13 @@ export default function ModuleModal({
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="font-semibold text-[#0A2342]">Lessons</h3>
                       {!isViewOnly && (
-                        <button type="button" className="text-sm text-[#1C3C5A] inline-flex items-center gap-1" onClick={addLessonLocal}>
-                          <PlusCircle /> Add
+                        <button
+                          type="button"
+                          onClick={addLessonLocal}
+                          className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 shadow-sm rounded-md transition"
+                        >
+                          <PlusIcon className="w-4 h-4" />
+                          <span>Add</span>
                         </button>
                       )}
                     </div>
@@ -783,7 +782,7 @@ export default function ModuleModal({
                           <div
                             key={key}
                             onClick={() => { setSelectedLessonIndex(i); setLessonSubTab("resources"); }}
-                            className={`p-3 rounded-lg cursor-pointer border ${selectedLessonIndex === i ? "bg-[#F7D57A] text-[#0A2342]" : "bg-white"}`}
+                            className={`p-3 rounded-lg cursor-pointer border ${selectedLessonIndex === i ? "bg-gray-100 text-[#0A2342]" : "bg-white"}`}
                           >
                             <div className="flex justify-between items-start">
                               <div>
@@ -799,23 +798,10 @@ export default function ModuleModal({
                                     onClick={(e) => { e.stopPropagation(); removeLessonLocal(i); }}
                                     className="text-red-600 text-sm"
                                   >
-                                    <Trash />
+                                    <TrashIcon />
                                   </button>
                                 )}
                               </div>
-                            </div>
-
-                            {/* quick actions */}
-                            <div className="mt-2 flex gap-2">
-                              {!isViewOnly && (
-                                <button
-                                  type="button"
-                                  onClick={(e) => { e.stopPropagation(); persistLesson(i); }}
-                                  className="text-sm px-2 py-1 rounded bg-[#0A2342] text-white"
-                                >
-                                  Save
-                                </button>
-                              )}
                             </div>
                           </div>
                         );
@@ -871,7 +857,7 @@ export default function ModuleModal({
                               <button
                                 type="button"
                                 onClick={() => persistLesson(selectedLessonIndex)}
-                                className="px-3 py-2 rounded bg-[#0A2342] text-white"
+                                className="px-3 py-1 rounded bg-green-600 text-white"
                               >
                                 Save Lesson
                               </button>
@@ -932,15 +918,15 @@ export default function ModuleModal({
                                   <button
                                     type="button"
                                     onClick={() => addResourceToLesson(selectedLessonIndex)}
-                                    className="inline-flex items-center gap-2 text-[#1C3C5A]"
+                                    className="inline-flex items-center bg-blue-500 rounded-md gap-1 text-white px-2 py-1"
                                   >
-                                    <PlusCircle /> Add Resource
+                                    <PlusIcon /> Add
                                   </button>
 
                                   <button
                                     type="button"
                                     onClick={() => persistResourcesBatch(selectedLessonIndex)}
-                                    className="px-3 py-1 rounded bg-[#0A2342] text-white"
+                                    className="px-3 py-1 rounded bg-green-600 text-white"
                                   >
                                     Save Resources
                                   </button>
@@ -1037,9 +1023,10 @@ export default function ModuleModal({
 
                                         <label
                                           htmlFor={`file-upload-${key}`}
-                                          className="px-3 py-2 bg-[#0A2342] text-white rounded cursor-pointer"
+                                          className="inline-flex items-center gap-2 px-3 py-2 bg-blue-500 text-white rounded-md cursor-pointer hover:bg-blue-600 transition"
                                         >
-                                          Upload File
+                                          <Upload className="w-4 h-4" />
+                                          <span>Upload</span>
                                         </label>
 
                                         <button
@@ -1047,7 +1034,7 @@ export default function ModuleModal({
                                           onClick={() => removeResource(selectedLessonIndex, ri)}
                                           className="text-red-600 ml-auto"
                                         >
-                                          <Trash />
+                                          <TrashIcon />
                                         </button>
                                       </div>
                                     )}
@@ -1121,14 +1108,14 @@ export default function ModuleModal({
                                   <button
                                     type="button"
                                     onClick={() => addAssessmentToLesson(selectedLessonIndex)}
-                                    className="inline-flex items-center gap-1 text-[#1C3C5A] hover:text-[#0A2342]"
+                                    className="inline-flex items-center gap-1 text-white hover:text-white bg-blue-500 px-3 py-1 rounded-md"
                                   >
-                                    <PlusCircle /> Add Assessment
+                                    <PlusIcon /> Add
                                   </button>
                                   <button
                                     type="button"
                                     onClick={() => handleSaveAssessment(selectedLessonIndex)}
-                                    className="px-3 py-1 rounded bg-[#0A2342] text-white hover:bg-[#1C3C5A]"
+                                    className="px-3 py-1 rounded bg-green-600 text-white hover:bg-[#1C3C5A]"
                                   >
                                     Save Assessment
                                   </button>
@@ -1181,7 +1168,7 @@ export default function ModuleModal({
                                             onClick={() => removeAssessment(selectedLessonIndex, ai)}
                                             className="text-red-600 hover:text-red-800"
                                           >
-                                            <Trash />
+                                            <TrashIcon />
                                           </button>
                                         )}
                                         <div className="text-xs text-[#1C3C5A]">
@@ -1198,9 +1185,9 @@ export default function ModuleModal({
                                           <button
                                             type="button"
                                             onClick={() => addQuestion(selectedLessonIndex, ai)}
-                                            className="inline-flex items-center gap-1 text-[#1C3C5A] hover:text-[#0A2342]"
+                                            className="inline-flex items-center gap-1  text-white bg-blue-500 hover:text-white rounded-md px-3 py-1"
                                           >
-                                            <PlusCircle /> Add Question
+                                            <PlusIcon /> Add
                                           </button>
                                         )}
                                       </div>
@@ -1244,7 +1231,7 @@ export default function ModuleModal({
                                                       }}
                                                       className="text-red-600 hover:text-red-800"
                                                     >
-                                                      <Trash />
+                                                      <TrashIcon />
                                                     </button>
                                                   )}
                                                 </div>
@@ -1278,10 +1265,12 @@ export default function ModuleModal({
                                               <button
                                                 type="button"
                                                 onClick={() => removeQuestion(selectedLessonIndex, ai, qi)}
-                                                className="text-red-600 hover:text-red-800"
+                                                className="p-1 text-red-600 hover:text-red-800 transition"
+                                                title="Delete Question"
                                               >
-                                                Delete Question
+                                                <TrashIcon className="w-5 h-5" />
                                               </button>
+
                                             )}
                                           </div>
                                         );

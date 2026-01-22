@@ -28,7 +28,6 @@ export default function WeekModal({ planId, week, onClose, onWeekCreated }) {
       toast.error("Week title is required");
       return;
     }
-
     try {
       if (week) {
         await api.put(`/Week/${week.weekId}`, {
@@ -37,7 +36,6 @@ export default function WeekModal({ planId, week, onClose, onWeekCreated }) {
           learningObjectives,
           prerequisites,
         });
-
         toast.success("Week updated");
       }
 
@@ -48,9 +46,7 @@ export default function WeekModal({ planId, week, onClose, onWeekCreated }) {
           learningObjectives,
           prerequisites,
         });
-
         toast.success("Week created");
-
         if (onWeekCreated) onWeekCreated(res.data);
       }
 
@@ -141,7 +137,6 @@ return (
           >
             Cancel
           </button>
-
           <button
             type="submit"
             className="px-6 py-2.5 rounded-lg bg-blue-600 text-white font-medium 
@@ -150,9 +145,7 @@ return (
           >
             {week ? "Update Week" : "Create Week"}
           </button>
-
         </div>
-
       </form>
     </div>
   </div>

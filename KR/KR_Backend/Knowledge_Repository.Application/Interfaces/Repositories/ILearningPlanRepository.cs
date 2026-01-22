@@ -1,4 +1,4 @@
-﻿// File: Knowledge_Repository.Application.Interfaces.Repositories/ILearningPlanRepository.cs
+﻿
 using Knowledge_Repository.Domain.Entities;
 using System;
 using System.Threading.Tasks;

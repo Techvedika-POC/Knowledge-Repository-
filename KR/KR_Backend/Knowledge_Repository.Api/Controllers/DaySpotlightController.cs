@@ -15,9 +15,6 @@ namespace Knowledge_Repository.Controllers
             _spotlightService = spotlightService;
         }
 
-        /// <summary>
-        /// Retrieves the items to display in the Day Spotlight.
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetDaySpotlight()
         {

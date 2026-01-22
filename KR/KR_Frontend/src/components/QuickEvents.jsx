@@ -3,10 +3,26 @@ import { Lightbulb, Zap, Code, BookOpen } from "lucide-react";
 
 const QuickEvents = ({ navigate }) => {
   const quickEvents = [
-    { name: "Ideathons", icon: <Lightbulb className="w-5 h-5 text-blue-400" />, path: "/app/events/ideathon" },
-    { name: "Hackathons", icon: <Zap className="w-5 h-5 text-red-400" />, path: "/app/events/hackathon" },
-    { name: "Coding Challenges", icon: <Code className="w-5 h-5 text-green-400" />, path: "/app/events/coding-challenge" },
-    { name: "LearnSphere", icon: <BookOpen className="w-5 h-5 text-purple-400" />, path: "/app/events/knowledge-quest" },
+    {
+      name: "Ideathons",
+      icon: <Lightbulb className="w-5 h-5 text-blue-400" />,
+      path: "/app/events/ideathon",
+    },
+    {
+      name: "Hackathons",
+      icon: <Zap className="w-5 h-5 text-red-400" />,
+      path: "/app/events/hackathon",
+    },
+    {
+      name: "Coding Challenges",
+      icon: <Code className="w-5 h-5 text-green-400" />,
+      path: "/app/events/coding-challenge",
+    },
+    {
+      name: "Learning Management",
+      icon: <BookOpen className="w-5 h-5 text-purple-400" />,
+      path: "/app/events/learning-management",
+    },
   ];
 
   return (

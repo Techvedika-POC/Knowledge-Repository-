@@ -1,5 +1,5 @@
 ﻿using Knowledge_Repository.Application.Interfaces.Services;
-using Knowledge_Repository.Domain.Entities; // for Category entity
+using Knowledge_Repository.Domain.Entities; 
 using Microsoft.AspNetCore.Mvc;
 
 namespace Knowledge_Repository.Controllers

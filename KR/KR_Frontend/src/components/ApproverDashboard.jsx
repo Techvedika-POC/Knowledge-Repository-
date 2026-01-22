@@ -7,17 +7,23 @@ export default function ApproverPage() {
   const [items, setItems] = useState([]);
   const [eventTypes, setEventTypes] = useState([]);
   const [selectedEventType, setSelectedEventType] = useState("");
-
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(null);
   const [previewItem, setPreviewItem] = useState(null);
   const [error, setError] = useState("");
-
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
   const totalPages = Math.ceil(totalItems / pageSize);
+  const [rejectItem, setRejectItem] = useState(null);
+  const [feedback, setFeedback] = useState("");
 
+  const getItemId = (item) =>
+    item.knowledgeItemId ||
+    item.eventItemId ||
+    item.itemId ||
+    item.Id ||
+    item.id;
   const loadEventTypes = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -29,11 +35,9 @@ export default function ApproverPage() {
       console.error("Failed loading event types", err);
     }
   };
-
   useEffect(() => {
     loadEventTypes();
   }, []);
-
   const fetchData = async () => {
     setLoading(true);
     setError("");
@@ -51,7 +55,8 @@ export default function ApproverPage() {
           return;
         }
         endpoint = `/approver/pending/event/type/${selectedEventType}${params}`;
-      } else if (tab === "all") {
+      }
+      else if (tab === "all") {
         const [normal, event] = await Promise.all([
           api.get(`/approver/pending/normal${params}`, {
             headers: { Authorization: `Bearer ${token}` },
@@ -60,7 +65,12 @@ export default function ApproverPage() {
             headers: { Authorization: `Bearer ${token}` },
           }),
         ]);
-        const merged = [...(normal.data.items || []), ...(event.data.items || [])];
+
+        const merged = [
+          ...(normal.data.items || []),
+          ...(event.data.items || []),
+        ];
+
         setItems(merged);
         setTotalItems(merged.length);
         setLoading(false);
@@ -80,27 +90,48 @@ export default function ApproverPage() {
       setLoading(false);
     }
   };
-
   useEffect(() => {
     fetchData();
   }, [tab, selectedEventType, pageNumber]);
-
   const handleAction = async (itemId, action) => {
+    if (!itemId) {
+      setError("Invalid item ID.");
+      return;
+    }
+
     setActionLoading(itemId);
+
     try {
       const token = localStorage.getItem("token");
-      await api.post(`/approver/${action}/${itemId}`, {}, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
 
+      if (action === "reject") {
+        await api.post(
+          `/approver/reject/${itemId}`,
+          { feedback }, 
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      } else {
+        await api.post(
+          `/approver/approve/${itemId}`,
+          {},
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      }
+
+      setRejectItem(null);
+      setFeedback("");    
       fetchData();
     } catch (err) {
-      setError("Action failed.");
+      console.error("Action failed", err);
+      setError(
+        err.response?.data ||
+        err.response?.data?.title ||
+        "Action failed."
+      );
     } finally {
       setActionLoading(null);
     }
   };
-
   return (
     <div className="p-10 min-h-screen bg-gradient-to-br from-[#F7F9FC] to-[#EDF2FA]">
       <div className="max-w-6xl mx-auto">
@@ -115,7 +146,7 @@ export default function ApproverPage() {
           </p>
         </div>
 
-        {/* Tabs */}
+        {/* TABS */}
         <div className="flex gap-3 mb-6 justify-center">
           {[
             { key: "normal", label: "Normal Items" },
@@ -141,7 +172,7 @@ export default function ApproverPage() {
           ))}
         </div>
 
-        {/* Event Type Dropdown */}
+        {/* EVENT TYPE DROPDOWN */}
         {tab === "eventType" && (
           <div className="flex justify-center mb-5">
             <select
@@ -159,14 +190,14 @@ export default function ApproverPage() {
           </div>
         )}
 
-        {/* Error */}
+        {/* ERROR */}
         {error && (
           <p className="text-red-500 text-center bg-red-50 py-2 rounded-lg mb-4 border border-red-200">
             {error}
           </p>
         )}
 
-        {/* Data */}
+        {/* DATA DISPLAY */}
         {loading ? (
           <p className="text-center text-gray-500">Loading...</p>
         ) : items.length === 0 ? (
@@ -186,42 +217,133 @@ export default function ApproverPage() {
                 </thead>
 
                 <tbody className="divide-y divide-gray-100">
-                  {items.map((item) => (
-                    <tr key={item.knowledgeItemId} className="hover:bg-blue-50/40 transition">
-                      <td className="px-4 py-3 font-medium text-gray-700">{item.title}</td>
-                      <td className="px-4 py-3 text-gray-600">{item.createdByName}</td>
+                  {items.map((item) => {
+                    const id = getItemId(item);
+                    return (
+                      <tr key={id} className="hover:bg-blue-50/40 transition">
 
-                      <td className="px-4 py-3 flex gap-2 justify-center">
-                        <button
-                          onClick={() => handleAction(item.knowledgeItemId, "approve")}
-                          disabled={actionLoading === item.knowledgeItemId}
-                          className="px-3 py-1.5 bg-green-100 text-green-700 hover:bg-green-200 rounded-full flex items-center gap-1 text-xs"
-                        >
-                          <Check size={14} /> Approve
-                        </button>
+                        <td className="px-4 py-3 font-medium text-gray-700">
+                          {item.title}
+                        </td>
 
-                        <button
-                          onClick={() => handleAction(item.knowledgeItemId, "reject")}
-                          disabled={actionLoading === item.knowledgeItemId}
-                          className="px-3 py-1.5 bg-red-100 text-red-700 hover:bg-red-200 rounded-full flex items-center gap-1 text-xs"
-                        >
-                          <X size={14} /> Reject
-                        </button>
+                        <td className="px-4 py-3 text-gray-600">
+                          {item.createdByName}
+                        </td>
 
-                        <button
-                          onClick={() => setPreviewItem(item)}
-                          className="px-3 py-1.5 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-full flex items-center gap-1 text-xs"
-                        >
-                          <Eye size={14} /> Preview
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                        <td className="px-4 py-3 flex gap-2 justify-center">
+                          <button
+                            onClick={() => handleAction(id, "approve")}
+                            disabled={actionLoading === id}
+                            className="px-3 py-1.5 bg-green-100 text-green-700 hover:bg-green-200 rounded-full flex items-center gap-1 text-xs"
+                          >
+                            <Check size={14} /> Approve
+                          </button>
+                          <button
+                            onClick={() => {
+                              setRejectItem(id);
+                              setFeedback("");
+                            }}
+                            disabled={actionLoading === id}
+                            className="px-3 py-1.5 bg-red-100 text-red-700 hover:bg-red-200 rounded-full flex items-center gap-1 text-xs"
+                          >
+                            <X size={14} /> Reject
+                          </button>
+
+                          <button
+                            onClick={() => setPreviewItem(item)}
+                            className="px-3 py-1.5 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-full flex items-center gap-1 text-xs"
+                          >
+                            <Eye size={14} /> Preview
+                          </button>
+                        </td>
+
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
+            {rejectItem && (
+              <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center">
+                <div className="bg-white rounded-2xl p-6 shadow-xl w-full max-w-md border border-gray-100">
 
-            {/* Pagination */}
+                  <h2 className="text-lg font-bold text-gray-700 mb-2">
+                    Reject Item
+                  </h2>
+
+                  <p className="text-sm text-gray-500 mb-3">
+                    Please provide feedback for rejection.
+                  </p>
+
+                  <textarea
+                    className="w-full border rounded-lg p-3 text-sm"
+                    rows={4}
+                    placeholder="What needs to be changed or improved?"
+                    value={feedback}
+                    onChange={(e) => setFeedback(e.target.value)}
+                  />
+
+                  <div className="flex justify-end gap-3 mt-4">
+                    <button
+                      onClick={() => setRejectItem(null)}
+                      className="px-4 py-2 bg-gray-100 rounded-lg"
+                    >
+                      Cancel
+                    </button>
+
+                    <button
+                      disabled={!feedback.trim()}
+                      onClick={() => handleAction(rejectItem, "reject")}
+                      className="px-4 py-2 bg-red-500 text-white rounded-lg disabled:opacity-50"
+                    >
+                      Reject with Feedback
+                    </button>
+                  </div>
+
+                </div>
+              </div>
+            )}
+            {rejectItem && (
+              <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center">
+                <div className="bg-white rounded-2xl p-6 shadow-xl w-full max-w-md border border-gray-100">
+
+                  <h2 className="text-lg font-bold text-gray-700 mb-2">
+                    Reject Item
+                  </h2>
+
+                  <p className="text-sm text-gray-500 mb-3">
+                    Please provide feedback for rejection.
+                  </p>
+
+                  <textarea
+                    className="w-full border rounded-lg p-3 text-sm"
+                    rows={4}
+                    placeholder="What needs to be changed or improved?"
+                    value={feedback}
+                    onChange={(e) => setFeedback(e.target.value)}
+                  />
+
+                  <div className="flex justify-end gap-3 mt-4">
+                    <button
+                      onClick={() => setRejectItem(null)}
+                      className="px-4 py-2 bg-gray-100 rounded-lg"
+                    >
+                      Cancel
+                    </button>
+
+                    <button
+                      disabled={!feedback.trim()}
+                      onClick={() => handleAction(rejectItem, "reject")}
+                      className="px-4 py-2 bg-red-500 text-white rounded-lg disabled:opacity-50"
+                    >
+                      Reject with Feedback
+                    </button>
+                  </div>
+
+                </div>
+              </div>
+            )}
+            {/* PAGINATION */}
             {tab !== "all" && (
               <div className="flex justify-end items-center gap-3 mt-4">
                 <button
@@ -248,7 +370,7 @@ export default function ApproverPage() {
           </>
         )}
 
-        {/* Preview Modal */}
+        {/* PREVIEW MODAL */}
         {previewItem && (
           <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center">
             <div className="bg-white rounded-2xl p-6 shadow-xl w-full max-w-lg border border-gray-100 relative animate-fadeIn">

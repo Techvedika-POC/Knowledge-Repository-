@@ -209,10 +209,6 @@ namespace Knowledge_Repository.Application.Implementations.Services
 
             return leaderboard;
         }
-
-
-
-
         private static CommentDto MapToCommentDto(Engagement e)
         {
             return new CommentDto

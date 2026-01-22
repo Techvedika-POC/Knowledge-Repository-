@@ -15,7 +15,6 @@ namespace Knowledge_Repository.API.Controllers
 
         public FileController()
         {
-            // MUST match Program.cs static file path
             _uploadRoot = Path.Combine(AppContext.BaseDirectory, "uploads");
 
             if (!Directory.Exists(_uploadRoot))
@@ -28,24 +27,21 @@ namespace Knowledge_Repository.API.Controllers
             if (file == null || file.Length == 0)
                 return BadRequest("No file received.");
 
-            // Clean + unique filename
             var originalName = Path.GetFileName(file.FileName);
             var safeName = originalName.Replace(" ", "_").Replace("(", "").Replace(")", "");
             var newFileName = $"{Guid.NewGuid()}_{safeName}";
 
             var filePath = Path.Combine(_uploadRoot, newFileName);
 
-            // Save file
             using (var stream = new FileStream(filePath, FileMode.Create))
                 await file.CopyToAsync(stream);
 
-            // Build public URL
             var baseUrl = $"{Request.Scheme}://{Request.Host}";
             var publicUrl = $"{baseUrl}/uploads/{newFileName}";
 
             return Ok(new
             {
-                url = publicUrl,                 // ABSOLUTE URL for frontend
+                url = publicUrl,                
                 relativePath = $"/uploads/{newFileName}",
                 fileName = originalName,
                 storedName = newFileName

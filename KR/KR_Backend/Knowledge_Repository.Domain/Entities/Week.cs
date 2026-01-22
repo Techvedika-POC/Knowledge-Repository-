@@ -27,6 +27,8 @@ public partial class Week
 
     public bool? IsAiGenerated { get; set; }
 
+    public virtual ICollection<Assessment> Assessments { get; set; } = new List<Assessment>();
+
     public virtual ICollection<Assignment> Assignments { get; set; } = new List<Assignment>();
 
     public virtual ICollection<Module> Modules { get; set; } = new List<Module>();

@@ -1,4 +1,5 @@
-﻿using Knowledge_Repository.Application.Dtos.Mentor;
+﻿using Knowledge_Repository.Application.Dtos;
+using Knowledge_Repository.Application.Dtos.Mentor;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -11,11 +12,6 @@ namespace Knowledge_Repository.Application.Interfaces.Services
         Task<IEnumerable<TeamsByMonthDto>> GetTeamsForMentorAsync(Guid mentorId);
 
         Task<TeamDetailsDto> GetTeamDetailsAsync(Guid teamId);
-        Task<FeedbackResponseDto> AddFeedbackAsync(AddFeedbackRequestDto request);
-        Task<bool> UpdateFeedbackAsync(UpdateFeedbackRequestDto request);
-        Task<IEnumerable<FeedbackResponseDto>> GetFeedbacksByMentorAsync(Guid mentorId);
-        Task<FeedbackResponseDto> GetFeedbackByIdAsync(Guid feedbackId);
-
-
+      
     }
-}
+    }

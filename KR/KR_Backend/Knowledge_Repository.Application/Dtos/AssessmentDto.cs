@@ -59,3 +59,7 @@ namespace Knowledge_Repository.Application.Dtos
         }
 
 }
+public class RejectDto
+{
+    public string Feedback { get; set; }
+}

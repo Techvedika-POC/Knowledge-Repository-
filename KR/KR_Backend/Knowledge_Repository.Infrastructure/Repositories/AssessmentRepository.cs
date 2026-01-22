@@ -1,4 +1,5 @@
 ﻿using Application.Interfaces;
+using Knowledge_Repository.Application.Dtos;
 using Knowledge_Repository.Application.Interfaces.Repositories;
 using Knowledge_Repository.Domain.Entities;
 using Knowledge_Repository.Infrastructure.Data;
@@ -14,12 +15,9 @@ namespace Knowledge_Repository.Infrastructure.Repositories
         {
             _context = ctx;
         }
-
-        // Helper: Force DateTimeKind.Unspecified for PostgreSQL
         private static DateTime NoKind(DateTime dt) =>
             DateTime.SpecifyKind(dt, DateTimeKind.Unspecified);
 
-        // ▬▬▬▬▬ ASSESSMENTS ▬▬▬▬▬
         public async Task<IEnumerable<Assessment>> GetByModuleIdAsync(Guid moduleId)
         {
             return await _dbSet
@@ -28,8 +26,6 @@ namespace Knowledge_Repository.Infrastructure.Repositories
                 .Where(a => a.ModuleId == moduleId)
                 .ToListAsync();
         }
-
-        // ▬▬▬▬▬ QUESTIONS ▬▬▬▬▬
         public async Task<IEnumerable<AssessmentQuestion>> GetAssessmentQuestionsAsync(Guid assessmentId)
         {
             return await _context.AssessmentQuestions
@@ -66,7 +62,6 @@ namespace Knowledge_Repository.Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
-        // ▬▬▬▬▬ ACCESS CONTROL ▬▬▬▬▬
         public async Task<bool> IsAssessmentUnlockedAsync(Guid assessmentId, Guid userId)
         {
             var assessment = await _dbSet.FindAsync(assessmentId);
@@ -77,38 +72,74 @@ namespace Knowledge_Repository.Infrastructure.Repositories
                 .AnyAsync(p => p.UserId == userId && p.ModuleId == assessment.ModuleId);
         }
 
-        // ▬▬▬▬▬ USER ASSESSMENT RESULTS ▬▬▬▬▬
         public async Task<UserAssessmentResult?> GetUserResultAsync(Guid assessmentId, Guid userId)
         {
             return await _context.UserAssessmentResults
                 .FirstOrDefaultAsync(r => r.AssessmentId == assessmentId && r.UserId == userId);
         }
+        public async Task<AssessmentResultDto?> GetLatestResultAsync(
+    Guid userId,
+    Guid assessmentId)
+        {
+            return await _context.UserAssessmentResults
+                .Where(r => r.UserId == userId && r.AssessmentId == assessmentId)
+                .OrderByDescending(r => r.AttemptedOn)
+                .Select(r => new AssessmentResultDto
+                {
+                    ResultId = r.ResultId,
+                    UserId = r.UserId,
+                    AssessmentId = r.AssessmentId,
+                    UserAnswers = r.UserAnswers,
+                    ScorePercentage = r.ScorePercentage,
+                    Passed = r.Passed,
+                    IsCompleted = r.IsCompleted,
+                    AttemptedOn = r.AttemptedOn,
+                    UpdatedOn = r.UpdatedOn
+                })
+                .FirstOrDefaultAsync();
+        }
 
         public async Task SaveUserResultAsync(UserAssessmentResult result)
         {
-            var existing = await GetUserResultAsync(result.AssessmentId, result.UserId);
+            Console.WriteLine(">>> SaveUserResultAsync EXECUTING <<<");
+
+            var existing = await _context.UserAssessmentResults
+                .FirstOrDefaultAsync(r => r.AssessmentId == result.AssessmentId && r.UserId == result.UserId);
 
             if (existing == null)
             {
-                // ensure all timestamps are unspecified
                 result.AttemptedOn = DateTime.SpecifyKind(result.AttemptedOn, DateTimeKind.Unspecified);
                 result.UpdatedOn = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
 
+                Console.WriteLine(">>> INSERT NEW RESULT");
                 await _context.UserAssessmentResults.AddAsync(result);
             }
             else
             {
+                Console.WriteLine(">>> UPDATE EXISTING RESULT");
+
                 existing.UserAnswers = result.UserAnswers;
                 existing.ScorePercentage = result.ScorePercentage;
                 existing.Passed = result.Passed;
-                existing.IsCompleted = result.IsCompleted;
-
-                // FIXED: remove UTC
+                existing.IsCompleted = true;
+                existing.AttemptedOn = result.AttemptedOn;
                 existing.UpdatedOn = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
+
+                _context.Entry(existing).State = EntityState.Modified;
             }
 
             await _context.SaveChangesAsync();
         }
+        public override async Task<Assessment?> GetByIdAsync(Guid id)
+        {
+            return await _dbSet
+                .Include(a => a.AssessmentQuestions)
+                .Include(a => a.UserAssessmentResults)
+                .FirstOrDefaultAsync(a => a.AssessmentId == id);
+        }
+
+
+
 
     }
 }

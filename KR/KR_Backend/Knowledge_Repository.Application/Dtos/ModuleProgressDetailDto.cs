@@ -17,11 +17,12 @@ namespace Knowledge_Repository.Application.Dtos
         public Guid AssessmentId { get; set; }
         public string Title { get; set; } = string.Empty;
         public int Difficulty { get; set; } = 0;
+
         public bool IsCompleted { get; set; } = false;
         public bool IsUnlocked { get; set; } = false;
 
-        // Optional: if later you want to show score %
-        public decimal ScorePercent { get; set; } = 0m;
+        // 🔑 REQUIRED – fixes refresh, buttons, unlocks
+        public AssessmentResultDto? LatestResult { get; set; }
     }
 
     public class ResourceProgressDto

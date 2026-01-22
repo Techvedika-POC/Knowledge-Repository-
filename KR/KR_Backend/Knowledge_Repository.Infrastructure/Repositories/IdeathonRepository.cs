@@ -57,13 +57,18 @@ namespace Knowledge_Repository.Infrastructure.Repositories
 
         public async Task RemoveMentorFromTeamAsync(Guid mentorId)
         {
-            var mentor = await _context.Mentors.FindAsync(mentorId);
-            if (mentor != null)
-            {
-                _context.Mentors.Remove(mentor);
-                await _context.SaveChangesAsync();
-            }
+            var mentor = await _context.Mentors
+                .FirstOrDefaultAsync(x => x.MentorId == mentorId);
+
+            if (mentor == null)
+                throw new ArgumentException("Mentor not found.");
+
+            mentor.AssignedTeamId = null;
+            mentor.EventId = null;
+
+            await _context.SaveChangesAsync();
         }
+
 
         public async Task<IEnumerable<User>> GetAvailableJuryMembersAsync(Guid eventId)
         {
@@ -206,6 +211,7 @@ namespace Knowledge_Repository.Infrastructure.Repositories
             _context.Presentations.Remove(pres);
             await _context.SaveChangesAsync();
         }
+       
 
     }
 }

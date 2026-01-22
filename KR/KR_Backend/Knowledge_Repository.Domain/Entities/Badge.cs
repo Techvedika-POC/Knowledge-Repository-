@@ -26,6 +26,4 @@ public partial class Badge
     public virtual User CreatedByNavigation { get; set; }
 
     public virtual User UpdatedByNavigation { get; set; }
-
-    public virtual ICollection<UserBadge> UserBadges { get; set; } = new List<UserBadge>();
 }

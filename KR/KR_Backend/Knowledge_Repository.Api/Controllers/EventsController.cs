@@ -52,11 +52,6 @@ namespace Knowledge_Repository.Controllers
                 : Ok(events);
         }
 
-  
-
-        // ======================================================
-        //               EXISTING CRUD ENDPOINTS
-        // ======================================================
 
         [HttpPost]
         public async Task<IActionResult> AddEvent([FromBody] Event evt)
@@ -130,9 +125,6 @@ namespace Knowledge_Repository.Controllers
             }
         }
 
-        // ======================================================
-        //               INSIGHT ENDPOINTS
-        // ======================================================
 
         [HttpGet("{eventId:guid}/insights")]
         public async Task<IActionResult> GetEventInsights(Guid eventId)

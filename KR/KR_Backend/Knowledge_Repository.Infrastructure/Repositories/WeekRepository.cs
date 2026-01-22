@@ -18,8 +18,6 @@ namespace Knowledge_Repository.Infrastructure.Repositories
         {
             _context = context;
         }
-
-        // Existing method: Get basic weeks by plan
         public async Task<IEnumerable<Week>> GetByPlanIdAsync(Guid planId)
         {
             return await _context.Weeks
@@ -28,8 +26,6 @@ namespace Knowledge_Repository.Infrastructure.Repositories
                 .OrderBy(w => w.WeekNumber)
                 .ToListAsync();
         }
-
-        // Existing method: Get week with modules
         public async Task<Week?> GetWeekWithModulesAsync(Guid weekId)
         {
             return await _context.Weeks
@@ -43,8 +39,6 @@ namespace Knowledge_Repository.Infrastructure.Repositories
                 .AsNoTracking()
                 .FirstOrDefaultAsync(w => w.WeekId == weekId);
         }
-
-        // Existing method: Check if week is unlocked for a user
         public async Task<bool> IsWeekUnlockedAsync(Guid weekId, Guid userId)
         {
             var week = await _context.Weeks
@@ -97,23 +91,17 @@ namespace Knowledge_Repository.Infrastructure.Repositories
                 .ToListAsync();
 
             foreach (var p in progresses)
-                p.CurrentLessonId = null; // Remove FK block
+                p.CurrentLessonId = null; 
 
             await _context.SaveChangesAsync();
         }
         public override async Task DeleteAsync(Week week)
         {
             if (week == null) return;
-
-            // 1. Remove FK references to lessons inside this week
             await ClearLessonProgressForWeekAsync(week.WeekId);
-
-            // 2. Now safe to delete week → modules → lessons → assessments → resources
             _context.Weeks.Remove(week);
             await _context.SaveChangesAsync();
         }
-
-        // NEW: Get full week details (WeekFullDto) by Id
         public async Task<Week?> GetWeekFullByIdAsync(Guid weekId)
         {
             return await _context.Weeks
@@ -127,8 +115,6 @@ namespace Knowledge_Repository.Infrastructure.Repositories
                 .AsNoTracking()
                 .FirstOrDefaultAsync(w => w.WeekId == weekId);
         }
-
-        // NEW: Get full weeks for a plan (WeekFullDto)
         public async Task<IEnumerable<Week>> GetWeeksFullByPlanAsync(Guid planId)
         {
             return await _context.Weeks

@@ -1,9 +1,12 @@
 ﻿using Application.Interfaces;
-using Knowledge_Repository.Infrastructure.Repositories;
 using Knowledge_Repository.Application.Implementations.Services;
+using Knowledge_Repository.Application.Interfaces;
 using Knowledge_Repository.Application.Interfaces.Repositories;
 using Knowledge_Repository.Application.Interfaces.Services;
+using Knowledge_Repository.Application.Services;
+using Knowledge_Repository.Application.Services;
 using Knowledge_Repository.Infrastructure.Data;
+using Knowledge_Repository.Infrastructure.Repositories;
 using Knowledge_Repository.Infrastructure.Repositories;
 using Knowledge_Repository.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -13,6 +16,17 @@ using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using TrainingPlanParser.Services;
+using TrainingPlanParser.Services.Enrichment;
+using TrainingPlanParser.Services.Evaluation.Core;
+using TrainingPlanParser.Services.Evaluation.Hybrid;
+using TrainingPlanParser.Services.Evaluation.MLNet;
+using TrainingPlanParser.Services.Evaluation.RuleBased;
+using TrainingPlanParser.Services.Pipeline;
+
+
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
 
 IdentityModelEventSource.ShowPII = true;
 
@@ -44,9 +58,14 @@ builder.Services.AddScoped<IEventTeamInsightRepository, EventTeamInsightReposito
 builder.Services.AddScoped<IKnowledgeTagRepository, KnowledgeTagRepository>();
 builder.Services.AddScoped<IKnowledgeVersionRepository, KnowledgeVersionRepository>();
 builder.Services.AddScoped<IEventKnowledgeItemRepository, EventKnowledgeItemRepository>();
+builder.Services.AddScoped<IKnowledgeTagRepository, KnowledgeTagRepository>();
+builder.Services.AddScoped<IKnowledgeVersionRepository, KnowledgeVersionRepository>();
+builder.Services.AddScoped<IPasswordResetRepository, PasswordResetRepository>();
+builder.Services.AddScoped<IJuryFinalScoreRepository, JuryFinalScoreRepository>();
+builder.Services.AddScoped<IJuryChatRepository, JuryChatRepository>();
+builder.Services.AddScoped<IEventJuryRepository, EventJuryRepository>();
+builder.Services.AddScoped<ICommunicationRepository, CommunicationRepository>();
 builder.Services.AddScoped<IApproverRepository, ApproverRepository>();
-
-// ===== NEW REPOSITORIES FOR LEARNING MODULE =====
 builder.Services.AddScoped<ILearningPlanRepository, LearningPlanRepository>();
 builder.Services.AddScoped<IWeekRepository, WeekRepository>();
 builder.Services.AddScoped<IModuleRepository, ModuleRepository>();
@@ -56,7 +75,6 @@ builder.Services.AddScoped<IAssessmentRepository, AssessmentRepository>();
 builder.Services.AddScoped<IUserProgressRepository, UserProgressRepository>();
 
 // ===== REGISTER SERVICES =====
-builder.Services.AddScoped<IUserProgressRepository, UserProgressRepository>();
 builder.Services.AddScoped<IUserProgressService, UserProgressService>();
 builder.Services.AddScoped<IAssessmentService, AssessmentService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -69,7 +87,6 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IKnowledgeItemService, KnowledgeItemService>();
 builder.Services.AddScoped<IActivityLogService, ActivityLogService>();
 builder.Services.AddScoped<IDaySpotlightService, DaySpotlightService>();
-builder.Services.AddScoped<IFileStorageService, FileStorageService>();
 builder.Services.AddScoped<IFreshPickService, FreshPickService>();
 builder.Services.AddScoped<IGlobalSearchService, GlobalSearchService>();
 builder.Services.AddScoped<ITopicHighlightService, TopicHighlightService>();
@@ -81,17 +98,84 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IIdeathonService, IdeathonService>();
 builder.Services.AddScoped<IMentorService, MentorService>();
 builder.Services.AddScoped<IEventTeamInsightService, EventTeamInsightService>();
+builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
+builder.Services.AddTransient<IEmailService, SmtpEmailService>();
+builder.Services.AddScoped<IJuryFinalScoreService,JuryFinalScoreService>();
+builder.Services.AddScoped<IJuryChatService, JuryChatService>();
+builder.Services.AddScoped<IJuryPanelService, JuryPanelService>();
+builder.Services.AddScoped<ICommunicationService, CommunicationService>();
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IUserProgressAggregateService, UserProgressAggregateService>();
-// Register LocalFreeAiClient with HttpClient for DI
-builder.Services.AddHttpClient<IFreeAiClient, LocalFreeAiClient>();
-
-// ===== NEW SERVICES =====
 builder.Services.AddScoped<ILearningPlanService, LearningPlanService>();
 builder.Services.AddScoped<IWeekService, WeekService>();
 builder.Services.AddScoped<IModuleService, ModuleService>();
 builder.Services.AddScoped<ILessonService, LessonService>();
 builder.Services.AddScoped<IResourceService, ResourceService>();
 builder.Services.AddScoped<IAssessmentService, AssessmentService>();
+builder.Services.AddScoped<IManagerRepository, ManagerRepository>();
+builder.Services.AddScoped<IManagerService, ManagerService>();
+
+// ENRICHMENT
+builder.Services.AddScoped<TrainingPlanEnrichmentProcessor>();
+builder.Services.AddScoped<TrainingPlanEnrichmentProcessor>();
+builder.Services.AddScoped<MultiPassEnrichmentOrchestrator>();
+
+// EVALUATORS
+builder.Services.AddScoped<RuleBasedEvaluator>();
+builder.Services.AddScoped<MLNetEvaluator>();
+builder.Services.AddScoped<HybridEvaluator>();
+
+// ENRICHMENT
+
+builder.Services.AddScoped<ITrainingPlanIngestionService, TrainingPlanIngestionService>();
+builder.Services.AddScoped<ITrainingPlanMappingService, TrainingPlanMappingService>();
+builder.Services.AddScoped<ITrainingPlanRepository, TrainingPlanRepository>();
+
+builder.Services.AddScoped<IEnrichmentLlmService>(sp =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    var apiKey = config["OpenAI:ApiKey"];
+
+    if (string.IsNullOrWhiteSpace(apiKey))
+        throw new Exception("OpenAI API Key is missing for enrichment");
+
+    return new Gpt4oMiniEnrichmentService(apiKey);
+});
+// ===== EVALUATION STRATEGIES =====
+
+// Rule-based evaluator 
+builder.Services.AddScoped<RuleBasedEvaluator>();
+
+// ML.NET evaluator
+builder.Services.AddScoped<MLNetEvaluator>();
+
+// Hybrid evaluator (FINAL decision engine)
+builder.Services.AddScoped<IEvaluationStrategy>(sp =>
+{
+    var rules = sp.GetRequiredService<RuleBasedEvaluator>();
+    var ml = sp.GetRequiredService<MLNetEvaluator>();
+
+    return new HybridEvaluator(rules, ml);
+});
+
+
+// ===== TRAINING PLAN PARSER PIPELINE =====
+builder.Services.AddScoped<DocxParser>();
+
+builder.Services.AddScoped<ILlmService>(sp =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    var apiKey = config["Groq:ApiKey"];
+
+    if (string.IsNullOrWhiteSpace(apiKey))
+        throw new Exception("Groq API Key is missing");
+
+    return new GroqLlmService(apiKey);
+});
+
+builder.Services.AddScoped<RuleBasedEvaluator>();
+
+builder.Services.AddScoped<TrainingPlanProcessingPipeline>();
 
 // ===== CORS =====
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
@@ -176,23 +260,20 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorization();
+var uploadsPhysicalPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot", "uploads");
+Directory.CreateDirectory(uploadsPhysicalPath);
+builder.Services.AddScoped<IFileStorageService>(sp =>
+{
+    var logger = sp.GetRequiredService<ILogger<FileStorageService>>();
+    return new FileStorageService(uploadsPhysicalPath, logger);
+});
+
 
 // ===== BUILD APP =====
 var app = builder.Build();
+app.UseStaticFiles();
 
-// ===== STATIC FILES =====
-var uploadsPhysicalPath = Path.Combine(AppContext.BaseDirectory, "uploads");
-if (!Directory.Exists(uploadsPhysicalPath))
-{
-    Directory.CreateDirectory(uploadsPhysicalPath);
-}
-app.UseStaticFiles(new StaticFileOptions
-{
-    FileProvider = new PhysicalFileProvider(uploadsPhysicalPath),
-    RequestPath = "/uploads",
-    ServeUnknownFileTypes = true,
-    DefaultContentType = "application/octet-stream"
-});
+
 
 // ===== SWAGGER UI =====
 if (app.Environment.IsDevelopment())

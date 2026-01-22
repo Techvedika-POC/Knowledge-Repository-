@@ -19,4 +19,5 @@ public interface IUserProgressRepository : IGenericRepository<UserModuleProgress
 
     Task<bool> IsModuleUnlockedAsync(Guid userId, Guid weekId, Guid moduleId);
     Task<bool> IsWeekUnlockedAsync(Guid userId, Guid planId, int weekNumber);
+
 }

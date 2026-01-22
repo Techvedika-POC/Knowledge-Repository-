@@ -1,5 +1,4 @@
-﻿using Application.Interfaces;
-using Knowledge_Repository.Application.Interfaces.Repositories;
+﻿using Knowledge_Repository.Application.Interfaces.Repositories;
 using Knowledge_Repository.Domain.Entities;
 using Knowledge_Repository.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -10,7 +9,8 @@ using System.Threading.Tasks;
 
 namespace Knowledge_Repository.Infrastructure.Repositories
 {
-    public class UserProgressRepository : GenericRepository<UserModuleProgress>, IUserProgressRepository
+    public class UserProgressRepository
+        : GenericRepository<UserModuleProgress>, IUserProgressRepository
     {
         private readonly Knowledge_Repository_dbContext _context;
 
@@ -20,30 +20,25 @@ namespace Knowledge_Repository.Infrastructure.Repositories
             _context = context;
         }
 
-        // --------------------------------------------------------------------
-        // GET MODULE PROGRESS
-        // --------------------------------------------------------------------
-        public async Task<UserModuleProgress?> GetModuleProgressAsync(Guid userId, Guid weekId, Guid moduleId)
+        public async Task<bool> UserExistsAsync(Guid userId)
+        {
+            return await _context.Users.AnyAsync(u => u.UserId == userId);
+        }
+
+        public async Task<UserModuleProgress?> GetModuleProgressAsync(
+           Guid userId,
+           Guid weekId,
+           Guid moduleId)
         {
             return await _dbSet.FirstOrDefaultAsync(p =>
                 p.UserId == userId &&
                 p.ModuleId == moduleId);
         }
 
-        // --------------------------------------------------------------------
-        // GET LESSON PROGRESS  ✅ (NOW INCLUDED)
-        // --------------------------------------------------------------------
-        public async Task<UserModuleProgress?> GetLessonProgressAsync(Guid userId, Guid lessonId)
-        {
-            return await _dbSet.FirstOrDefaultAsync(p =>
-                p.UserId == userId &&
-                p.CurrentLessonId == lessonId);
-        }
-
-        // --------------------------------------------------------------------
-        // INITIALIZE MODULE PROGRESS
-        // --------------------------------------------------------------------
-        public async Task InitializeModuleProgressAsync(Guid userId, Guid weekId, Guid moduleId)
+        public async Task InitializeModuleProgressAsync(
+            Guid userId,
+            Guid weekId,
+            Guid moduleId)
         {
             var existing = await GetModuleProgressAsync(userId, weekId, moduleId);
             if (existing != null)
@@ -57,168 +52,197 @@ namespace Knowledge_Repository.Infrastructure.Repositories
                 ProgressId = Guid.NewGuid(),
                 UserId = userId,
                 ModuleId = moduleId,
-                TopicId = Guid.Empty,
-                Status = "NotStarted",
+                Status = "InProgress",
                 TestStatus = "NotTaken",
-                TotalLessonsCount = totalLessons,
+                TotalLessonsCount = totalLessons,   
                 CompletedLessonsCount = 0,
                 CompletedLessonIds = "[]",
+                LessonProgressPercent = 0,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
 
             await AddAsync(progress);
         }
-
-        // --------------------------------------------------------------------
-        // UPDATE MODULE PROGRESS   ✅ (NOW INCLUDED)
-        // --------------------------------------------------------------------
         public async Task UpdateModuleProgressAsync(UserModuleProgress progress)
         {
             progress.UpdatedAt = DateTime.UtcNow;
             await UpdateAsync(progress);
         }
-
-        // --------------------------------------------------------------------
-        // TRACK LESSON ACCESS
-        // --------------------------------------------------------------------
-        public async Task TrackLessonAccessAsync(Guid userId, Guid moduleId, Guid lessonId)
+        public async Task<UserModuleProgress?> GetLessonProgressAsync(
+            Guid userId,
+            Guid lessonId)
         {
-            var progress = await _dbSet
-                .FirstOrDefaultAsync(p => p.UserId == userId && p.ModuleId == moduleId);
+            return await _dbSet.FirstOrDefaultAsync(p =>
+                p.UserId == userId &&
+                p.CurrentLessonId == lessonId);
+        }
+        public async Task TrackLessonAccessAsync(
+            Guid userId,
+            Guid moduleId,
+            Guid lessonId)
+        {
+            var module = await _context.Modules
+                .FirstAsync(m => m.ModuleId == moduleId);
+
+            var progress = await GetModuleProgressAsync(
+                userId,
+                module.WeekId,
+                moduleId);
 
             if (progress == null)
-                return;
+            {
+                await InitializeModuleProgressAsync(userId, module.WeekId, moduleId);
+                progress = await GetModuleProgressAsync(userId, module.WeekId, moduleId);
+            }
 
-            progress.CurrentLessonId = lessonId;
+            progress!.CurrentLessonId = lessonId;
             progress.LastAccessed = DateTime.UtcNow;
             progress.UpdatedAt = DateTime.UtcNow;
 
             await UpdateAsync(progress);
         }
 
-        // --------------------------------------------------------------------
-        // MARK LESSON COMPLETED
-        // --------------------------------------------------------------------
-        public async Task MarkLessonCompletedAsync(Guid userId, Guid moduleId, Guid lessonId)
+        public async Task MarkLessonCompletedAsync(
+            Guid userId,
+            Guid moduleId,
+            Guid lessonId)
         {
-            var progress = await _dbSet
-                .FirstOrDefaultAsync(p => p.UserId == userId && p.ModuleId == moduleId);
+            var progress = await _dbSet.FirstOrDefaultAsync(p =>
+                p.UserId == userId &&
+                p.ModuleId == moduleId);
 
             if (progress == null)
-                return;
-
-            var completedIds = JsonSerializer.Deserialize<string[]>(progress.CompletedLessonIds ?? "[]")!
-                .ToList();
-
-            if (!completedIds.Contains(lessonId.ToString()))
-                completedIds.Add(lessonId.ToString());
-
-            progress.CompletedLessonIds = JsonSerializer.Serialize(completedIds);
-            progress.CompletedLessonsCount = completedIds.Count;
-
-            if (progress.TotalLessonsCount > 0)
             {
-                progress.LessonProgressPercent =
-                    Math.Round((decimal)progress.CompletedLessonsCount / progress.TotalLessonsCount * 100, 2);
+                var module = await _context.Modules.FirstAsync(m => m.ModuleId == moduleId);
+
+                progress = new UserModuleProgress
+                {
+                    ProgressId = Guid.NewGuid(),
+                    UserId = userId,
+                    ModuleId = moduleId,
+                    TopicId = lessonId,              
+                    CurrentLessonId = lessonId,      
+                    TotalLessonsCount = await _context.Lessons.CountAsync(l => l.ModuleId == moduleId),
+                    CompletedLessonsCount = 0,
+                    CompletedLessonIds = "[]",
+                    Status = "InProgress",
+                    TestStatus = "NotTaken",
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                await _dbSet.AddAsync(progress);
             }
 
+            var completed = JsonSerializer.Deserialize<List<string>>(progress.CompletedLessonIds ?? "[]");
+
+            if (!completed.Contains(lessonId.ToString()))
+            {
+                completed.Add(lessonId.ToString());
+                progress.CompletedLessonsCount++;
+            }
+
+            progress.CompletedLessonIds = JsonSerializer.Serialize(completed);
+            progress.TopicId = lessonId;
+            progress.CurrentLessonId = lessonId;
             progress.UpdatedAt = DateTime.UtcNow;
 
-            await UpdateAsync(progress);
+            await _context.SaveChangesAsync();
         }
 
-        // --------------------------------------------------------------------
-        // UPDATE TEST STATUS
-        // --------------------------------------------------------------------
-        public async Task UpdateTestStatusAsync(Guid userId, Guid weekId, Guid moduleId, string testStatus)
+        public async Task UpdateTestStatusAsync(
+            Guid userId,
+            Guid weekId,
+            Guid moduleId,
+            string testStatus)
         {
-            var progress = await GetModuleProgressAsync(userId, weekId, moduleId);
+            var progress = await _dbSet.FirstOrDefaultAsync(p =>
+                p.UserId == userId &&
+                p.ModuleId == moduleId);
 
             if (progress == null)
-            {
-                await InitializeModuleProgressAsync(userId, weekId, moduleId);
-                progress = await GetModuleProgressAsync(userId, weekId, moduleId);
-            }
+                throw new InvalidOperationException("Module progress must exist before test submission");
+
+            testStatus = testStatus?.Trim();
+
+            if (string.Equals(testStatus, "passed", StringComparison.OrdinalIgnoreCase))
+                testStatus = "Passed";
 
             progress.TestStatus = testStatus;
             progress.TestAttemptedOn = DateTime.UtcNow;
             progress.UpdatedAt = DateTime.UtcNow;
 
-            bool lessonsDone = progress.CompletedLessonsCount == progress.TotalLessonsCount;
-            bool passedTest = testStatus.Equals("Passed", StringComparison.OrdinalIgnoreCase);
-
-            if (lessonsDone && passedTest)
-            {
-                progress.Status = "Completed";
-                progress.CompletedOn = DateTime.UtcNow;
-            }
-
-            await UpdateAsync(progress);
+            await _context.SaveChangesAsync();
         }
-
-        // --------------------------------------------------------------------
-        // TRY TO MARK MODULE COMPLETED
-        // --------------------------------------------------------------------
-        public async Task<bool> TryMarkModuleCompletedAsync(Guid userId, Guid weekId, Guid moduleId)
+        public async Task<bool> TryMarkModuleCompletedAsync(
+          Guid userId,
+          Guid weekId,
+          Guid moduleId)
         {
-            var progress = await GetModuleProgressAsync(userId, weekId, moduleId);
+            var progress = await _dbSet.FirstOrDefaultAsync(p =>
+                p.UserId == userId &&
+                p.ModuleId == moduleId);
+
             if (progress == null)
                 return false;
 
-            bool lessonsDone = progress.CompletedLessonsCount == progress.TotalLessonsCount;
-            bool passedTest = progress.TestStatus == "Passed";
+            bool lessonsDone =
+                progress.TotalLessonsCount == 0 ||
+                progress.CompletedLessonsCount >= progress.TotalLessonsCount;
 
-            if (!lessonsDone || !passedTest)
+            bool testPassed =
+                string.Equals(progress.TestStatus, "Passed", StringComparison.OrdinalIgnoreCase);
+
+            if (!lessonsDone || !testPassed)
                 return false;
 
             progress.Status = "Completed";
             progress.CompletedOn = DateTime.UtcNow;
-            progress.UpdatedAt = DateTime.UtcNow;
 
-            await UpdateAsync(progress);
+            await _context.SaveChangesAsync();
             return true;
         }
-
-        // --------------------------------------------------------------------
-        // MODULE UNLOCK LOGIC
-        // --------------------------------------------------------------------
-        public async Task<bool> IsModuleUnlockedAsync(Guid userId, Guid weekId, Guid moduleId)
+        public async Task<bool> IsModuleUnlockedAsync(
+            Guid userId,
+            Guid weekId,
+            Guid moduleId)
         {
-            var module = await _context.Modules.FirstOrDefaultAsync(m => m.ModuleId == moduleId);
-            if (module == null) return false;
+            var module = await _context.Modules
+                .FirstOrDefaultAsync(m => m.ModuleId == moduleId && m.WeekId == weekId);
+
+            if (module == null)
+                return false;
 
             if (module.OrderNo == 1)
                 return true;
 
-            var prevModule = await _context.Modules.FirstOrDefaultAsync(m =>
-                m.WeekId == module.WeekId &&
-                m.OrderNo == module.OrderNo - 1);
+            var prevModule = await _context.Modules
+                .FirstOrDefaultAsync(m =>
+                    m.WeekId == weekId &&
+                    m.OrderNo == module.OrderNo - 1);
 
             if (prevModule == null)
                 return true;
 
-            var previousProgress =
-                await GetModuleProgressAsync(userId, weekId, prevModule.ModuleId);
+            var prevProgress = await _dbSet.FirstOrDefaultAsync(p =>
+                p.UserId == userId &&
+                p.ModuleId == prevModule.ModuleId);
 
-            return previousProgress != null &&
-                   previousProgress.Status == "Completed";
+            return prevProgress != null &&
+                   prevProgress.Status == "Completed";
         }
-        public async Task<bool> UserExistsAsync(Guid userId)
-        {
-            return await _context.Users.AnyAsync(u => u.UserId == userId);
-        }
-
-        // --------------------------------------------------------------------
-        // WEEK UNLOCK LOGIC
-        // --------------------------------------------------------------------
-        public async Task<bool> IsWeekUnlockedAsync(Guid userId, Guid planId, int weekNumber)
+        public async Task<bool> IsWeekUnlockedAsync(
+            Guid userId,
+            Guid planId,
+            int weekNumber)
         {
             if (weekNumber == 1)
                 return true;
 
             var prevWeek = await _context.Weeks
-                .FirstOrDefaultAsync(w => w.PlanId == planId && w.WeekNumber == weekNumber - 1);
+                .FirstOrDefaultAsync(w =>
+                    w.PlanId == planId &&
+                    w.WeekNumber == weekNumber - 1);
 
             if (prevWeek == null)
                 return true;
@@ -229,8 +253,9 @@ namespace Knowledge_Repository.Infrastructure.Repositories
 
             foreach (var module in modules)
             {
-                var progress =
-                    await GetModuleProgressAsync(userId, prevWeek.WeekId, module.ModuleId);
+                var progress = await _dbSet.FirstOrDefaultAsync(p =>
+                    p.UserId == userId &&
+                    p.ModuleId == module.ModuleId);
 
                 if (progress == null || progress.Status != "Completed")
                     return false;

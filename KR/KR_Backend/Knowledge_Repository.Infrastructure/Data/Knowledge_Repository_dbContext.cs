@@ -3,8 +3,9 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
+
 using Knowledge_Repository.Domain.Entities;
-namespace Knowledge_Repository.Infrastructure.Data;
+namespace Knowledge_Repository .Infrastructure .Data;
 
 public partial class Knowledge_Repository_dbContext : DbContext
 {
@@ -14,10 +15,6 @@ public partial class Knowledge_Repository_dbContext : DbContext
     }
 
     public virtual DbSet<ActivityLog> ActivityLogs { get; set; }
-
-    public virtual DbSet<AiGenerationOutput> AiGenerationOutputs { get; set; }
-
-    public virtual DbSet<AiGenerationRequest> AiGenerationRequests { get; set; }
 
     public virtual DbSet<Announcement> Announcements { get; set; }
 
@@ -45,6 +42,10 @@ public partial class Knowledge_Repository_dbContext : DbContext
 
     public virtual DbSet<EventKnowledgeItem> EventKnowledgeItems { get; set; }
 
+    public virtual DbSet<JuryChatMessage> JuryChatMessages { get; set; }
+
+    public virtual DbSet<JuryFinalScore> JuryFinalScores { get; set; }
+
     public virtual DbSet<KnowledgeItem> KnowledgeItems { get; set; }
 
     public virtual DbSet<KnowledgeReview> KnowledgeReviews { get; set; }
@@ -65,6 +66,8 @@ public partial class Knowledge_Repository_dbContext : DbContext
 
     public virtual DbSet<Module> Modules { get; set; }
 
+    public virtual DbSet<PasswordReset> PasswordResets { get; set; }
+
     public virtual DbSet<Presentation> Presentations { get; set; }
 
     public virtual DbSet<Resource> Resources { get; set; }
@@ -74,6 +77,8 @@ public partial class Knowledge_Repository_dbContext : DbContext
     public virtual DbSet<SpotlightItem> SpotlightItems { get; set; }
 
     public virtual DbSet<Team> Teams { get; set; }
+
+    public virtual DbSet<TeamChatMessage> TeamChatMessages { get; set; }
 
     public virtual DbSet<TeamFeedback> TeamFeedbacks { get; set; }
 
@@ -87,7 +92,7 @@ public partial class Knowledge_Repository_dbContext : DbContext
 
     public virtual DbSet<UserAssessmentResult> UserAssessmentResults { get; set; }
 
-    public virtual DbSet<UserBadge> UserBadges { get; set; }
+    public virtual DbSet<UserLearningPlan> UserLearningPlans { get; set; }
 
     public virtual DbSet<UserModuleProgress> UserModuleProgresses { get; set; }
 
@@ -152,61 +157,6 @@ public partial class Knowledge_Repository_dbContext : DbContext
                 .HasConstraintName("activity_log_user_id_fkey");
         });
 
-        modelBuilder.Entity<AiGenerationOutput>(entity =>
-        {
-            entity.HasKey(e => e.OutputId).HasName("ai_generation_outputs_pkey");
-
-            entity.ToTable("ai_generation_outputs");
-
-            entity.HasIndex(e => e.RequestId, "idx_generation_output_request_id");
-
-            entity.Property(e => e.OutputId)
-                .HasDefaultValueSql("gen_random_uuid()")
-                .HasColumnName("output_id");
-            entity.Property(e => e.CreatedOn)
-                .HasDefaultValueSql("now()")
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("created_on");
-            entity.Property(e => e.OutputText).HasColumnName("output_text");
-            entity.Property(e => e.RequestId).HasColumnName("request_id");
-            entity.Property(e => e.StructuredJson)
-                .HasColumnType("jsonb")
-                .HasColumnName("structured_json");
-            entity.Property(e => e.TokensUsed).HasColumnName("tokens_used");
-
-            entity.HasOne(d => d.Request).WithMany(p => p.AiGenerationOutputs)
-                .HasForeignKey(d => d.RequestId)
-                .HasConstraintName("ai_generation_outputs_request_id_fkey");
-        });
-
-        modelBuilder.Entity<AiGenerationRequest>(entity =>
-        {
-            entity.HasKey(e => e.RequestId).HasName("ai_generation_requests_pkey");
-
-            entity.ToTable("ai_generation_requests");
-
-            entity.Property(e => e.RequestId)
-                .HasDefaultValueSql("gen_random_uuid()")
-                .HasColumnName("request_id");
-            entity.Property(e => e.CreatedOn)
-                .HasDefaultValueSql("now()")
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("created_on");
-            entity.Property(e => e.InputPayload)
-                .HasColumnType("jsonb")
-                .HasColumnName("input_payload");
-            entity.Property(e => e.Model).HasColumnName("model");
-            entity.Property(e => e.Prompt).HasColumnName("prompt");
-            entity.Property(e => e.RequestType)
-                .IsRequired()
-                .HasMaxLength(50)
-                .HasColumnName("request_type");
-            entity.Property(e => e.Status)
-                .HasMaxLength(20)
-                .HasDefaultValueSql("'pending'::character varying")
-                .HasColumnName("status");
-        });
-
         modelBuilder.Entity<Announcement>(entity =>
         {
             entity.HasKey(e => e.AnnouncementId).HasName("announcements_pkey");
@@ -243,9 +193,15 @@ public partial class Knowledge_Repository_dbContext : DbContext
 
             entity.HasIndex(e => e.TopicId, "idx_assessments_topic_id");
 
+            entity.HasIndex(e => e.WeekId, "idx_assessments_week_id");
+
             entity.Property(e => e.AssessmentId)
                 .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("assessment_id");
+            entity.Property(e => e.AssessmentScope)
+                .HasMaxLength(20)
+                .HasDefaultValueSql("'LESSON'::character varying")
+                .HasColumnName("assessment_scope");
             entity.Property(e => e.AssessmentType)
                 .HasMaxLength(50)
                 .HasColumnName("assessment_type");
@@ -264,19 +220,29 @@ public partial class Knowledge_Repository_dbContext : DbContext
                 .HasColumnType("jsonb")
                 .HasColumnName("metadata");
             entity.Property(e => e.ModuleId).HasColumnName("module_id");
+            entity.Property(e => e.SkillsTested)
+                .HasColumnType("jsonb")
+                .HasColumnName("skills_tested");
             entity.Property(e => e.Title)
                 .IsRequired()
                 .HasColumnName("title");
             entity.Property(e => e.TopicId).HasColumnName("topic_id");
+            entity.Property(e => e.TotalMarks).HasColumnName("total_marks");
             entity.Property(e => e.UpdatedOn)
                 .HasDefaultValueSql("now()")
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("updated_on");
+            entity.Property(e => e.WeekId).HasColumnName("week_id");
 
             entity.HasOne(d => d.Module).WithMany(p => p.Assessments)
                 .HasForeignKey(d => d.ModuleId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("fk_assessment_module");
+
+            entity.HasOne(d => d.Week).WithMany(p => p.Assessments)
+                .HasForeignKey(d => d.WeekId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("fk_assessment_week");
         });
 
         modelBuilder.Entity<AssessmentQuestion>(entity =>
@@ -298,11 +264,17 @@ public partial class Knowledge_Repository_dbContext : DbContext
                 .HasDefaultValueSql("now()")
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_on");
+            entity.Property(e => e.EvaluationStrategy)
+                .HasMaxLength(50)
+                .HasColumnName("evaluation_strategy");
             entity.Property(e => e.Explanation).HasColumnName("explanation");
             entity.Property(e => e.Hint1).HasColumnName("hint");
             entity.Property(e => e.IsAiGenerated)
                 .HasDefaultValue(false)
                 .HasColumnName("is_ai_generated");
+            entity.Property(e => e.Marks)
+                .HasDefaultValue(1)
+                .HasColumnName("marks");
             entity.Property(e => e.Metadata)
                 .HasColumnType("jsonb")
                 .HasColumnName("metadata");
@@ -348,9 +320,21 @@ public partial class Knowledge_Repository_dbContext : DbContext
             entity.Property(e => e.Description).HasColumnName("description");
             entity.Property(e => e.EstimatedDurationMinutes).HasColumnName("estimated_duration_minutes");
             entity.Property(e => e.ExpectedOutput).HasColumnName("expected_output");
+            entity.Property(e => e.GradingStrategy)
+                .HasMaxLength(50)
+                .HasColumnName("grading_strategy");
+            entity.Property(e => e.Metadata)
+                .HasColumnType("jsonb")
+                .HasColumnName("metadata");
             entity.Property(e => e.RubricJson)
                 .HasColumnType("jsonb")
                 .HasColumnName("rubric_json");
+            entity.Property(e => e.SkillsEvaluated)
+                .HasColumnType("jsonb")
+                .HasColumnName("skills_evaluated");
+            entity.Property(e => e.SubmissionFormat)
+                .HasMaxLength(50)
+                .HasColumnName("submission_format");
             entity.Property(e => e.Title)
                 .IsRequired()
                 .HasColumnName("title");
@@ -729,6 +713,55 @@ public partial class Knowledge_Repository_dbContext : DbContext
                 .HasConstraintName("event_knowledge_items_updated_by_fkey");
         });
 
+        modelBuilder.Entity<JuryChatMessage>(entity =>
+        {
+            entity.HasKey(e => e.MessageId).HasName("JuryChatMessage_pkey");
+
+            entity.ToTable("JuryChatMessage");
+
+            entity.Property(e => e.MessageId).HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.CreatedOn)
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone");
+            entity.Property(e => e.Message).IsRequired();
+
+            entity.HasOne(d => d.Event).WithMany(p => p.JuryChatMessages)
+                .HasForeignKey(d => d.EventId)
+                .HasConstraintName("FK_JuryChatMessage_Event");
+
+            entity.HasOne(d => d.ReplyToMessage).WithMany(p => p.InverseReplyToMessage)
+                .HasForeignKey(d => d.ReplyToMessageId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_JuryChatMessage_ReplyToMessage");
+
+            entity.HasOne(d => d.SenderJury).WithMany(p => p.JuryChatMessages)
+                .HasForeignKey(d => d.SenderJuryId)
+                .HasConstraintName("FK_JuryChatMessage_SenderJury");
+        });
+
+        modelBuilder.Entity<JuryFinalScore>(entity =>
+        {
+            entity.HasKey(e => e.FinalId).HasName("JuryFinalScore_pkey");
+
+            entity.ToTable("JuryFinalScore");
+
+            entity.Property(e => e.FinalId).HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.ApprovedOn).HasColumnType("timestamp without time zone");
+
+            entity.HasOne(d => d.ApprovedByNavigation).WithMany(p => p.JuryFinalScores)
+                .HasForeignKey(d => d.ApprovedBy)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_JuryFinalScore_User");
+
+            entity.HasOne(d => d.Event).WithMany(p => p.JuryFinalScores)
+                .HasForeignKey(d => d.EventId)
+                .HasConstraintName("FK_JuryFinalScore_Event");
+
+            entity.HasOne(d => d.Team).WithMany(p => p.JuryFinalScores)
+                .HasForeignKey(d => d.TeamId)
+                .HasConstraintName("FK_JuryFinalScore_Team");
+        });
+
         modelBuilder.Entity<KnowledgeItem>(entity =>
         {
             entity.HasKey(e => e.ItemId).HasName("knowledge_items_pkey");
@@ -805,6 +838,7 @@ public partial class Knowledge_Repository_dbContext : DbContext
                 .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("review_id");
             entity.Property(e => e.AssignmentId).HasColumnName("assignment_id");
+            entity.Property(e => e.Decision).HasMaxLength(50);
             entity.Property(e => e.ItemId).HasColumnName("item_id");
             entity.Property(e => e.ReviewedOn)
                 .HasDefaultValueSql("now()")
@@ -1089,6 +1123,28 @@ public partial class Knowledge_Repository_dbContext : DbContext
                 .HasConstraintName("fk_module_week");
         });
 
+        modelBuilder.Entity<PasswordReset>(entity =>
+        {
+            entity.HasKey(e => e.PasswordResetId).HasName("PasswordReset_pkey");
+
+            entity.ToTable("PasswordReset");
+
+            entity.Property(e => e.PasswordResetId).HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.CodeExpiresAt).HasColumnType("timestamp without time zone");
+            entity.Property(e => e.CodeHash).IsRequired();
+            entity.Property(e => e.CodeUsed).HasDefaultValue(false);
+            entity.Property(e => e.CreatedOn)
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone");
+            entity.Property(e => e.ResetTokenExpiresAt).HasColumnType("timestamp without time zone");
+            entity.Property(e => e.ResetTokenUsed).HasDefaultValue(false);
+            entity.Property(e => e.UpdatedOn).HasColumnType("timestamp without time zone");
+
+            entity.HasOne(d => d.User).WithMany(p => p.PasswordResets)
+                .HasForeignKey(d => d.UserId)
+                .HasConstraintName("FK_PasswordReset_User");
+        });
+
         modelBuilder.Entity<Presentation>(entity =>
         {
             entity.HasKey(e => e.PresentationId).HasName("presentations_pkey");
@@ -1135,12 +1191,17 @@ public partial class Knowledge_Repository_dbContext : DbContext
                 .HasDefaultValueSql("now()")
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_on");
+            entity.Property(e => e.Difficulty).HasColumnName("difficulty");
+            entity.Property(e => e.EstimatedDurationMinutes).HasColumnName("estimated_duration_minutes");
             entity.Property(e => e.IsAiGenerated).HasDefaultValue(false);
             entity.Property(e => e.Metadata).HasColumnType("jsonb");
             entity.Property(e => e.ModuleId).HasColumnName("module_id");
             entity.Property(e => e.ResourceType)
                 .HasMaxLength(50)
                 .HasColumnName("resource_type");
+            entity.Property(e => e.Source)
+                .HasMaxLength(100)
+                .HasColumnName("source");
             entity.Property(e => e.Title)
                 .IsRequired()
                 .HasColumnName("title");
@@ -1244,6 +1305,19 @@ public partial class Knowledge_Repository_dbContext : DbContext
                 .HasConstraintName("teams_event_id_fkey");
         });
 
+        modelBuilder.Entity<TeamChatMessage>(entity =>
+        {
+            entity.HasKey(e => e.MessageId).HasName("TeamChatMessage_pkey");
+
+            entity.ToTable("TeamChatMessage");
+
+            entity.Property(e => e.MessageId).HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.CreatedOn).HasDefaultValueSql("now()");
+            entity.Property(e => e.IsDeleted).HasDefaultValue(false);
+            entity.Property(e => e.MessageText).IsRequired();
+            entity.Property(e => e.SenderName).IsRequired();
+        });
+
         modelBuilder.Entity<TeamFeedback>(entity =>
         {
             entity.HasKey(e => e.FeedbackId).HasName("team_feedback_pkey");
@@ -1279,34 +1353,29 @@ public partial class Knowledge_Repository_dbContext : DbContext
 
         modelBuilder.Entity<TeamFeedbackReply>(entity =>
         {
-            entity.HasKey(e => e.ReplyId).HasName("team_feedback_reply_pkey");
+            entity.HasKey(e => e.ReplyId);
 
-            entity.ToTable("team_feedback_reply");
+            entity.ToTable("TeamFeedbackReply");
 
-            entity.Property(e => e.ReplyId)
-                .HasDefaultValueSql("gen_random_uuid()")
-                .HasColumnName("reply_id");
+            entity.Property(e => e.ReplyId).HasDefaultValueSql("gen_random_uuid()");
             entity.Property(e => e.CreatedOn)
                 .HasDefaultValueSql("now()")
-                .HasColumnName("created_on");
-            entity.Property(e => e.FeedbackId).HasColumnName("feedback_id");
-            entity.Property(e => e.ReplyText)
-                .IsRequired()
-                .HasColumnName("reply_text");
-            entity.Property(e => e.TeamId).HasColumnName("team_id");
-            entity.Property(e => e.UserId).HasColumnName("user_id");
+                .HasColumnType("timestamp without time zone");
+            entity.Property(e => e.EditedOn).HasColumnType("timestamp without time zone");
+            entity.Property(e => e.IsDeleted).HasDefaultValue(false);
+            entity.Property(e => e.ReplyText).IsRequired();
 
             entity.HasOne(d => d.Feedback).WithMany(p => p.TeamFeedbackReplies)
                 .HasForeignKey(d => d.FeedbackId)
-                .HasConstraintName("fk_team_feedback_reply_feedback");
+                .HasConstraintName("FK_TeamFeedbackReply_Feedback");
 
             entity.HasOne(d => d.Team).WithMany(p => p.TeamFeedbackReplies)
                 .HasForeignKey(d => d.TeamId)
-                .HasConstraintName("fk_team_feedback_reply_team");
+                .HasConstraintName("FK_TeamFeedbackReply_Team");
 
             entity.HasOne(d => d.User).WithMany(p => p.TeamFeedbackReplies)
                 .HasForeignKey(d => d.UserId)
-                .HasConstraintName("fk_team_feedback_reply_user");
+                .HasConstraintName("FK_TeamFeedbackReply_User");
         });
 
         modelBuilder.Entity<TeamMember>(entity =>
@@ -1456,55 +1525,16 @@ public partial class Knowledge_Repository_dbContext : DbContext
                 .HasConstraintName("FK_UserAssessmentResult_User");
         });
 
-        modelBuilder.Entity<UserBadge>(entity =>
+        modelBuilder.Entity<UserLearningPlan>(entity =>
         {
-            entity.HasKey(e => e.UserBadgeId).HasName("user_badges_pkey");
+            entity.HasKey(e => e.UserLearningPlanId).HasName("UserLearningPlans_pkey");
 
-            entity.ToTable("user_badges");
-
-            entity.HasIndex(e => new { e.UserId, e.BadgeId }, "user_badges_user_id_badge_id_key").IsUnique();
-
-            entity.Property(e => e.UserBadgeId)
-                .HasDefaultValueSql("gen_random_uuid()")
-                .HasColumnName("user_badge_id");
-            entity.Property(e => e.AwardedBy).HasColumnName("awarded_by");
-            entity.Property(e => e.AwardedOn)
-                .HasDefaultValueSql("now()")
-                .HasColumnName("awarded_on");
-            entity.Property(e => e.BadgeId).HasColumnName("badge_id");
-            entity.Property(e => e.CreatedBy).HasColumnName("created_by");
-            entity.Property(e => e.CreatedOn)
-                .HasDefaultValueSql("now()")
-                .HasColumnName("created_on");
-            entity.Property(e => e.Notes).HasColumnName("notes");
-            entity.Property(e => e.UpdatedBy).HasColumnName("updated_by");
-            entity.Property(e => e.UpdatedOn).HasColumnName("updated_on");
-            entity.Property(e => e.UserId).HasColumnName("user_id");
-
-            entity.HasOne(d => d.AwardedByNavigation).WithMany(p => p.UserBadgeAwardedByNavigations)
-                .HasForeignKey(d => d.AwardedBy)
-                .OnDelete(DeleteBehavior.SetNull)
-                .HasConstraintName("user_badges_awarded_by_fkey");
-
-            entity.HasOne(d => d.Badge).WithMany(p => p.UserBadges)
-                .HasForeignKey(d => d.BadgeId)
-                .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("user_badges_badge_id_fkey");
-
-            entity.HasOne(d => d.CreatedByNavigation).WithMany(p => p.UserBadgeCreatedByNavigations)
-                .HasForeignKey(d => d.CreatedBy)
-                .OnDelete(DeleteBehavior.SetNull)
-                .HasConstraintName("user_badges_created_by_fkey");
-
-            entity.HasOne(d => d.UpdatedByNavigation).WithMany(p => p.UserBadgeUpdatedByNavigations)
-                .HasForeignKey(d => d.UpdatedBy)
-                .OnDelete(DeleteBehavior.SetNull)
-                .HasConstraintName("user_badges_updated_by_fkey");
-
-            entity.HasOne(d => d.User).WithMany(p => p.UserBadgeUsers)
-                .HasForeignKey(d => d.UserId)
-                .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("user_badges_user_id_fkey");
+            entity.Property(e => e.UserLearningPlanId).ValueGeneratedNever();
+            entity.Property(e => e.AssignedOn).HasColumnType("timestamp without time zone");
+            entity.Property(e => e.CompletedOn).HasColumnType("timestamp without time zone");
+            entity.Property(e => e.ProgressPercent).HasPrecision(5, 2);
+            entity.Property(e => e.StartedOn).HasColumnType("timestamp without time zone");
+            entity.Property(e => e.Status).HasMaxLength(50);
         });
 
         modelBuilder.Entity<UserModuleProgress>(entity =>

@@ -10,7 +10,8 @@ public interface IApproverService
     Task<IEnumerable<string>> GetEventTypesAsync();
 
     Task<bool> ApproveAsync(Guid itemId, Guid approverId);
-    Task<bool> RejectAsync(Guid itemId, Guid approverId);
+    Task<bool> RejectAsync(Guid itemId, Guid approverId, string feedback);
+
     Task<(List<KnowledgeItemDto> Items, int TotalCount)>
     GetPendingByEventTypeAsync(string eventType, int page, int size);
 

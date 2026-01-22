@@ -9,7 +9,6 @@ export default function UploadKnowledgeItem() {
   const location = useLocation();
   const navigate = useNavigate();
   const editItemId = location.state?.itemId ?? null;
-
   const [frameworks, setFrameworks] = useState([
     "C#",
     "Python",
@@ -18,30 +17,29 @@ export default function UploadKnowledgeItem() {
     ".NET",
     "Spring Boot",
   ]);
-  const [files, setFiles] = useState([]); 
-  const [existingAttachments, setExistingAttachments] = useState([]); 
-  const [keptExistingAttachmentIds, setKeptExistingAttachmentIds] = useState([]); 
+  const [files, setFiles] = useState([]);
+  const [existingAttachments, setExistingAttachments] = useState([]);
+  const [keptExistingAttachmentIds, setKeptExistingAttachmentIds] = useState([]);
   const [replaceAttachments, setReplaceAttachments] = useState(false);
-
   const [tags, setTags] = useState("");
   const [domains, setDomains] = useState([]);
   const [categories, setCategories] = useState([]);
   const [events, setEvents] = useState([]);
   const [activeTab, setActiveTab] = useState("File");
-
-  
   const [form, setForm] = useState({
     name: "",
     domainId: "",
     categoryId: "",
     description: "",
-    languages: [], 
+    languages: [],
     tags: [],
     isEventItem: false,
     eventId: "",
-    teamId: "", 
-    teamMemberEmails: "", 
+    teamId: "",
+    teamMemberEmails: "",
   });
+  const isEventFlow = !!(location.state?.eventId || form.isEventItem);
+  // ------------------- Prefill event & team info -------------------
   useEffect(() => {
     if (location.state?.eventId) {
       const userTeam = JSON.parse(localStorage.getItem("userTeam") || "{}");
@@ -130,11 +128,7 @@ export default function UploadKnowledgeItem() {
       if (input) input.value = "";
     }
   };
-
-
   const handleTabChange = (tab) => setActiveTab(tab);
-
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     const token = localStorage.getItem("jwtToken");
@@ -145,43 +139,28 @@ export default function UploadKnowledgeItem() {
 
     try {
       const formData = new FormData();
-
       formData.append("Title", form.name);
       formData.append("DomainId", form.domainId ?? "");
       formData.append("CategoryId", form.categoryId ?? "");
       formData.append("Description", form.description ?? "");
-
-   
       const languageList = Array.isArray(form.languages) ? form.languages : ((form.languages || "") + "").split(",").map((l) => l.trim()).filter(Boolean);
       languageList.forEach((lang) => formData.append("Language", lang));
-
       const frameworkList = Array.isArray(frameworks) ? frameworks : ((frameworks || "") + "").split(",").map((f) => f.trim()).filter(Boolean);
       frameworkList.forEach((fw) => formData.append("Framework", fw));
-
-
       (form.tags || []).forEach((tag) => formData.append("Tags", tag));
-
-     
       (files || []).forEach((file) => formData.append("Files", file));
-
-
       if (form.isEventItem && !editItemId) {
         formData.append("IsEventItem", "true");
         formData.append("EventId", form.eventId || "");
         formData.append("TeamId", form.teamId || "");
         formData.append("TeamMemberEmails", form.teamMemberEmails || "");
       }
-
-
       if (editItemId) {
-   
+
         (keptExistingAttachmentIds || []).forEach((id) => formData.append("ExistingAttachmentIds", id));
         formData.append("ReplaceAttachments", replaceAttachments ? "true" : "false");
-
- 
         formData.append("itemId", editItemId);
       }
-
       const config = {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -189,12 +168,12 @@ export default function UploadKnowledgeItem() {
       };
 
       if (editItemId) {
-     
+
         await api.put(`/KnowledgeItem?itemId=${encodeURIComponent(editItemId)}`, formData, config);
         toast.success("Knowledge item updated successfully!");
-        navigate("/app/my-contributions"); 
+        navigate("/app/my-contributions");
       } else {
-     
+
         await api.post(`/knowledgeitem/upload`, formData, config);
         toast.success("Knowledge item uploaded successfully!");
         navigate("/app/my-contributions");
@@ -208,14 +187,30 @@ export default function UploadKnowledgeItem() {
   return (
     <div className="max-w-[1000px] mx-auto mt-5 p-6 bg-white rounded-[12px] shadow-md font-inter text-[#1f2937]">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-[22px] font-semibold">{editItemId ? "Edit Knowledge Item" : "Upload Knowledge Articles"}</h2>
+        <h2 className="text-[22px] font-semibold">
+          {editItemId
+            ? "Edit Knowledge Item"
+            : isEventFlow
+              ? "Event Knowledge Articles Upload"
+              : " Knowledge Articles Upload"}
+        </h2>
       </div>
 
-      <div className="flex items-center gap-2 bg-[#fef3c7] p-3 rounded-[8px] text-[#92400e] text-sm mb-5">
+      <div className="flex items-center gap-2 bg-[#fef3c7] p-3 rounded-[8px] text-[#92400e] text-sm mb-3">
         <FaLightbulb />
         <span>
           <strong>Tip:</strong> Follow upload guidelines for faster approvals.
         </span>
+      </div>
+
+      {/* Upload Guidelines */}
+      <div className="bg-blue-50 border border-blue-200 p-3 rounded-[8px] text-sm text-blue-900 mb-5">
+        <ul className="list-disc ml-5 space-y-1">
+          <li>Select the correct Domain and Category</li>
+          <li>Use clear, descriptive titles</li>
+          <li>Add relevant tags for better discovery</li>
+          <li>Upload readable, well-structured files</li>
+        </ul>
       </div>
 
       <form onSubmit={handleSubmit}>
@@ -263,6 +258,7 @@ export default function UploadKnowledgeItem() {
               ))}
             </select>
           </div>
+
           {form.isEventItem && (
             <div className="text-sm text-gray-700 mb-2">
               This submission will be linked to the event automatically.
@@ -305,6 +301,7 @@ export default function UploadKnowledgeItem() {
         {/* ------------------- Tags ------------------- */}
         <section className="bg-[#f9fafb] p-4 rounded-[8px] mb-6">
           <h3 className="text-[16px] font-semibold mb-2 text-[#111827]">Tags</h3>
+
           <div className="flex flex-wrap gap-2 mb-2">
             {form.tags.map((tag, index) => (
               <div
@@ -326,7 +323,8 @@ export default function UploadKnowledgeItem() {
               </div>
             ))}
           </div>
-          <div className="flex gap-2 mt-2">
+
+          <div className="flex gap-2 mt-2 items-center">
             <input
               type="text"
               id="tagInput"
@@ -341,10 +339,10 @@ export default function UploadKnowledgeItem() {
             />
             <button
               type="button"
-              className="px-2 py-1 rounded-[18px] bg-[#06b6d4] text-white"
               onClick={addTag}
+              className="px-4 py-2 rounded-[8px] bg-blue-500 text-white flex items-center gap-1"
             >
-              Add
+              <span className="text-lg leading-none">+</span> Add
             </button>
           </div>
         </section>
@@ -375,10 +373,11 @@ export default function UploadKnowledgeItem() {
               <button
                 type="button"
                 key={tab}
-                className={`px-2 py-1 rounded-[15px] ${
-                  activeTab === tab ? "bg-[#e4a931] text-[#0c0c0c]" : "bg-[#fef3c7]"
-                }`}
                 onClick={() => handleTabChange(tab)}
+                className={`px-4 py-1 text-sm border rounded-[3px] ${activeTab === tab
+                    ? "bg-white border-blue-500 text-blue-600"
+                    : "bg-white border-gray-300 text-gray-500"
+                  }`}
               >
                 {tab}
               </button>
@@ -387,21 +386,56 @@ export default function UploadKnowledgeItem() {
 
           {activeTab === "File" && (
             <>
+              {/* FILE UPLOAD BLOCK */}
               {existingAttachments.length > 0 && (
                 <div className="mb-4">
-                  <div className="text-sm mb-2">Existing attachments — keep/remove</div>
+                  <div className="text-sm mb-2">
+                    Existing attachments — keep/remove
+                  </div>
                   <div className="flex flex-col gap-2 mb-2">
                     {existingAttachments.map((att) => {
-                      const kept = keptExistingAttachmentIds.includes(att.attachmentId);
+                      const kept = keptExistingAttachmentIds.includes(
+                        att.attachmentId
+                      );
                       return (
-                        <div key={att.attachmentId} className="flex items-center gap-3 p-2 border rounded-[8px] bg-white">
-                          <a href={att.fileUrl} target="_blank" rel="noreferrer" className="text-sm text-blue-600 underline">{att.fileName}</a>
-                          <span className="text-xs text-gray-500">{att.mimeType}</span>
+                        <div
+                          key={att.attachmentId}
+                          className="flex items-center gap-3 p-2 border rounded-[8px] bg-white"
+                        >
+                          <a
+                            href={att.fileUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-sm text-blue-600 underline"
+                          >
+                            {att.fileName}
+                          </a>
+                          <span className="text-xs text-gray-500">
+                            {att.mimeType}
+                          </span>
                           <div className="ml-auto">
                             {kept ? (
-                              <button type="button" className="px-2 py-1 rounded bg-red-400 text-white" onClick={() => handleRemoveExistingAttachment(att.attachmentId)}>Remove</button>
+                              <button
+                                type="button"
+                                className="px-2 py-1 rounded bg-red-400 text-white"
+                                onClick={() =>
+                                  handleRemoveExistingAttachment(
+                                    att.attachmentId
+                                  )
+                                }
+                              >
+                                Remove
+                              </button>
                             ) : (
-                              <button type="button" className="px-2 py-1 rounded bg-green-400 text-white" onClick={() => handleKeepExistingAttachment(att.attachmentId)}>Keep</button>
+                              <button
+                                type="button"
+                                className="px-2 py-1 rounded bg-green-400 text-white"
+                                onClick={() =>
+                                  handleKeepExistingAttachment(att.attachmentId)
+                                }
+                              >
+                                Keep
+                              </button>
                             )}
                           </div>
                         </div>
@@ -410,19 +444,31 @@ export default function UploadKnowledgeItem() {
                   </div>
 
                   <label className="inline-flex items-center gap-2 text-sm">
-                    <input type="checkbox" checked={replaceAttachments} onChange={(e) => setReplaceAttachments(e.target.checked)} />
-                    <span>Replace all existing attachments with newly uploaded files</span>
+                    <input
+                      type="checkbox"
+                      checked={replaceAttachments}
+                      onChange={(e) =>
+                        setReplaceAttachments(e.target.checked)
+                      }
+                    />
+                    <span>
+                      Replace all existing attachments with newly uploaded files
+                    </span>
                   </label>
                 </div>
               )}
 
               <div
                 className="border-2 border-dashed border-[#d1d5db] rounded-[8px] p-5 text-center text-[14px] text-[#6b7280] mb-3 bg-[#f9fafb] cursor-pointer"
-                onClick={() => document.getElementById("fileInput").click()}
+                onClick={() =>
+                  document.getElementById("fileInput").click()
+                }
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => {
                   e.preventDefault();
-                  handleFileChange({ target: { files: e.dataTransfer.files } });
+                  handleFileChange({
+                    target: { files: e.dataTransfer.files },
+                  });
                 }}
               >
                 Drag & drop files here (PDF, PPTX, DOCX, MP4 up to 500MB)
@@ -437,7 +483,6 @@ export default function UploadKnowledgeItem() {
                 className="hidden"
                 onChange={handleFileChange}
               />
-
               <div className="flex flex-col gap-2 mt-3">
                 {files.map((file) => (
                   <div
@@ -461,10 +506,11 @@ export default function UploadKnowledgeItem() {
             </>
           )}
         </section>
+
         <div className="flex gap-2 justify-end mt-5">
           <button
             type="submit"
-            className="px-4 py-2 rounded-[20px] bg-[#eab308] text-white"
+            className="px-6 py-2 rounded-[8px] bg-green-600 text-white"
           >
             {editItemId ? "Update" : "Upload"}
           </button>
@@ -472,4 +518,5 @@ export default function UploadKnowledgeItem() {
       </form>
     </div>
   );
+
 }

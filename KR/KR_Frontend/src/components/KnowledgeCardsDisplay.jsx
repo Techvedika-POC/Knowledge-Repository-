@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import EngagementButtons from "./EngagementButtons";
-import VersionFilesModal from "./VersionFilesModal";
+import VersionFilesModal from "./VersionFilesModal"; // 
 import {
   FileText,
   Tag,
@@ -21,7 +21,6 @@ export default function KnowledgeCardsDisplay({ items = [], onPreview, userId, o
   const [showAll, setShowAll] = useState(false);
   const [engagementData, setEngagementData] = useState({});
   const [loading, setLoading] = useState(false);
-
   const [commentModalItem, setCommentModalItem] = useState(null);
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
@@ -30,11 +29,8 @@ export default function KnowledgeCardsDisplay({ items = [], onPreview, userId, o
   const [editText, setEditText] = useState("");
   const [expandedComments, setExpandedComments] = useState({});
   const [filesItemId, setFilesItemId] = useState(null);
-
   const themeColor = "indigo";
   const cardHighlightColor = "blue";
-
-  // Helper for Enter key behavior
   const handleKeyDown = (e, action) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -65,10 +61,6 @@ export default function KnowledgeCardsDisplay({ items = [], onPreview, userId, o
   useEffect(() => {
     if (items.length) fetchEngagementData();
   }, [items, userId]);
-
-  // -----------------------------
-  // Like / Favourite
-  // -----------------------------
   const handleLike = async (item) => {
     const id = item.itemId || item.id;
     const isLiked = engagementData[id]?.userEngagementTypes?.includes("Like");
@@ -93,9 +85,6 @@ export default function KnowledgeCardsDisplay({ items = [], onPreview, userId, o
     }
   };
 
-  // -----------------------------
-  // Comments Logic
-  // -----------------------------
   const openCommentsModal = async (item) => {
     setCommentModalItem(item);
     const id = item.itemId || item.id;
@@ -152,7 +141,6 @@ export default function KnowledgeCardsDisplay({ items = [], onPreview, userId, o
     }));
   };
 
-  // Recursive rendering
   const renderComments = (list, level = 0) =>
     list.map((c) => (
       <div
@@ -277,7 +265,6 @@ export default function KnowledgeCardsDisplay({ items = [], onPreview, userId, o
       {loading && (
         <p className="text-center text-gray-500">Loading engagements...</p>
       )}
-
       {/* Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {items.slice(0, showAll ? items.length : 3).map((item, idx) => {

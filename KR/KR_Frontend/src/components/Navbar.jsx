@@ -17,6 +17,8 @@ export default function Navbar() {
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [userId, setUserId] = useState(null);
+  const [isBrowseAllActive, setIsBrowseAllActive] = useState(false);
+
 
   const [engagement, setEngagement] = useState({
     likedItems: [],
@@ -26,13 +28,11 @@ export default function Navbar() {
   const domainDropdownRef = useRef(null);
   const categoryDropdownRef = useRef(null);
 
-  // Get userId on mount
   useEffect(() => {
     const storedUserId = localStorage.getItem("userId");
     if (storedUserId) setUserId(storedUserId);
   }, []);
 
-  // Fetch user's engagement when userId is available
   useEffect(() => {
     if (!userId) return;
 
@@ -59,8 +59,6 @@ export default function Navbar() {
     setEngagement(newEngagement);
     localStorage.setItem("engagement", JSON.stringify(newEngagement));
   };
-
-  // Like handler
   const handleLikeClick = async (item) => {
     if (!userId) return;
 
@@ -87,12 +85,9 @@ export default function Navbar() {
         )
       );
     } catch (error) {
-      console.error("Failed to update like:", error);
-      updateEngagement(engagement); // revert UI
+      updateEngagement(engagement);
     }
   };
-
-  // Favourite handler
   const handleFavouriteClick = async (item) => {
     if (!userId) return;
 
@@ -111,12 +106,10 @@ export default function Navbar() {
         await api.post(`/engagement/favourite/${itemId}?userId=${userId}`);
       }
     } catch (error) {
-      console.error("Failed to update favourite:", error);
-      updateEngagement(engagement); // revert UI
+      updateEngagement(engagement);
     }
   };
 
-  // Comment handler
   const handleCommentClick = async (item, commentText) => {
     if (!userId || !commentText.trim()) return;
 
@@ -145,7 +138,6 @@ export default function Navbar() {
     }
   };
 
-  // Fetch filters
   useEffect(() => {
     const fetchFilters = async () => {
       try {
@@ -172,6 +164,7 @@ export default function Navbar() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
   const fetchItems = async (url) => {
     setIsSearching(true);
     setError("");
@@ -183,7 +176,6 @@ export default function Navbar() {
       }));
       setSearchResults(items);
     } catch (err) {
-      console.error(err);
       setError("Error fetching items");
     } finally {
       setIsSearching(false);
@@ -207,9 +199,9 @@ export default function Navbar() {
   const handleBrowseAll = () => {
     setSelectedDomain("");
     setSelectedCategory("");
+    setIsBrowseAllActive(true);
     fetchItems("/KnowledgeItem/All");
   };
-
   const handleSearch = (e) => {
     e.preventDefault();
     if (!keyword.trim()) return;
@@ -227,7 +219,6 @@ export default function Navbar() {
 
   return (
     <>
-      {/* Navbar Filters */}
       <div className="sticky top-0 bg-white shadow-md border-b z-10 px-4 py-2 mb-0">
         <div className="flex justify-between items-center gap-3">
           <div className="flex gap-4 items-center">
@@ -235,8 +226,12 @@ export default function Navbar() {
             <div className="relative" ref={domainDropdownRef}>
               <button
                 onClick={() => setShowDomainDropdown(!showDomainDropdown)}
-                className={`px-5 py-2 rounded-full flex items-center gap-2 ${selectedDomain ? "bg-cyan-700 text-white" : "bg-cyan-100 text-cyan-700"
-                  }`}
+                className={`px-5 py-2 rounded-full flex items-center gap-2
+                ${selectedDomain
+                    ? "bg-indigo-300 text-indigo-900"
+                    : "bg-cyan-100 text-cyan-700"}
+                hover:bg-cyan-200
+              `}
               >
                 <FaLayerGroup /> Domain
               </button>
@@ -259,8 +254,12 @@ export default function Navbar() {
             <div className="relative" ref={categoryDropdownRef}>
               <button
                 onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-                className={`px-5 py-2 rounded-full flex items-center gap-2 ${selectedCategory ? "bg-blue-700 text-white" : "bg-blue-100 text-blue-700"
-                  }`}
+                className={`px-5 py-2 rounded-full flex items-center gap-2
+                ${selectedCategory
+                    ? "bg-indigo-300 text-indigo-900"
+                    : "bg-blue-100 text-blue-700"}
+                hover:bg-blue-200
+              `}
               >
                 <FaFolderOpen /> Category
               </button>
@@ -278,38 +277,46 @@ export default function Navbar() {
                 </div>
               )}
             </div>
-
             <button
-              className="px-5 py-2 rounded-full bg-indigo-700 text-white flex items-center gap-2"
+              className={`px-5 py-2 rounded-full flex items-center gap-2
+    ${isBrowseAllActive
+                  ? "bg-amber-200 text-amber-900"   
+                  : "bg-amber-100 text-amber-800"}
+  `}
               onClick={handleBrowseAll}
             >
-              <FaFilter /> Browse All
+              Browse All
             </button>
-            {searchResults.length > 0 && (
-              <button
-                onClick={handleReset}
-                className="px-5 py-2 rounded-full bg-gray-300 text-gray-800 hover:bg-gray-400"
-              >
-                Reset
-              </button>
-            )}
           </div>
 
           {/* Search Bar */}
-          <form onSubmit={handleSearch} className="relative w-full sm:w-80 ml-4">
+          <form
+            onSubmit={handleSearch}
+            className="relative w-full sm:w-80 ml-4 flex items-center gap-2"
+          >
             <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
             <input
               type="text"
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               placeholder="Search knowledge..."
-              className="w-full border border-gray-300 rounded-full pl-10 pr-3 py-2 focus:ring-2 focus:ring-blue-400"
+              className="w-full border border-gray-300 rounded-full pl-10 pr-8 py-2 focus:ring-2 focus:ring-blue-400"
             />
+
+            {searchResults.length > 0 && (
+              <button
+                type="button"
+                onClick={handleReset}
+                className="text-gray-400 hover:text-red-500"
+                title="Reset"
+              >
+                ✕
+              </button>
+            )}
           </form>
         </div>
       </div>
 
-      {/* Search Results */}
       <div className="px-6 w-full">
         {isSearching && <p className="text-center text-gray-500">Searching...</p>}
         {error && <p className="text-center text-red-500">{error}</p>}
@@ -333,9 +340,13 @@ export default function Navbar() {
         )}
 
         {selectedItem && (
-          <PreviewModal item={selectedItem} onClose={() => setSelectedItem(null)} />
+          <PreviewModal
+            item={selectedItem}
+            onClose={() => setSelectedItem(null)}
+          />
         )}
       </div>
     </>
   );
+
 }

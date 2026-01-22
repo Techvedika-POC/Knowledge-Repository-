@@ -22,14 +22,10 @@ namespace Knowledge_Repository.Application.Implementations.Services
             _lessonRepo = lessonRepo;
             _userProgressRepo = userProgressRepo;
         }
-
-        // Prevent PostgreSQL timestamp errors
         private static DateTime Now() =>
             DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
 
-        // -----------------------
-        // Mapping Helper
-        // -----------------------
+
         private static LessonDto Map(Lesson l) => new LessonDto
         {
             LessonId = l.LessonId,
@@ -43,18 +39,14 @@ namespace Knowledge_Repository.Application.Implementations.Services
             DurationMinutes = l.DurationMinutes ?? 0
         };
 
-        // -----------------------
-        // Get Single
-        // -----------------------
+
         public async Task<LessonDto> GetLessonByIdAsync(Guid lessonId)
         {
             var entity = await _lessonRepo.GetByIdAsync(lessonId);
             return entity == null ? null : Map(entity);
         }
 
-        // -----------------------
-        // Get multiple by module (optimized)
-        // -----------------------
+
         public async Task<IEnumerable<LessonDto>> GetLessonsByModuleIdAsync(Guid moduleId)
         {
             var entities = await _lessonRepo.GetByModuleIdAsync(moduleId);
@@ -66,9 +58,8 @@ namespace Knowledge_Repository.Application.Implementations.Services
                 .ToList();
         }
 
-        // -----------------------
-        // Create Single Lesson
-        // -----------------------
+
+
         public async Task<LessonDto> CreateLessonAsync(LessonDto dto)
         {
             var id = dto.LessonId != Guid.Empty ? dto.LessonId : Guid.NewGuid();
@@ -92,12 +83,9 @@ namespace Knowledge_Repository.Application.Implementations.Services
             return Map(entity);
         }
 
-        // -----------------------
-        // Batch create optimized
-        // -----------------------
+
         public async Task<IEnumerable<LessonDto>> CreateLessonsBatchAsync(IEnumerable<LessonDto> lessons)
         {
-            // Guarantee stable ordering + consistent IDs
             var list = lessons
                 .Select((l, index) => new Lesson
                 {
@@ -121,9 +109,6 @@ namespace Knowledge_Repository.Application.Implementations.Services
             return list.Select(Map).ToList();
         }
 
-        // -----------------------
-        // Update Single
-        // -----------------------
         public async Task UpdateLessonAsync(LessonDto dto)
         {
             if (dto.LessonId == Guid.Empty)
@@ -145,9 +130,7 @@ namespace Knowledge_Repository.Application.Implementations.Services
             await _lessonRepo.UpdateAsync(entity);
         }
 
-        // -----------------------
-        // Delete Lesson
-        // -----------------------
+
         public async Task DeleteLessonAsync(Guid lessonId)
         {
             var entity = await _lessonRepo.GetByIdAsync(lessonId);
@@ -155,9 +138,7 @@ namespace Knowledge_Repository.Application.Implementations.Services
                 await _lessonRepo.DeleteAsync(entity);
         }
 
-        // -----------------------
-        // Mark Lesson Completed
-        // -----------------------
+
         public async Task MarkLessonCompletedAsync(Guid lessonId, Guid userId)
         {
             var lesson = await _lessonRepo.GetByIdAsync(lessonId);

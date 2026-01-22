@@ -13,8 +13,6 @@ namespace Knowledge_Repository.Application.Interfaces.Services
         Task<WeekProgressDto?> GetWeekProgressAsync(Guid weekId, Guid userId);
         Task UpdateWeekAsync(Guid weekId, WeekDto weekDto);
         Task DeleteWeekAsync(Guid weekId);
-
-        // Full DTO methods
         Task<WeekFullDto?> GetWeekFullByIdAsync(Guid weekId, Guid? userId = null);
         Task<IEnumerable<WeekFullDto>> GetWeeksFullByPlanAsync(Guid planId, Guid? userId = null);
     }

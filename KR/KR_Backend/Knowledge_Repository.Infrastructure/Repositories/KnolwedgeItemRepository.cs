@@ -96,18 +96,21 @@ namespace Knowledge_Repository.Infrastructure.Repositories
                 .AsNoTracking()
                 .FirstOrDefaultAsync(k => k.ItemId == itemId);
         }
-
         public async Task<IEnumerable<KnowledgeItem>> GetByOwnerAsync(Guid ownerId)
         {
             return await _context.KnowledgeItems
                 .Where(k => k.OwnerId == ownerId)
                 .Include(k => k.Domain)
                 .Include(k => k.Category)
+                .Include(k => k.Owner)
                 .Include(k => k.KnowledgeTags)
                 .Include(k => k.Engagements)
+                .Include(k => k.Attachments)
+                .Include(k => k.KnowledgeReviews)  
                 .OrderByDescending(k => k.CreatedOn)
                 .ToListAsync();
         }
+
         public async Task<List<KnowledgeItem>> GetFreshPicksAsync(int count = 10)
         {
             return await _context.KnowledgeItems
@@ -137,7 +140,7 @@ namespace Knowledge_Repository.Infrastructure.Repositories
         }
         public async Task<List<KnowledgeVersion>> GetVersionsWithAttachmentsAsync(Guid itemId, bool onlyLatest = false)
         {
-            // base query that will include attachments for final fetch
+            
             IQueryable<KnowledgeVersion> query = _context.KnowledgeVersions
                 .AsNoTracking()
                 .Where(v => v.ItemId == itemId)
@@ -145,7 +148,7 @@ namespace Knowledge_Repository.Infrastructure.Repositories
 
             if (onlyLatest)
             {
-                // compute max version from a simple query (no Include)
+        
                 var maxVersion = await _context.KnowledgeVersions
                     .AsNoTracking()
                     .Where(v => v.ItemId == itemId)
@@ -163,7 +166,25 @@ namespace Knowledge_Repository.Infrastructure.Repositories
 
             return versions;
         }
-     
+        public async Task<List<KnowledgeItem>> GetApprovedEventItemsAsync()
+        {
+            var query =
+                from eki in _context.EventKnowledgeItems
+                join ki in _context.KnowledgeItems on eki.ItemId equals ki.ItemId
+                where ki.Status == "Approved" && ki.IsEventItem == true
+                select ki;
+
+            return await query
+                .Include(k => k.Domain)
+                .Include(k => k.Category)
+                .Include(k => k.Owner)
+                .Include(k => k.KnowledgeTags)
+                .Include(k => k.Engagements)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
+
 
     }
 }

@@ -1,5 +1,6 @@
-﻿using Knowledge_Repository.Application.Dtos.EventInsight;
-
+﻿using Knowledge_Repository.Application.Dtos;
+using Knowledge_Repository.Application.Dtos.EventInsight;
+using Knowledge_Repository.Application.Dtos.Mentor;
 public class FeedbackResponseDto
 {
     public Guid FeedbackId { get; set; }
@@ -9,5 +10,5 @@ public class FeedbackResponseDto
     public int? ProgressRating { get; set; }
     public DateTime CreatedOn { get; set; }
 
-    public List<FeedbackReplyDto> Replies { get; set; } = new();
+    public List<FeedbackReplysDto> Replies { get; set; } = new();
 }

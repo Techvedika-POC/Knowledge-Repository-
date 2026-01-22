@@ -5,18 +5,16 @@ using Knowledge_Repository.Domain.Entities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
-using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Security.Claims;
 using System.Text;
-using System.Threading.Tasks;
 using BCryptNet = BCrypt.Net.BCrypt;
 
 namespace Knowledge_Repository.Application.Implementations.Services
 {
-
+    /// <summary>
+    /// Handles user authentication, registration, and JWT token generation.
+    /// </summary>
     public class AuthService : IAuthService
     {
         private readonly IUserRepository _userRepository;
@@ -25,6 +23,7 @@ namespace Knowledge_Repository.Application.Implementations.Services
         private readonly IUserRoleRepository _userRoleRepository;
         private readonly IConfiguration _configuration;
         private readonly ILogger<AuthService> _logger;
+        private readonly IEventJuryRepository _eventJuryRepo;
 
         public AuthService(
             IUserRepository userRepository,
@@ -32,23 +31,29 @@ namespace Knowledge_Repository.Application.Implementations.Services
             IRoleRepository roleRepository,
             IUserRoleRepository userRoleRepository,
             IConfiguration configuration,
-            ILogger<AuthService> logger)
+            ILogger<AuthService> logger,
+            IEventJuryRepository eventJuryRepo)
         {
-            _userRepository = userRepository;
-            _departmentRepository = departmentRepository;
-            _roleRepository = roleRepository;
-            _userRoleRepository = userRoleRepository;
-            _configuration = configuration;
-            _logger = logger;
+            _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+            _departmentRepository = departmentRepository ?? throw new ArgumentNullException(nameof(departmentRepository));
+            _roleRepository = roleRepository ?? throw new ArgumentNullException(nameof(roleRepository));
+            _userRoleRepository = userRoleRepository ?? throw new ArgumentNullException(nameof(userRoleRepository));
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _eventJuryRepo = eventJuryRepo ?? throw new ArgumentNullException(nameof(eventJuryRepo));
         }
 
-
+        /// <summary>
+        /// Registers a new user and assigns the default "Contributor" role.
+        /// </summary>
         public async Task<bool> RegisterAsync(RegisterDto dto, Guid? createdBy = null)
         {
-    
+            if (dto == null)
+                throw new ArgumentNullException(nameof(dto), "Registration data cannot be null.");
+
             if (await _userRepository.ExistsByEmailAsync(dto.Email))
             {
-                _logger.LogWarning("Registration failed: Email already exists ({Email})", dto.Email);
+                _logger.LogWarning("Registration failed. Email already exists: {Email}", dto.Email);
                 return false;
             }
 
@@ -69,6 +74,7 @@ namespace Knowledge_Repository.Application.Implementations.Services
 
             await _userRepository.AddAsync(user);
 
+            // If self-registered, set CreatedBy and UpdatedBy to the user's own ID
             if (createdBy == null)
             {
                 user.CreatedBy = user.UserId;
@@ -76,9 +82,11 @@ namespace Knowledge_Repository.Application.Implementations.Services
                 await _userRepository.UpdateAsync(user);
             }
 
+            // Assign default Contributor role
             var contributorRole = await _roleRepository.GetByNameAsync("Contributor");
             if (contributorRole == null)
-                throw new InvalidOperationException("Default role 'Contributor' not found.");
+                throw new InvalidOperationException(
+                    "Registration failed. Default role 'Contributor' is not configured in the system.");
 
             var userRole = new UserRole
             {
@@ -96,37 +104,57 @@ namespace Knowledge_Repository.Application.Implementations.Services
             return true;
         }
 
+        /// <summary>
+        /// Authenticates a user and returns a JWT token with role and event jury claims.
+        /// </summary>
         public async Task<AuthResponseDto?> LoginAsync(LoginDto dto)
         {
+            if (dto == null)
+                throw new ArgumentNullException(nameof(dto), "Login data cannot be null.");
+
             _logger.LogInformation("Login attempt for user: {Email}", dto.Email);
 
             var user = await _userRepository.GetUserWithRolesByEmailAsync(dto.Email);
+
+            // Validate credentials
             if (user == null || !BCryptNet.Verify(dto.Password, user.PasswordHash))
             {
-                _logger.LogWarning("Login failed for user: {Email}", dto.Email);
+                _logger.LogWarning("Login failed due to invalid credentials: {Email}", dto.Email);
                 return null;
             }
 
-            var secretKey = _configuration["JwtSettings:SecretKey"];
+            // Fetch event jury assignments for claims
+            var eventIds = await _eventJuryRepo.GetEventIdsForUserAsync(user.UserId);
+
+            // JWT configuration
+            var secretKey = _configuration["JwtSettings:SecretKey"]
+                ?? throw new InvalidOperationException("JWT SecretKey is not configured.");
+
             var issuer = _configuration["JwtSettings:Issuer"];
             var audience = _configuration["JwtSettings:Audience"];
             var expiresMinutes = int.Parse(_configuration["JwtSettings:ExpiresInMinutes"]);
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            // Base identity claims
             var claims = new List<Claim>
             {
-                new Claim(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub, user.UserId.ToString()),
-                new Claim(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Email, user.Email),
-                new Claim(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new Claim(JwtRegisteredClaimNames.Sub, user.UserId.ToString()),
+                new Claim(JwtRegisteredClaimNames.Email, user.Email),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 new Claim(ClaimTypes.Name, user.Name)
             };
 
+            // Role claims
             foreach (var role in user.UserRoleUsers.Select(ur => ur.Role.RoleName))
-            {
                 claims.Add(new Claim(ClaimTypes.Role, role));
-            }
 
+            // Event jury claims
+            foreach (var eventId in eventIds)
+                claims.Add(new Claim("event_jury", eventId.ToString()));
+
+            // Create JWT token
             var token = new JwtSecurityToken(
                 issuer: issuer,
                 audience: audience,
@@ -145,7 +173,8 @@ namespace Knowledge_Repository.Application.Implementations.Services
                 Name = user.Name,
                 Email = user.Email,
                 Roles = user.UserRoleUsers.Select(ur => ur.Role.RoleName).ToList(),
-                UserId = user.UserId
+                UserId = user.UserId,
+                EventJuryIds = eventIds
             };
         }
     }

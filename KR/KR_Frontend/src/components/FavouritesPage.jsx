@@ -8,9 +8,9 @@ export default function FavouritesPage() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
-
+  const handlePreview = (item) => setSelectedItem(item);
+  const handleClosePreview = () => setSelectedItem(null);
   const userId = localStorage.getItem("userId");
-
   const fetchFavourites = async () => {
     setLoading(true);
     try {
@@ -26,9 +26,6 @@ export default function FavouritesPage() {
   useEffect(() => {
     fetchFavourites();
   }, [userId]);
-
-  const handlePreview = (item) => setSelectedItem(item);
-  const handleClosePreview = () => setSelectedItem(null);
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">

@@ -118,9 +118,6 @@ namespace Knowledge_Repository.Application.Implementations.Services
             await _repo.UpdateAsync(entity);
         }
 
-        // ---------------------------------------------------------
-        // DELETE ASSESSMENT
-        // ---------------------------------------------------------
         public async Task DeleteAssessmentAsync(Guid id)
         {
             var entity = await _repo.GetByIdAsync(id);
@@ -128,9 +125,6 @@ namespace Knowledge_Repository.Application.Implementations.Services
                 await _repo.DeleteAsync(entity);
         }
 
-        // ---------------------------------------------------------
-        // QUESTIONS
-        // ---------------------------------------------------------
         public async Task AddQuestionsAsync(Guid id, IEnumerable<AssessmentQuestionDto> questions)
         {
             var newOnes = questions.Select(q => new AssessmentQuestion
@@ -143,7 +137,7 @@ namespace Knowledge_Repository.Application.Implementations.Services
                 Explanation = q.Explanation,
                 Hint = q.Hint,
                 QuestionType = q.QuestionType,
-                CreatedOn = UnspecNow()    // FIXED
+                CreatedOn = UnspecNow()   
             });
 
             await _repo.AddQuestionsAsync(newOnes);
@@ -172,22 +166,15 @@ namespace Knowledge_Repository.Application.Implementations.Services
                 await _repo.DeleteQuestionAsync(q);
         }
 
-        // ---------------------------------------------------------
-        // UNLOCK LOGIC
-        // ---------------------------------------------------------
         public async Task<bool> IsAssessmentUnlockedAsync(Guid assessmentId, Guid userId)
         {
             return await _repo.IsAssessmentUnlockedAsync(assessmentId, userId);
         }
 
-        // ---------------------------------------------------------
-        // SUBMIT ASSESSMENT AND EVALUATE
-        // ---------------------------------------------------------
         public async Task<AssessmentResultDto> SubmitAssessmentAsync(SubmitAssessmentDto dto)
         {
-            // 1️⃣ Validate USER exists
-            var userExists = await _progressRepo.UserExistsAsync(dto.UserId);
-            if (!userExists)
+
+            if (!await _progressRepo.UserExistsAsync(dto.UserId))
                 throw new Exception($"User does not exist: {dto.UserId}");
 
             var assessment = await _repo.GetByIdAsync(dto.AssessmentId);
@@ -195,20 +182,82 @@ namespace Knowledge_Repository.Application.Implementations.Services
                 throw new Exception("Assessment not found");
 
             var questions = assessment.AssessmentQuestions.ToList();
-            var answers = JsonSerializer.Deserialize<Dictionary<string, string>>(dto.UserAnswers);
 
+            var answers =
+                JsonSerializer.Deserialize<Dictionary<string, string>>(dto.UserAnswers)
+                ?? new Dictionary<string, string>();
+
+            static string Normalize(string s)
+            {
+                if (string.IsNullOrWhiteSpace(s)) return "";
+
+                try { s = System.Net.WebUtility.HtmlDecode(s); } catch { }
+
+                s = s.Replace("\u00A0", " ")
+                     .Replace("\u200B", "")
+                     .Replace("\u200C", "")
+                     .Replace("\u200D", "")
+                     .Replace("\uFEFF", "")
+                     .Trim();
+
+                s = s.Replace("–", "-")
+                     .Replace("—", "-")
+                     .Replace("‒", "-")
+                     .Replace("−", "-");
+
+                s = System.Text.RegularExpressions.Regex.Replace(
+                    s,
+                    @"^\s*(?:[A-Za-z]|\d+)\s*[\.\)\:\-\–]\s*",
+                    ""
+                );
+
+                s = System.Text.RegularExpressions.Regex.Replace(s, @"\s+", " ");
+                return s.Trim().ToLowerInvariant();
+            }
             int correct = 0;
 
             foreach (var q in questions)
             {
-                if (answers.TryGetValue(q.QuestionId.ToString(), out var ans) &&
-                    ans == q.CorrectAnswer)
+                string qKey = q.QuestionId.ToString();
+                if (!answers.TryGetValue(qKey, out string userRaw))
+                    continue;
+
+                string userNorm = Normalize(userRaw);
+                string correctNorm = Normalize(q.CorrectAnswer ?? "");
+
+                if (q.QuestionType == "MCQ")
                 {
-                    correct++;
+                    if (userNorm.Length == 1 && char.IsLetter(userNorm[0]))
+                    {
+                        var options =
+                            JsonSerializer.Deserialize<string[]>(q.Options ?? "[]")
+                            ?? Array.Empty<string>();
+
+                        int index = char.ToUpperInvariant(userNorm[0]) - 'A';
+                        if (index >= 0 && index < options.Length)
+                        {
+                            if (Normalize(options[index]) == correctNorm)
+                                correct++;
+                        }
+                    }
+                    else if (userNorm == correctNorm)
+                    {
+                        correct++;
+                    }
+                }
+                else
+                {
+                    if (!string.IsNullOrWhiteSpace(userNorm))
+                        correct++;
                 }
             }
+            double percent = questions.Count == 0
+                ? 0
+                : (double)correct / questions.Count * 100;
 
-            double percent = (double)correct / questions.Count * 100;
+            if (double.IsNaN(percent) || double.IsInfinity(percent))
+                percent = 0;
+
             bool passed = percent >= 60;
 
             var result = new UserAssessmentResult
@@ -220,18 +269,61 @@ namespace Knowledge_Repository.Application.Implementations.Services
                 ScorePercentage = percent,
                 Passed = passed,
                 IsCompleted = true,
-                AttemptedOn = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
-                UpdatedOn = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified)
+                AttemptedOn = UnspecNow(),
+                UpdatedOn = UnspecNow()
             };
 
-            await _repo.SaveUserResultAsync(result);
+            await _repo.SaveUserResultAsync(result); 
 
-            await _progressRepo.UpdateTestStatusAsync(
-                dto.UserId,
-                dto.WeekId,
-                assessment.ModuleId!.Value,
-                passed ? "Passed" : "Failed"
-            );
+            if (passed)
+            {
+                Guid weekId = dto.WeekId;   
+
+                if (!assessment.ModuleId.HasValue)
+                    throw new Exception("Assessment.ModuleId is missing");
+
+                Guid moduleId = assessment.ModuleId.Value;
+
+                var lessonId = assessment.TopicId;
+                if (lessonId == Guid.Empty)
+                    throw new Exception("Assessment.TopicId (LessonId) missing");
+
+                var progress = await _progressRepo.GetModuleProgressAsync(
+                    dto.UserId,
+                    weekId,
+                    moduleId
+                );
+
+                if (progress == null)
+                {
+                    await _progressRepo.InitializeModuleProgressAsync(
+                        dto.UserId,
+                        weekId,
+                        moduleId
+                    );
+
+                    progress = await _progressRepo.GetModuleProgressAsync(
+                        dto.UserId,
+                        weekId,
+                        moduleId
+                    );
+                }
+
+
+                progress.TestStatus = "Passed";
+                progress.TopicId = lessonId;
+                progress.CurrentLessonId = lessonId;
+                progress.TestAttemptedOn = UnspecNow();
+                progress.UpdatedAt = UnspecNow();
+
+                await _progressRepo.UpdateModuleProgressAsync(progress);
+                await _progressRepo.TryMarkModuleCompletedAsync(
+                    dto.UserId,
+                    weekId,
+                    moduleId
+                );
+            }
+
 
             return new AssessmentResultDto
             {
@@ -240,16 +332,13 @@ namespace Knowledge_Repository.Application.Implementations.Services
                 UserId = dto.UserId,
                 ScorePercentage = percent,
                 Passed = passed,
-                AttemptedOn = result.AttemptedOn,
                 IsCompleted = true,
+                AttemptedOn = result.AttemptedOn,
                 UserAnswers = result.UserAnswers
             };
         }
 
 
-        // ---------------------------------------------------------
-        // GET USER ASSESSMENT RESULT
-        // ---------------------------------------------------------
         public async Task<AssessmentResultDto?> GetUserAssessmentResultAsync(Guid assessmentId, Guid userId)
         {
             var r = await _repo.GetUserResultAsync(assessmentId, userId);

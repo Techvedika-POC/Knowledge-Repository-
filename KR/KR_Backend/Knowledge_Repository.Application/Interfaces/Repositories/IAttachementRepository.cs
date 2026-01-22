@@ -1,4 +1,4 @@
-﻿// Application/Interfaces/Repositories/IAttachmentRepository.cs
+﻿
 using Knowledge_Repository.Domain.Entities;
 using System;
 using System.Collections.Generic;
@@ -10,5 +10,6 @@ namespace Knowledge_Repository.Application.Interfaces.Repositories
     {
         Task<List<Attachment>> GetByItemIdAsync(Guid itemId);
         Task AddRangeAsync(IEnumerable<Attachment> attachments);
+        Task<Attachment> GetAttachmentByIdAsync(Guid attachmentId);
     }
 }

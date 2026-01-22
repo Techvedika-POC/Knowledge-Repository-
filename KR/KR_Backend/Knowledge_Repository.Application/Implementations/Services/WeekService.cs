@@ -21,9 +21,6 @@ namespace Knowledge_Repository.Application.Implementations.Services
             _userProgressRepo = userProgressRepo;
         }
 
-        // --------------------------------------------------------
-        // CREATE WEEK
-        // --------------------------------------------------------
         public async Task<WeekDto> CreateWeekAsync(Guid planId, WeekDto weekDto)
         {
             if (weekDto == null) throw new ArgumentNullException(nameof(weekDto));
@@ -45,9 +42,6 @@ namespace Knowledge_Repository.Application.Implementations.Services
             return weekDto;
         }
 
-        // --------------------------------------------------------
-        // GET WEEKS IN PLAN
-        // --------------------------------------------------------
         public async Task<IEnumerable<WeekDto>> GetWeeksByPlanAsync(Guid planId)
         {
             var weeks = await _weekRepo.GetByPlanIdAsync(planId);
@@ -62,9 +56,6 @@ namespace Knowledge_Repository.Application.Implementations.Services
             });
         }
 
-        // --------------------------------------------------------
-        // GET WEEK BY ID
-        // --------------------------------------------------------
         public async Task<WeekDto?> GetWeekByIdAsync(Guid weekId)
         {
             var week = await _weekRepo.GetByIdAsync(weekId);
@@ -79,10 +70,6 @@ namespace Knowledge_Repository.Application.Implementations.Services
                 Prerequisites = week.Prerequisites
             };
         }
-
-        // --------------------------------------------------------
-        // WEEK PROGRESS
-        // --------------------------------------------------------
         public async Task<WeekProgressDto?> GetWeekProgressAsync(Guid weekId, Guid userId)
         {
             var week = await _weekRepo.GetWeekWithModulesAsync(weekId);
@@ -117,10 +104,6 @@ namespace Knowledge_Repository.Application.Implementations.Services
                 IsCompleted = completedModules == totalModules
             };
         }
-
-        // --------------------------------------------------------
-        // UPDATE WEEK
-        // --------------------------------------------------------
         public async Task UpdateWeekAsync(Guid weekId, WeekDto weekDto)
         {
             var week = await _weekRepo.GetByIdAsync(weekId);
@@ -134,10 +117,6 @@ namespace Knowledge_Repository.Application.Implementations.Services
 
             await _weekRepo.UpdateAsync(week);
         }
-
-        // --------------------------------------------------------
-        // DELETE WEEK
-        // --------------------------------------------------------
         public async Task DeleteWeekAsync(Guid weekId)
         {
             var week = await _weekRepo.GetByIdAsync(weekId);
@@ -146,9 +125,6 @@ namespace Knowledge_Repository.Application.Implementations.Services
             await _weekRepo.DeleteAsync(week);
         }
 
-        // --------------------------------------------------------
-        // GET FULL WEEK DETAILS
-        // --------------------------------------------------------
         public async Task<WeekFullDto?> GetWeekFullByIdAsync(Guid weekId, Guid? userId = null)
         {
             var week = await _weekRepo.GetWeekWithModulesAsync(weekId);
@@ -210,8 +186,6 @@ namespace Knowledge_Repository.Application.Implementations.Services
                     }).ToList()
                 }).ToList()
             };
-
-            // Progress details if user is provided
             if (userId.HasValue)
             {
                 dto.IsUnlocked = await _weekRepo.IsWeekUnlockedAsync(week.WeekId, userId.Value);
@@ -238,10 +212,6 @@ namespace Knowledge_Repository.Application.Implementations.Services
 
             return dto;
         }
-
-        // --------------------------------------------------------
-        // GET FULL WEEKS FOR PLAN
-        // --------------------------------------------------------
         public async Task<IEnumerable<WeekFullDto>> GetWeeksFullByPlanAsync(Guid planId, Guid? userId = null)
         {
             var weeks = await _weekRepo.GetByPlanIdAsync(planId);

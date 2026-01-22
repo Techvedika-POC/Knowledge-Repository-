@@ -8,8 +8,12 @@ export default function PreviewModal({ item, onClose }) {
   const parseDbJsonArray = (str) => {
     if (!str) return [];
     try {
+
       let cleaned = str.trim();
-      if (cleaned.startsWith('"') && cleaned.endsWith('"')) cleaned = cleaned.slice(1, -1);
+      if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
+        cleaned = cleaned.slice(1, -1);
+      }
+
       cleaned = cleaned.replace(/""/g, '"');
       const parsed = JSON.parse(cleaned);
       return Array.isArray(parsed) ? parsed.filter(Boolean) : [];
@@ -61,6 +65,14 @@ export default function PreviewModal({ item, onClose }) {
 
         {/* Content */}
         <div className="p-6 overflow-y-auto space-y-10">
+{item.status?.toLowerCase() === "rejected" && item.feedback && (
+  <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+    <p className="text-sm text-red-700">
+      <strong>Reviewer Feedback:</strong><br />
+      {item.feedback}
+    </p>
+  </div>
+)}
 
           {/* Description */}
           <div>

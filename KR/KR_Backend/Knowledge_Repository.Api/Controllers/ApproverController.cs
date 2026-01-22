@@ -98,20 +98,24 @@ namespace Knowledge_Repository.Api.Controllers
 
             return Ok("Item approved successfully.");
         }
-
         [HttpPost("reject/{itemId}")]
-        public async Task<IActionResult> RejectItem(Guid itemId)
+        public async Task<IActionResult> RejectItem(
+            Guid itemId,
+            [FromBody] RejectDto dto)
         {
             var approverId = GetLoggedInUserId();
             if (approverId == null)
                 return Unauthorized("User ID missing in token.");
 
-            var success = await _approverService.RejectAsync(itemId, approverId.Value);
-            if (!success)
-                return BadRequest("Unable to reject the item.");
+            if (dto == null || string.IsNullOrWhiteSpace(dto.Feedback))
+                return BadRequest("Feedback is required.");
+
+            await _approverService
+                .RejectAsync(itemId, approverId.Value, dto.Feedback);
 
             return Ok("Item rejected successfully.");
         }
+
 
 
         private Guid? GetLoggedInUserId()
@@ -126,9 +130,6 @@ namespace Knowledge_Repository.Api.Controllers
             var types = await _approverService.GetEventTypesAsync();
             return Ok(types);
         }
-        // --------------------------------------------
-        // EVENT TYPE → PENDING ITEMS (Paged)
-        // --------------------------------------------
         [HttpGet("pending/event/type/{eventType}")]
         public async Task<IActionResult> GetPendingByEventType(
             string eventType,

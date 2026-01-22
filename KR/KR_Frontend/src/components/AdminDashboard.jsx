@@ -30,13 +30,13 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-gray-50 text-gray-800 flex flex-col">
       <Toaster position="top-right" />
 
-      <nav className="bg-blue-100 text-blue-800 p-4 flex justify-between items-center shadow-sm border-b border-blue-200">
-        <h1 className="text-xl font-semibold">Admin Dashboard</h1>
+      <nav className="bg-blue-100 text-blue-900 p-3 flex justify-between items-center shadow-sm border-b border-blue-200">
+        <h1 className="text-2xl font-semibold">Admin Dashboard</h1>
 
         <div className="space-x-3 flex flex-wrap">
           <button
             onClick={() => setActiveTab("events")}
-            className={`px-4 py-2 rounded-md ${
+            className={`px-4 py-1 rounded-md ${
               activeTab === "events"
                 ? "bg-blue-300 text-blue-900"
                 : "bg-white border border-blue-200 hover:bg-blue-50"
@@ -46,7 +46,7 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={() => setActiveTab("domains")}
-            className={`px-4 py-2 rounded-md ${
+            className={`px-4 py-1 rounded-md ${
               activeTab === "domains"
                 ? "bg-blue-300 text-blue-900"
                 : "bg-white border border-blue-200 hover:bg-blue-50"
@@ -56,7 +56,7 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={() => setActiveTab("roles")}
-            className={`px-4 py-2 rounded-md ${
+            className={`px-4 py-1 rounded-md ${
               activeTab === "roles"
                 ? "bg-blue-300 text-blue-900"
                 : "bg-white border border-blue-200 hover:bg-blue-50"
@@ -66,17 +66,17 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={() => setActiveTab("knowledgeQuest")}
-            className={`px-4 py-2 rounded-md ${
+            className={`px-4 py-1 rounded-md ${
               activeTab === "knowledgeQuest"
                 ? "bg-blue-300 text-blue-900"
                 : "bg-white border border-blue-200 hover:bg-blue-50"
             }`}
           >
-            Learn Sphere
+        Learning Management
           </button>
           <button
             onClick={() => setActiveTab("ideathon")}
-            className={`px-4 py-2 rounded-md ${
+            className={`px-4 py-1 rounded-md ${
               activeTab === "ideathon"
                 ? "bg-blue-300 text-blue-900"
                 : "bg-white border border-blue-200 hover:bg-blue-50"
@@ -87,7 +87,7 @@ export default function AdminDashboard() {
         </div>
       </nav>
 
-      <main className="flex-1 p-8">{renderContent()}</main>
+      <main className="flex-1 px-8 pb-8 pt-0">{renderContent()}</main>
     </div>
   );
 }

@@ -11,10 +11,13 @@ export default function TrendingSection({ trending = [] }) {
   });
   const [userId, setUserId] = useState(null);
   const [mappedTrending, setMappedTrending] = useState([]);
+
+  
   useEffect(() => {
     const storedUserId = localStorage.getItem("userId");
     if (storedUserId) setUserId(storedUserId);
   }, []);
+
   useEffect(() => {
     const mapped = trending.map((item) => ({
       ...item,

@@ -17,6 +17,10 @@ public partial class KnowledgeReview
 
     public DateTime? ReviewedOn { get; set; }
 
+    public string Decision { get; set; }
+
+    public string Comments { get; set; }
+
     public virtual KnowledgeReviewerAssignment Assignment { get; set; }
 
     public virtual KnowledgeItem Item { get; set; }

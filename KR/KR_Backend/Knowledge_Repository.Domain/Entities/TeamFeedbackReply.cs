@@ -19,6 +19,10 @@ public partial class TeamFeedbackReply
 
     public DateTime CreatedOn { get; set; }
 
+    public DateTime? EditedOn { get; set; }
+
+    public bool IsDeleted { get; set; }
+
     public virtual TeamFeedback Feedback { get; set; }
 
     public virtual Team Team { get; set; }

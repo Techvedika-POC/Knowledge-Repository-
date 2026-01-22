@@ -35,6 +35,15 @@ namespace Knowledge_Repository.Infrastructure.Repositories
                 .ThenInclude(ur => ur.Role)
                 .FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
         }
+        public async Task<string?> GetUserNameAsync(Guid userId)
+        {
+            if (userId == Guid.Empty) return null;
+
+            return await _context.Users
+                .Where(u => u.UserId == userId)
+                .Select(u => u.Name)
+                .FirstOrDefaultAsync();
+        }
         public async Task<List<User>> GetUsersByIdsAsync(List<Guid> userIds)
         {
             return await _context.Users

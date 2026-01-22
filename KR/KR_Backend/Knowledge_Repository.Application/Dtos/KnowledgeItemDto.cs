@@ -5,6 +5,7 @@ namespace Knowledge_Repository.Application.Dtos
 {
     public class KnowledgeItemDto
     {
+        
         public Guid ItemId { get; set; }
         public int EngagementScore { get; set; }
         public DateTimeOffset CreatedOn { get; set; }
@@ -16,11 +17,11 @@ namespace Knowledge_Repository.Application.Dtos
         public string Title { get; set; }
         public string Description { get; set; }
 
-        // Optional field
+        
         public List<float> Embedding { get; set; }
         public string KnowledgeItem { get; set; }
 
-        // Domain details
+       
         public Guid? DomainId { get; set; }
         public string DomainName { get; set; }
         public Guid? CategoryId { get; set; }
@@ -31,12 +32,12 @@ namespace Knowledge_Repository.Application.Dtos
         public int? Version { get; set; }
         public string Visibility { get; set; }
 
-        // Event-related
+       
         public bool? IsEventItem { get; set; }
         public string ContributorName { get; set; }
         public Guid? CreatedBy { get; set; }
         public string CreatedByName { get; set; }
-
+        public List<AttachmentDto> Attachments { get; set; } = new();
         public DateTime? UpdatedOn { get; set; }
 
         public List<string> Tags { get; set; } = new List<string>();

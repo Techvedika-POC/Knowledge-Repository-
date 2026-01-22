@@ -20,14 +20,6 @@
          "ObjectType": 0
       },
       {
-         "Name": "public.ai_generation_outputs",
-         "ObjectType": 0
-      },
-      {
-         "Name": "public.ai_generation_requests",
-         "ObjectType": 0
-      },
-      {
          "Name": "public.announcements",
          "ObjectType": 0
       },
@@ -80,6 +72,14 @@
          "ObjectType": 0
       },
       {
+         "Name": "public.JuryChatMessage",
+         "ObjectType": 0
+      },
+      {
+         "Name": "public.JuryFinalScore",
+         "ObjectType": 0
+      },
+      {
          "Name": "public.knowledge_items",
          "ObjectType": 0
       },
@@ -120,6 +120,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "public.PasswordReset",
+         "ObjectType": 0
+      },
+      {
          "Name": "public.presentations",
          "ObjectType": 0
       },
@@ -140,11 +144,15 @@
          "ObjectType": 0
       },
       {
-         "Name": "public.team_feedback_reply",
+         "Name": "public.team_members",
          "ObjectType": 0
       },
       {
-         "Name": "public.team_members",
+         "Name": "public.TeamChatMessage",
+         "ObjectType": 0
+      },
+      {
+         "Name": "public.TeamFeedbackReply",
          "ObjectType": 0
       },
       {
@@ -153,10 +161,6 @@
       },
       {
          "Name": "public.topic",
-         "ObjectType": 0
-      },
-      {
-         "Name": "public.user_badges",
          "ObjectType": 0
       },
       {
@@ -169,6 +173,10 @@
       },
       {
          "Name": "public.UserAssessmentResult",
+         "ObjectType": 0
+      },
+      {
+         "Name": "public.UserLearningPlans",
          "ObjectType": 0
       },
       {

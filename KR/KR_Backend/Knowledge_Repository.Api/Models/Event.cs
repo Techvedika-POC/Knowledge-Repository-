@@ -55,11 +55,17 @@ public partial class Event
 
     public virtual ICollection<EventKnowledgeItem> EventKnowledgeItems { get; set; } = new List<EventKnowledgeItem>();
 
+    public virtual ICollection<JuryCommunication> JuryCommunications { get; set; } = new List<JuryCommunication>();
+
+    public virtual ICollection<JuryFinalScore> JuryFinalScores { get; set; } = new List<JuryFinalScore>();
+
     public virtual ICollection<Mentor> Mentors { get; set; } = new List<Mentor>();
 
     public virtual User Owner { get; set; }
 
     public virtual ICollection<Presentation> Presentations { get; set; } = new List<Presentation>();
+
+    public virtual ICollection<TeamFeedback> TeamFeedbacks { get; set; } = new List<TeamFeedback>();
 
     public virtual ICollection<Team> Teams { get; set; } = new List<Team>();
 

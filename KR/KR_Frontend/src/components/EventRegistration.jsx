@@ -1,3 +1,4 @@
+// src/components/EventRegistration.jsx
 import React, { useEffect, useState } from "react";
 import api from "../api";
 import { useNavigate } from "react-router-dom";
@@ -13,6 +14,7 @@ export default function EventRegistration() {
   const [isRegistered, setIsRegistered] = useState(false);
 
   const navigate = useNavigate();
+
   useEffect(() => {
     const fetchEvents = async () => {
       try {
@@ -36,11 +38,23 @@ export default function EventRegistration() {
     const checkRegistration = async () => {
       try {
         setCheckingRegistration(true);
-        const res = await api.get(`/EventRegistration/is-registered/${selectedEvent}`);
+
+        const currentUserId = localStorage.getItem("userId");
+        if (!currentUserId) {
+          console.warn("No userId in localStorage — cannot pre-check registration.");
+          if (!cancelled) setIsRegistered(false);
+          return;
+        }
+
+        const res = await api.get(
+          `/EventRegistration/is-registered/${selectedEvent}`,
+          { params: { userId: currentUserId } }
+        );
+
         const isReg = res.data?.isRegistered ?? false;
         if (!cancelled) setIsRegistered(Boolean(isReg));
       } catch (err) {
-        console.error("Failed to check registration:", err);
+        console.warn("Failed to check registration:", err);
         toast.error("Could not confirm registration status. You may still attempt to register.");
         if (!cancelled) setIsRegistered(false);
       } finally {
@@ -58,10 +72,11 @@ export default function EventRegistration() {
   const extractEmailsFromText = (text = "") => {
     const re = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,}/g;
     const matches = text.match(re);
-    return Array.isArray(matches) ? Array.from(new Set(matches.map(m => m.toLowerCase()))) : [];
+    return Array.isArray(matches) ? Array.from(new Set(matches.map((m) => m.toLowerCase()))) : [];
   };
 
   const handleBackendError = (err) => {
+    console.error("Backend error:", err?.response?.data || err);
     const backendMessage = err?.response?.data?.message || err?.message || "Registration failed";
     const conflictingEmails = extractEmailsFromText(backendMessage);
 
@@ -116,15 +131,51 @@ export default function EventRegistration() {
       return;
     }
 
+    const currentUserId = localStorage.getItem("userId");
+    const currentUserEmail = (localStorage.getItem("userEmail") || "").toLowerCase();
+
+    if (currentUserId) {
+      try {
+        const pre = await api.get(
+          `/EventRegistration/is-registered/${selectedEvent}`,
+          { params: { userId: currentUserId } }
+        );
+        if (pre.data?.isRegistered) {
+          toast.error("You are already registered (part of a team) for this event.");
+          return;
+        }
+      } catch (err) {
+        console.warn("Pre-check for existing registration failed:", err);
+      }
+    } else {
+      console.warn("No currentUserId in localStorage — pre-check skipped.");
+    }
+
+    const finalMembers = [...uniqueMembers];
+    if (currentUserEmail && !finalMembers.includes(currentUserEmail)) {
+      finalMembers.unshift(currentUserEmail);
+    }
+
+    const invalidEmails = finalMembers.filter((em) => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em));
+    if (invalidEmails.length) {
+      toast.error(`Invalid email(s): ${invalidEmails.join(", ")}`);
+      return;
+    }
+
+    const payload = {
+      eventId: selectedEvent,
+      teamName,
+      teamMemberEmails: finalMembers,
+      leaderEmail: currentUserEmail || undefined,
+    };
+
+    console.info("Registration payload:", payload);
+
     try {
       setLoading(true);
 
-      const payload = {
-        eventId: selectedEvent,
-        teamName,
-        teamMemberEmails: uniqueMembers, 
-      };
       const res = await api.post("/EventRegistration/register-team", payload);
+
       if (res.data?.success === false || res.status >= 400) {
         const serverMsg = res.data?.message || "Registration failed";
         throw new Error(serverMsg);
@@ -194,7 +245,6 @@ export default function EventRegistration() {
               required
             />
           </div>
-
           {/* Team Members */}
           <div>
             <label className="block text-sm font-medium text-gray-800 mb-1">
@@ -209,7 +259,7 @@ export default function EventRegistration() {
               required
             />
             <p className="text-xs text-gray-500 mt-1">
-              Separate emails with commas. Include the team leader in the list.
+              Separate emails with commas. The logged-in user will be added automatically.
             </p>
           </div>
 

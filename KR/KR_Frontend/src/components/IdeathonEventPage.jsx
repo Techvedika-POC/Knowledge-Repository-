@@ -2,12 +2,15 @@ import React, { useState, useEffect, useMemo } from "react";
 import { toast } from "react-hot-toast";
 import api from "../api";
 import debounce from "lodash.debounce";
+import {
+  ChevronDownIcon,
+  ChevronUpIcon, TrashIcon, PlusIcon
+} from "@heroicons/react/24/outline";
 
 export default function IdeathonAdminDashboard() {
-  const [events, setEvents] = useState([]); 
-  const [eventsByType, setEventsByType] = useState([]); 
+  const [events, setEvents] = useState([]);
+  const [eventsByType, setEventsByType] = useState([]);
   const [selectedEventId, setSelectedEventId] = useState(null);
-
   const [eventData, setEventData] = useState({});
   const [teams, setTeams] = useState([]);
   const [mentors, setMentors] = useState([]);
@@ -15,21 +18,17 @@ export default function IdeathonAdminDashboard() {
   const [juryUsers, setJuryUsers] = useState([]);
   const [presentations, setPresentations] = useState([]);
   const [auditLog, setAuditLog] = useState([]);
-
   const [activeTab, setActiveTab] = useState("teams");
   const [searchTeam, setSearchTeam] = useState("");
   const [filteredTeams, setFilteredTeams] = useState([]);
   const [page, setPage] = useState(1);
   const teamsPerPage = 5;
-
   const [expandedTeamId, setExpandedTeamId] = useState(null);
   const [scheduleInputs, setScheduleInputs] = useState({});
   const [mentorSelect, setMentorSelect] = useState({});
   const [selectedJuryToAdd, setSelectedJuryToAdd] = useState("");
-
   const [presentationTeamToSchedule, setPresentationTeamToSchedule] = useState("");
   const [presentationDatetime, setPresentationDatetime] = useState("");
-
   const safeVal = (v, fallback = "") => (v === null || v === undefined ? fallback : v);
   const formatDateLabel = (d) => {
     if (!d) return "";
@@ -324,7 +323,6 @@ export default function IdeathonAdminDashboard() {
                             >
                               Select
                             </button>
-                            <a href={`/events/${ev.eventId}`} className="text-xs text-indigo-600 hover:underline">Details</a>
                           </div>
                         </div>
                       ))
@@ -371,7 +369,6 @@ export default function IdeathonAdminDashboard() {
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
               </button>
             ))}
-            <div className="ml-auto text-sm text-gray-500">Selected event controls</div>
           </div>
 
           {/* TEAMS */}
@@ -396,9 +393,22 @@ export default function IdeathonAdminDashboard() {
                         </div>
 
                         <div className="flex items-center gap-3">
-                          <button onClick={() => setExpandedTeamId((id) => (id === team.teamId ? null : team.teamId))} className="px-3 py-1 rounded bg-gray-100 hover:bg-gray-200 text-sm">
-                            {expandedTeamId === team.teamId ? "Collapse" : "Details"}
+                          <button
+                            onClick={() =>
+                              setExpandedTeamId((id) =>
+                                id === team.teamId ? null : team.teamId
+                              )
+                            }
+                            title={expandedTeamId === team.teamId ? "Collapse" : "Details"}
+                            className="p-2 rounded-md bg-gray-100 hover:bg-gray-200"
+                          >
+                            {expandedTeamId === team.teamId ? (
+                              <ChevronUpIcon className="w-4 h-4 text-gray-700" />
+                            ) : (
+                              <ChevronDownIcon className="w-4 h-4 text-gray-700" />
+                            )}
                           </button>
+
                         </div>
                       </div>
 
@@ -431,8 +441,15 @@ export default function IdeathonAdminDashboard() {
                                   <li key={am.mentorId} className="flex justify-between items-center">
                                     <div className="text-sm">{am.user?.fullName || am.user?.name || am.user?.email || am.userId}</div>
                                     <div className="flex gap-2">
-                                      <button onClick={() => removeMentor(team.teamId, am.mentorId)} className="px-2 py-1 rounded bg-red-200 text-xs">Remove</button>
+                                      <button
+                                        onClick={() => removeMentor(team.teamId, am.mentorId)}
+                                        title="Remove mentor"
+                                        className="p-1"
+                                      >
+                                        <TrashIcon className="w-4 h-4 text-red-600 hover:text-red-800" />
+                                      </button>
                                     </div>
+
                                   </li>
                                 ))}
                               </ul>
@@ -496,7 +513,13 @@ export default function IdeathonAdminDashboard() {
                     <option key={u.userId} value={u.userId}>{u.name} ({u.email})</option>
                   ))}
                 </select>
-                <button onClick={addJuryMember} className="px-3 py-1 rounded bg-blue-600 text-white">Add Jury</button>
+                <button
+                  onClick={addJuryMember}
+                  className="flex items-center gap-1 px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700"
+                >
+                  <PlusIcon className="w-4 h-4" />
+                  Add
+                </button>
                 <div className="text-sm text-gray-500 ml-auto">{juryMembers.length} assigned</div>
               </div>
 
@@ -510,8 +533,15 @@ export default function IdeathonAdminDashboard() {
                           <div className="text-sm text-gray-500">{member.email}</div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <button onClick={() => removeJuryMember(member.userId)} className="px-3 py-1 rounded bg-red-200 text-sm">Remove</button>
+                          <button
+                            onClick={() => removeJuryMember(member.userId)}
+                            title="Remove jury member"
+                            className="p-1"
+                          >
+                            <TrashIcon className="w-4 h-4 text-red-600 hover:text-red-800" />
+                          </button>
                         </div>
+
                       </li>
                     ))}
                   </ul>
@@ -554,8 +584,8 @@ export default function IdeathonAdminDashboard() {
                   <input type="datetime-local" value={presentationDatetime} onChange={(e) => setPresentationDatetime(e.target.value)} className="border p-2 rounded-md w-full md:w-1/3" />
 
                   <div className="flex gap-2">
-                    <button onClick={schedulePresentationCompact} className="px-4 py-2 rounded bg-green-600 text-white">Schedule</button>
-                    <button onClick={() => { setPresentationTeamToSchedule(""); setPresentationDatetime(""); }} className="px-4 py-2 rounded bg-gray-200">Clear</button>
+                    <button onClick={schedulePresentationCompact} className="px-4 py-1 rounded bg-green-600 text-white">Schedule</button>
+                    <button onClick={() => { setPresentationTeamToSchedule(""); setPresentationDatetime(""); }} className="px-4 py-1 rounded bg-gray-200">Clear</button>
                   </div>
                 </div>
                 <p className="text-xs text-gray-500 mt-2">Tip: scheduled items appear above as cards.</p>

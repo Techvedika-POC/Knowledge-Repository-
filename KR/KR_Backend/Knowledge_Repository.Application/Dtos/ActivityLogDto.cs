@@ -13,7 +13,8 @@
         public string Domain { get; set; }
         public string Description { get; set; } 
         public string Status { get; set; }
-        public DateTime? Date { get; set; } 
+        public DateTime? Date { get; set; }
+        public string Feedback { get; set; }
     }
     public class PagedResult<T>
     {

@@ -6,6 +6,7 @@ export default function ProtectedRoute({
   requireAdmin = false,
   requireManager = false,
   requireApprover = false,
+  requireJury=false,
   redirectPath = "/app/home",
 }) {
   const token = localStorage.getItem("jwtToken");
@@ -23,5 +24,9 @@ export default function ProtectedRoute({
   if (requireApprover && !roles.includes("Approver")) {
     return <Navigate to={redirectPath} replace />;
   }
+  if (requireJury && !roles.includes("Jury Member")) {
+  return <Navigate to="/app/home" replace />;
+}
+
   return children;
 }

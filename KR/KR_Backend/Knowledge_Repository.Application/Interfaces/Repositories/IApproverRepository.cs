@@ -18,7 +18,7 @@ namespace Knowledge_Repository.Application.Interfaces.Repositories
         Task<List<KnowledgeItem>> GetPendingItemsByEventAsync(Guid eventId, int page, int size);
 
         Task<bool> ApproveAsync(Guid itemId, Guid approverId);
-        Task<bool> RejectAsync(Guid itemId, Guid approverId);
+        Task<bool> RejectAsync(Guid itemId, Guid approverId, string feedback);
         Task<IEnumerable<string>> GetEventTypesAsync();
         Task<List<KnowledgeItem>> GetPendingItemsByEventTypeAsync(string eventType, int page, int size);
         Task<int> GetPendingEventTypeCountAsync(string eventType);

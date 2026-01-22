@@ -77,6 +77,10 @@ public partial class User
 
     public virtual ICollection<User> InverseUpdatedByNavigation { get; set; } = new List<User>();
 
+    public virtual ICollection<JuryChatMessage> JuryChatMessages { get; set; } = new List<JuryChatMessage>();
+
+    public virtual ICollection<JuryFinalScore> JuryFinalScores { get; set; } = new List<JuryFinalScore>();
+
     public virtual ICollection<KnowledgeItem> KnowledgeItemCreatedByNavigations { get; set; } = new List<KnowledgeItem>();
 
     public virtual ICollection<KnowledgeItem> KnowledgeItemOwners { get; set; } = new List<KnowledgeItem>();
@@ -99,6 +103,8 @@ public partial class User
 
     public virtual ICollection<Mentor> Mentors { get; set; } = new List<Mentor>();
 
+    public virtual ICollection<PasswordReset> PasswordResets { get; set; } = new List<PasswordReset>();
+
     public virtual ICollection<Role> RoleCreatedByNavigations { get; set; } = new List<Role>();
 
     public virtual ICollection<Role> RoleUpdatedByNavigations { get; set; } = new List<Role>();
@@ -118,14 +124,6 @@ public partial class User
     public virtual User UpdatedByNavigation { get; set; }
 
     public virtual ICollection<UserAssessmentResult> UserAssessmentResults { get; set; } = new List<UserAssessmentResult>();
-
-    public virtual ICollection<UserBadge> UserBadgeAwardedByNavigations { get; set; } = new List<UserBadge>();
-
-    public virtual ICollection<UserBadge> UserBadgeCreatedByNavigations { get; set; } = new List<UserBadge>();
-
-    public virtual ICollection<UserBadge> UserBadgeUpdatedByNavigations { get; set; } = new List<UserBadge>();
-
-    public virtual ICollection<UserBadge> UserBadgeUsers { get; set; } = new List<UserBadge>();
 
     public virtual ICollection<UserModuleProgress> UserModuleProgresses { get; set; } = new List<UserModuleProgress>();
 

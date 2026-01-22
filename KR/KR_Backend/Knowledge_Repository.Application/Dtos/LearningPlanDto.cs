@@ -13,5 +13,9 @@ public class LearningPlanDto
     public string TechnicalRequirements { get; set; }
     public string SelfAssessmentChecklist { get; set; }
 
+    // ✅ MUST BE NULLABLE (matches entity)
+    public DateTime? CreatedOn { get; set; }
+    public DateTime? UpdatedOn { get; set; }
+
     public List<WeekFullDto> Weeks { get; set; } = new();
 }

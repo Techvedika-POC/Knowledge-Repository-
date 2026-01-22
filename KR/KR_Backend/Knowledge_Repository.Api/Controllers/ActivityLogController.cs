@@ -11,7 +11,7 @@ namespace Knowledge_Repository.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize] 
+    [Authorize]
     public class ContributionsController : ControllerBase
     {
         private readonly IActivityLogService _activityLogService;

@@ -16,10 +16,6 @@ namespace Knowledge_Repository.Infrastructure.Repositories
         {
             _context = context;
         }
-
-        /// <summary>
-        /// Lightweight hierarchy (kept for backward compatibility)
-        /// </summary>
         public async Task<LearningPlan?> GetPlanWithHierarchyAsync(Guid planId)
         {
             return await _context.LearningPlans
@@ -38,9 +34,6 @@ namespace Knowledge_Repository.Infrastructure.Repositories
                 .FirstOrDefaultAsync(x => x.PlanId == planId);
         }
 
-        /// <summary>
-        /// Full hierarchy loading all metadata fields
-        /// </summary>
         public async Task<LearningPlan?> GetPlanWithHierarchyFullAsync(Guid planId)
         {
             return await _context.LearningPlans
@@ -59,9 +52,6 @@ namespace Knowledge_Repository.Infrastructure.Repositories
                 .FirstOrDefaultAsync(p => p.PlanId == planId);
         }
 
-        /// <summary>
-        /// Checks if user completed all modules under a plan
-        /// </summary>
         public async Task<bool> IsPlanCompletedByUser(Guid planId, Guid userId)
         {
             var moduleIds = await _context.Modules
