@@ -125,10 +125,11 @@ namespace Knowledge_Repository.Application.Implementations.Services
 
             // Fetch event jury assignments for claims
             var eventIds = await _eventJuryRepo.GetEventIdsForUserAsync(user.UserId);
+            // JWT configuration (from environment)
+            var secretKey = Environment.GetEnvironmentVariable("JWT_SECRET");
 
-            // JWT configuration
-            var secretKey = _configuration["JwtSettings:SecretKey"]
-                ?? throw new InvalidOperationException("JWT SecretKey is not configured.");
+            if (string.IsNullOrWhiteSpace(secretKey))
+                throw new InvalidOperationException("JWT_SECRET environment variable is missing in AuthService.");
 
             var issuer = _configuration["JwtSettings:Issuer"];
             var audience = _configuration["JwtSettings:Audience"];
@@ -136,6 +137,8 @@ namespace Knowledge_Repository.Application.Implementations.Services
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+
 
             // Base identity claims
             var claims = new List<Claim>

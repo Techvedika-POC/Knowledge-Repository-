@@ -33,8 +33,13 @@ IdentityModelEventSource.ShowPII = true;
 var builder = WebApplication.CreateBuilder(args);
 
 // ===== DATABASE =====
+var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
+
+if (string.IsNullOrWhiteSpace(connectionString))
+    throw new Exception("DB_CONNECTION environment variable is missing");
+
 builder.Services.AddDbContext<Knowledge_Repository_dbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
+    options.UseNpgsql(connectionString)
 );
 
 // ===== REGISTER REPOSITORIES =====
@@ -133,14 +138,18 @@ builder.Services.AddScoped<ITrainingPlanRepository, TrainingPlanRepository>();
 
 builder.Services.AddScoped<IEnrichmentLlmService>(sp =>
 {
-    var config = sp.GetRequiredService<IConfiguration>();
-    var apiKey = config["OpenAI:ApiKey"];
+    var apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
 
     if (string.IsNullOrWhiteSpace(apiKey))
-        throw new Exception("OpenAI API Key is missing for enrichment");
+        throw new Exception("OPENAI_API_KEY environment variable is missing");
 
     return new Gpt4oMiniEnrichmentService(apiKey);
 });
+
+builder.Configuration
+    .AddEnvironmentVariables();
+
+
 // ===== EVALUATION STRATEGIES =====
 
 // Rule-based evaluator 
@@ -164,14 +173,14 @@ builder.Services.AddScoped<DocxParser>();
 
 builder.Services.AddScoped<ILlmService>(sp =>
 {
-    var config = sp.GetRequiredService<IConfiguration>();
-    var apiKey = config["Groq:ApiKey"];
+    var apiKey = Environment.GetEnvironmentVariable("GROQ_API_KEY");
 
     if (string.IsNullOrWhiteSpace(apiKey))
-        throw new Exception("Groq API Key is missing");
+        throw new Exception("GROQ_API_KEY environment variable is missing");
 
     return new GroqLlmService(apiKey);
 });
+
 
 builder.Services.AddScoped<RuleBasedEvaluator>();
 
@@ -225,7 +234,14 @@ builder.Services.AddSwaggerGen(c =>
 
 // ===== JWT AUTH =====
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-var secretKey = Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]);
+
+var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET");
+
+if (string.IsNullOrWhiteSpace(jwtSecret))
+    throw new Exception("JWT_SECRET environment variable is missing");
+
+var secretKey = Encoding.UTF8.GetBytes(jwtSecret);
+
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>

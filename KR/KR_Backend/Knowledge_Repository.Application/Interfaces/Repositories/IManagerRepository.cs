@@ -8,5 +8,6 @@ namespace Knowledge_Repository.Application.Interfaces.Repositories
 
         Task<List<UserLearningProgressDto>> GetPlanProgressAsync(Guid planId);
 
-        Task<List<LearningPlanDto>> GetAllLearningPlansAsync(); 
+        Task<List<LearningPlanDto>> GetAllLearningPlansAsync();
+    }
 }
