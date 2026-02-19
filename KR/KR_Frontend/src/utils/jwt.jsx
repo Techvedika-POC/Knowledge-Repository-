@@ -17,11 +17,6 @@ export function parseJwt(token) {
     return null;
   }
 }
-
-/**
- * Return array of event IDs from claim names:
- * "event_jury", "eventJury", "eventJuries"
- */
 export function getEventJuryIdsFromToken(token) {
   const claims = parseJwt(token);
   if (!claims) return [];

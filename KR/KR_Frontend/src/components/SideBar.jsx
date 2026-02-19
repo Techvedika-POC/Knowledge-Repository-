@@ -46,8 +46,7 @@ export default function Sidebar() {
   };
 
   return (
-    <div className="flex flex-col h-full w-[240px] bg-gradient-to-b from-[#0b2239] via-[#102c47] to-[#133553] text-white font-inter p-3 flex-shrink-0">
-      {/* Header */}
+    <div className="flex flex-col h-full w-[240px] bg-gradient-to-b from-[#0b2239] via-[#102c47] to-[#133553] text-white font-inter p-2 flex-shrink-0">
       <div className="text-center mb-5 flex-shrink-0">
         <h1 className="text-[18px] font-semibold text-[#22d3ee]">
           KnowLedger Synaptix
@@ -56,8 +55,6 @@ export default function Sidebar() {
           Innovate • Collaborate • Build
         </p>
       </div>
-
-      {/* Primary Menu */}
       <div className="flex-1 flex flex-col">
         <p className="text-[10px] font-medium uppercase tracking-[0.5px] text-[#94a3b8] mb-2 flex-shrink-0">
           Primary
@@ -136,8 +133,6 @@ export default function Sidebar() {
 
         </nav>
       </div>
-
-      {/* Secondary Menu */}
       <div className="mt-3 mb-3 flex-shrink-0">
         <p className="text-[10px] font-medium uppercase tracking-[0.5px] text-[#94a3b8] mb-2">
           Secondary
@@ -159,8 +154,6 @@ export default function Sidebar() {
 
         </nav>
       </div>
-
-      {/* User Profile */}
       <div ref={menuRef} className="mt-auto relative w-full flex-shrink-0">
         <button
           onClick={() => setMenuOpen(!menuOpen)}

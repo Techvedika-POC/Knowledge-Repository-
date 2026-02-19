@@ -4,6 +4,7 @@ using Knowledge_Repository.Application.Interfaces.Services;
 using Knowledge_Repository.Domain.Entities;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Knowledge_Repository.Application.Implementations.Services
@@ -12,15 +13,38 @@ namespace Knowledge_Repository.Application.Implementations.Services
     {
         private readonly IEventRepository _eventRepository;
 
-        public EventService(IEventRepository eventRepository)
+        private readonly ITeamRepository _teamRepository;
+
+        public EventService(
+            IEventRepository eventRepository,
+            ITeamRepository teamRepository)
         {
             _eventRepository = eventRepository;
+            _teamRepository = teamRepository;
         }
 
         public async Task<List<Event>> GetAllEventsAsync()
         {
             return await _eventRepository.GetAllEventsAsync();
         }
+        public async Task<int> GetTotalHackathonTeamsAsync()
+        {
+            var hackathons = await _eventRepository.GetEventsByTypeAsync("Hackathon");
+
+            if (hackathons == null || hackathons.Count == 0)
+                return 0;
+
+            var hackathonIds = hackathons
+                .Select(e => e.EventId)
+                .ToList();
+
+            var teams = await _teamRepository.GetAllAsync(
+                t => t.EventId.HasValue && hackathonIds.Contains(t.EventId.Value)
+            );
+
+            return teams.Count();
+        }
+
 
         public async Task<List<Event>> GetEventsByTypeAsync(string eventType)
         {
@@ -225,6 +249,34 @@ namespace Knowledge_Repository.Application.Implementations.Services
             }
 
             return result;
+        }
+
+        public async Task<List<EventWithTimelineDto>> GetActiveEventsAsync()
+        {
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+            var events = await _eventRepository.GetActiveEventsAsync(today);
+
+            return events.Select(e => new EventWithTimelineDto
+            {
+                EventId = e.EventId,
+                Title = e.Title,
+                Description = e.Description,
+                EventType = e.EventType,
+                StartDate = e.StartDate,
+                EndDate = e.EndDate,
+                RegistrationCloseDate = e.RegistrationCloseDate,
+                MentorCheckpointStart = e.MentorCheckpointStart,
+                MentorCheckpointEnd = e.MentorCheckpointEnd,
+                FinalSubmissionDeadline = e.FinalSubmissionDeadline,
+                IdeaPresentationStart = e.IdeaPresentationStart,
+                IdeaPresentationEnd = e.IdeaPresentationEnd,
+                WinnersAnnouncementDate = e.WinnersAnnouncementDate,
+                ContactEmail = e.ContactEmail,
+                Notes = e.Notes,
+                CreatedOn = e.CreatedOn,
+                UpdatedOn = e.UpdatedOn
+            }).ToList();
         }
 
 

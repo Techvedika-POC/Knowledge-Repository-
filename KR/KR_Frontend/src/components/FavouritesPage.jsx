@@ -29,7 +29,6 @@ export default function FavouritesPage() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
-      {/* Page Header */}
       <div className="mb-6 text-center">
         <h1 className="text-3xl font-bold text-gray-800 mb-1">
           My Favourite Knowledge Items
@@ -38,8 +37,6 @@ export default function FavouritesPage() {
           Preview and manage the items you've saved as favourites.
         </p>
       </div>
-
-      {/* Container Card */}
       <div className="bg-white shadow-md rounded-xl p-6 max-w-7xl mx-auto">
         {loading && (
           <p className="text-center text-gray-500 py-10 animate-pulse">
@@ -63,8 +60,6 @@ export default function FavouritesPage() {
           />
         )}
       </div>
-
-      {/* Preview Modal */}
       {selectedItem && (
         <PreviewModal item={selectedItem} onClose={handleClosePreview} />
       )}

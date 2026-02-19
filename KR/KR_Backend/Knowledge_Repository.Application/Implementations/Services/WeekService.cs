@@ -13,14 +13,15 @@ namespace Knowledge_Repository.Application.Implementations.Services
     public class WeekService : IWeekService
     {
         private readonly IWeekRepository _weekRepo;
-        private readonly IUserProgressRepository _userProgressRepo;
+        private readonly IUserModuleProgressRepository _moduleProgressRepo;
 
-        public WeekService(IWeekRepository weekRepo, IUserProgressRepository userProgressRepo)
+        public WeekService(
+            IWeekRepository weekRepo,
+            IUserModuleProgressRepository moduleProgressRepo)
         {
             _weekRepo = weekRepo;
-            _userProgressRepo = userProgressRepo;
+            _moduleProgressRepo = moduleProgressRepo;
         }
-
         public async Task<WeekDto> CreateWeekAsync(Guid planId, WeekDto weekDto)
         {
             if (weekDto == null) throw new ArgumentNullException(nameof(weekDto));
@@ -80,14 +81,15 @@ namespace Knowledge_Repository.Application.Implementations.Services
 
             foreach (var module in week.Modules)
             {
-                var progress = await _userProgressRepo.GetModuleProgressAsync(
+                var progress = await _moduleProgressRepo.GetAsync(
                     userId,
-                    week.PlanId,
-                    module.ModuleId
-                );
+                    module.ModuleId);
 
                 if (progress != null &&
-                    string.Equals(progress.Status, "Completed", StringComparison.OrdinalIgnoreCase))
+                    string.Equals(
+                        progress.Status,
+                        "Completed",
+                        StringComparison.OrdinalIgnoreCase))
                 {
                     completedModules++;
                 }
@@ -100,10 +102,13 @@ namespace Knowledge_Repository.Application.Implementations.Services
                 WeekNumber = week.WeekNumber,
                 TotalModules = totalModules,
                 CompletedModules = completedModules,
-                IsUnlocked = await _weekRepo.IsWeekUnlockedAsync(week.WeekId, userId),
+                IsUnlocked = await _weekRepo.IsWeekUnlockedAsync(
+                    week.WeekId,
+                    userId),
                 IsCompleted = completedModules == totalModules
             };
         }
+
         public async Task UpdateWeekAsync(Guid weekId, WeekDto weekDto)
         {
             var week = await _weekRepo.GetByIdAsync(weekId);
@@ -186,21 +191,26 @@ namespace Knowledge_Repository.Application.Implementations.Services
                     }).ToList()
                 }).ToList()
             };
+
             if (userId.HasValue)
             {
-                dto.IsUnlocked = await _weekRepo.IsWeekUnlockedAsync(week.WeekId, userId.Value);
+                dto.IsUnlocked = await _weekRepo.IsWeekUnlockedAsync(
+                    week.WeekId,
+                    userId.Value);
 
                 bool allCompleted = true;
 
                 foreach (var module in week.Modules)
                 {
-                    var progress = await _userProgressRepo.GetModuleProgressAsync(
+                    var progress = await _moduleProgressRepo.GetAsync(
                         userId.Value,
-                        week.PlanId,
-                        module.ModuleId
-                    );
+                        module.ModuleId);
 
-                    if (progress == null || progress.Status != "Completed")
+                    if (progress == null ||
+                        !string.Equals(
+                            progress.Status,
+                            "Completed",
+                            StringComparison.OrdinalIgnoreCase))
                     {
                         allCompleted = false;
                         break;
@@ -212,6 +222,7 @@ namespace Knowledge_Repository.Application.Implementations.Services
 
             return dto;
         }
+
         public async Task<IEnumerable<WeekFullDto>> GetWeeksFullByPlanAsync(Guid planId, Guid? userId = null)
         {
             var weeks = await _weekRepo.GetByPlanIdAsync(planId);

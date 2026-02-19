@@ -39,7 +39,6 @@ export default function UploadKnowledgeItem() {
     teamMemberEmails: "",
   });
   const isEventFlow = !!(location.state?.eventId || form.isEventItem);
-  // ------------------- Prefill event & team info -------------------
   useEffect(() => {
     if (location.state?.eventId) {
       const userTeam = JSON.parse(localStorage.getItem("userTeam") || "{}");
@@ -202,8 +201,6 @@ export default function UploadKnowledgeItem() {
           <strong>Tip:</strong> Follow upload guidelines for faster approvals.
         </span>
       </div>
-
-      {/* Upload Guidelines */}
       <div className="bg-blue-50 border border-blue-200 p-3 rounded-[8px] text-sm text-blue-900 mb-5">
         <ul className="list-disc ml-5 space-y-1">
           <li>Select the correct Domain and Category</li>
@@ -386,7 +383,6 @@ export default function UploadKnowledgeItem() {
 
           {activeTab === "File" && (
             <>
-              {/* FILE UPLOAD BLOCK */}
               {existingAttachments.length > 0 && (
                 <div className="mb-4">
                   <div className="text-sm mb-2">

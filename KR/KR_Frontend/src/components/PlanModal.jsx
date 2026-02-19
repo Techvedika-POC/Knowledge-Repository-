@@ -75,7 +75,6 @@ export default function PlanModal({ plan, onClose, onPlanSaved }) {
         border border-gray-200
       ">
 
-        {/* HEADER */}
         <div className="text-black px-2 py-2 mb-3 rounded-xl text-center">
           <h2 className="text-2xl font-bold tracking-wide">
             {plan ? "Update Learning Plan" : "Create Learning Plan"}
@@ -87,7 +86,6 @@ export default function PlanModal({ plan, onClose, onPlanSaved }) {
 
         <form onSubmit={handleSubmit} className="space-y-4">
 
-          {/* TITLE */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">
               Plan Title
@@ -103,7 +101,6 @@ export default function PlanModal({ plan, onClose, onPlanSaved }) {
             />
           </div>
 
-          {/* DESCRIPTION */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">
               Short Description
@@ -117,7 +114,6 @@ export default function PlanModal({ plan, onClose, onPlanSaved }) {
             />
           </div>
 
-          {/* WEEKS & DAYS */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">
@@ -150,7 +146,6 @@ export default function PlanModal({ plan, onClose, onPlanSaved }) {
             </div>
           </div>
 
-          {/* OVERVIEW */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">
               Full Overview
@@ -163,8 +158,6 @@ export default function PlanModal({ plan, onClose, onPlanSaved }) {
                          focus:ring-2 focus:ring-indigo-300 h-24 text-sm"
             />
           </div>
-
-          {/* OBJECTIVES */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">
               Learning Objectives
@@ -178,7 +171,6 @@ export default function PlanModal({ plan, onClose, onPlanSaved }) {
             />
           </div>
 
-          {/* PREREQUISITES */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">
               Prerequisites
@@ -192,7 +184,6 @@ export default function PlanModal({ plan, onClose, onPlanSaved }) {
             />
           </div>
 
-          {/* TECHNICAL REQUIREMENTS */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">
               Technical Requirements
@@ -206,7 +197,6 @@ export default function PlanModal({ plan, onClose, onPlanSaved }) {
             />
           </div>
 
-          {/* SELF-ASSESSMENT */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">
               Self-Assessment Checklist
@@ -215,15 +205,13 @@ export default function PlanModal({ plan, onClose, onPlanSaved }) {
               value={selfAssessmentChecklist}
               onChange={(e) => setSelfAssessmentChecklist(e.target.value)}
               placeholder={`e.g.,
-✓ I understand the basics of LLMs  
-✓ I can write Python scripts  
-✓ I can work with APIs`}
+ I understand the basics of LLMs  
+ I can write Python scripts  
+ I can work with APIs`}
               className="w-full p-2.5 rounded-lg bg-gray-50 border border-gray-300 shadow-sm 
                          focus:ring-2 focus:ring-indigo-300 h-20 text-sm whitespace-pre-line"
             />
           </div>
-
-          {/* BUTTONS */}
           <div className="flex justify-end gap-3 pt-3 border-t border-gray-200">
             <button
               type="button"

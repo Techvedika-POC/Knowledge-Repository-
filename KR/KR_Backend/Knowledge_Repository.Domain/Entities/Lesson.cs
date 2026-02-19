@@ -34,6 +34,4 @@ public partial class Lesson
     public string Metadata { get; set; }
 
     public virtual Module Module { get; set; }
-
-    public virtual ICollection<UserModuleProgress> UserModuleProgresses { get; set; } = new List<UserModuleProgress>();
 }

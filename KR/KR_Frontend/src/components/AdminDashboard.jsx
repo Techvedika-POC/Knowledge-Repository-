@@ -31,7 +31,7 @@ export default function AdminDashboard() {
       <Toaster position="top-right" />
 
       <nav className="bg-blue-100 text-blue-900 p-3 flex justify-between items-center shadow-sm border-b border-blue-200">
-        <h1 className="text-2xl font-semibold">Admin Dashboard</h1>
+        <h1 className="text-2xl font-bold">Admin Dashboard</h1>
 
         <div className="space-x-3 flex flex-wrap">
           <button

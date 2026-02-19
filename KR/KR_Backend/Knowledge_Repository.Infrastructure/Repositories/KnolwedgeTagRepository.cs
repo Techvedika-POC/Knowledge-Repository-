@@ -29,5 +29,14 @@ namespace Knowledge_Repository.Infrastructure.Repositories
                                  .Where(t => t.ItemId == itemId)
                                  .ToListAsync();
         }
+        public async Task<List<KnowledgeTag>> GetByItemAndVersionAsync(
+    Guid itemId,
+    Guid versionId)
+        {
+            return await _context.KnowledgeTags
+                .Where(t => t.ItemId == itemId && t.VersionId == versionId)
+                .ToListAsync();
+        }
+
     }
 }

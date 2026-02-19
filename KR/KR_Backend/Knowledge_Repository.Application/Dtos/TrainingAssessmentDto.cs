@@ -12,8 +12,6 @@
         public string Description { get; set; }
 
         public string Metadata { get; set; }
-
-        // 🔥 NEW — REQUIRED
         public List<TrainingAssessmentQuestionDto> Questions { get; set; } = [];
     }
 
@@ -21,8 +19,6 @@
     {
         public string Question { get; set; }
         public string QuestionType { get; set; }
-
-        // Stored as JSON string (MCQ options, coding metadata, etc.)
         public string Options { get; set; }
 
         public string CorrectAnswer { get; set; }

@@ -1,86 +1,114 @@
 ﻿using Knowledge_Repository.Application.Dtos;
 using Knowledge_Repository.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Threading.Tasks;
 
-namespace Knowledge_Repository.API.Controllers
+namespace Knowledge_Repository.Api.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/user-progress")]
     public class UserProgressController : ControllerBase
     {
         private readonly IUserProgressService _service;
 
-        public UserProgressController(IUserProgressService service)
+        public UserProgressController(
+            IUserProgressService service)
         {
             _service = service;
         }
 
-        // GET USER PROGRESS
-        [HttpGet("{userId}/plan/{planId}")]
-        public async Task<ActionResult<UserProgressDto>> GetUserProgress(
+        // -------- PLAN --------
+
+        [HttpPost("{userId}/plan/{planId}/enroll")]
+        public async Task<IActionResult> EnrollToPlan(
+            Guid userId,
+            Guid planId,
+            [FromQuery] Guid assignedBy)
+        {
+            await _service.EnrollUserToPlanAsync(
+                userId, planId, assignedBy);
+            return NoContent();
+        }
+
+        [HttpPost("{userId}/plan/{planId}/start")]
+        public async Task<IActionResult> StartPlan(
             Guid userId,
             Guid planId)
         {
-            return Ok(await _service.GetUserProgressAsync(userId, planId));
-        }
-
-        // TRACK LESSON ACCESS
-        [HttpPost("{userId}/module/{moduleId}/lesson/{lessonId}/access")]
-        public async Task<IActionResult> TrackLesson(
-            Guid userId,
-            Guid moduleId,
-            Guid lessonId)
-        {
-            await _service.TrackLessonAccessAsync(userId, moduleId, lessonId);
+            await _service.StartPlanAsync(
+                userId, planId);
             return NoContent();
         }
 
-        // MARK LESSON COMPLETED
-        [HttpPost("{userId}/module/{moduleId}/lesson/{lessonId}/complete")]
+        // -------- LESSON --------
+
+        [HttpPost("{userId}/lesson/{lessonId}/start")]
+        public async Task<IActionResult> StartLesson(
+            Guid userId,
+            Guid lessonId,
+            [FromQuery] Guid moduleId)
+        {
+            await _service.StartLessonAsync(
+                userId, lessonId, moduleId);
+            return NoContent();
+        }
+
+        [HttpPost("{userId}/lesson/{lessonId}/complete")]
         public async Task<IActionResult> CompleteLesson(
             Guid userId,
-            Guid moduleId,
             Guid lessonId)
         {
-            await _service.MarkLessonCompletedAsync(userId, moduleId, lessonId);
+            await _service.CompleteLessonAsync(
+                userId, lessonId);
             return NoContent();
         }
 
-        // UPDATE TEST STATUS
-        [HttpPost("{userId}/module/{moduleId}/test")]
-        public async Task<IActionResult> UpdateTestStatus(
+        // -------- ASSESSMENT --------
+
+        [HttpPost("{userId}/assessment/{assessmentId}/start")]
+        public async Task<IActionResult> StartAssessment(
             Guid userId,
-            Guid moduleId,
-            [FromQuery] string status)
+            Guid assessmentId,
+            [FromQuery] Guid moduleId)
         {
-            await _service.UpdateTestStatusAsync(
-                userId,
-                Guid.Empty,    
-                moduleId,
-                status
-            );
-
+            await _service.StartAssessmentAsync(
+                userId, assessmentId, moduleId);
             return NoContent();
         }
+        [HttpPost("{userId}/assessment/{assessmentId}/submit")]
+        public async Task<ActionResult<AssessmentResultDto>> SubmitAssessment(
+            Guid userId,
+            Guid assessmentId,
+            [FromBody] SubmitAssessmentDto dto)
+        {
+            dto.UserId = userId;
+            dto.AssessmentId = assessmentId;
 
-        // COMPLETE MODULE 
-        [HttpPost("{userId}/module/{moduleId}/complete")]
-        public async Task<IActionResult> CompleteModule(
+            var result = await _service.SubmitAssessmentAsync(dto);
+            return Ok(result);
+        }
+
+
+
+        // -------- PROGRESS --------
+
+        [HttpGet("{userId}/module/{moduleId}")]
+        public async Task<ActionResult<decimal>> GetModuleProgress(
             Guid userId,
             Guid moduleId)
         {
-            bool ok = await _service.TryMarkModuleCompletedAsync(
-                userId,
-                Guid.Empty,     
-                moduleId
-            );
+            return Ok(await _service
+                .GetModuleProgressAsync(userId, moduleId));
+        }
 
-            if (!ok)
-                return BadRequest("Cannot complete module: lessons or assessment incomplete.");
-
-            return NoContent();
+        [HttpGet("{userId}/plan/{planId}")]
+        public async Task<ActionResult<decimal>> GetPlanProgress(
+            Guid userId,
+            Guid planId)
+        {
+            return Ok(await _service
+                .GetPlanProgressAsync(userId, planId));
         }
     }
+
+
 }

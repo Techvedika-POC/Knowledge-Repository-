@@ -49,11 +49,21 @@ public partial class Event
 
     public virtual ICollection<ActivityLog> ActivityLogs { get; set; } = new List<ActivityLog>();
 
+    public virtual ICollection<AiConversation> AiConversations { get; set; } = new List<AiConversation>();
+
+    public virtual ICollection<AiInsight> AiInsights { get; set; } = new List<AiInsight>();
+
+    public virtual ICollection<CodingChallenge> CodingChallenges { get; set; } = new List<CodingChallenge>();
+
     public virtual User CreatedByNavigation { get; set; }
+
+    public virtual ICollection<EvaluationCriterion> EvaluationCriteria { get; set; } = new List<EvaluationCriterion>();
 
     public virtual ICollection<EventJury> EventJuries { get; set; } = new List<EventJury>();
 
     public virtual ICollection<EventKnowledgeItem> EventKnowledgeItems { get; set; } = new List<EventKnowledgeItem>();
+
+    public virtual ICollection<IdeaSubmission> IdeaSubmissions { get; set; } = new List<IdeaSubmission>();
 
     public virtual ICollection<JuryChatMessage> JuryChatMessages { get; set; } = new List<JuryChatMessage>();
 

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import api from "../api";
 import { toast } from "react-hot-toast";
+import HackathonJuryTab from "./HackathonJuryTab";
 
 const safeData = (res) => {
   if (!res) return [];
@@ -28,6 +29,7 @@ export default function JuryDashboard() {
   const [loadingEvents, setLoadingEvents] = useState(false);
   const [loadingTeams, setLoadingTeams] = useState(false);
   const chatScrollRef = useRef(null);
+  const [tab, setTab] = useState("IDEATHON");
 
   const fetchEvents = useCallback(async () => {
     setLoadingEvents(true);
@@ -76,8 +78,6 @@ export default function JuryDashboard() {
       setChatMessages([]);
     }
   }, [selectedEventId, loadTeams]);
-
-  // ---------------- SCORE SUBMISSION ----------------
   const submitScore = async (teamId) => {
     const data = scoreMap[teamId] || {};
     const total = data.totalScore;
@@ -106,8 +106,6 @@ export default function JuryDashboard() {
       }
     }
   };
-
-  // ---------------- JURY GROUP CHAT ----------------
   const loadJuryChat = useCallback(async (eventId) => {
     try {
       const res = await api.get(`/JuryPanel/JuryChat/${eventId}`);
@@ -194,197 +192,211 @@ export default function JuryDashboard() {
       </div>
     );
   };
-
-  // ---------------- UI ----------------
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">Jury Panel</h1>
+        <h1 className="text-2xl font-bold">Jury Panel</h1>
       </div>
+      {/* Tabs */}
+      <div className="flex gap-3 mb-3">
+        <button
+          onClick={() => setTab("IDEATHON")}
+          className={`px-4 py-2 rounded-lg font-semibold transition ${tab === "IDEATHON"
+              ? "bg-indigo-600 text-white shadow"
+              : "bg-white border hover:bg-slate-50"
+            }`}
+        >
+          Ideathon Jury
+        </button>
 
-      {/* Event Selector */}
-      <div className="mb-6">
-        <label className="block text-sm font-medium">Assigned Ideathon Events</label>
-        <div className="flex gap-3 mt-2 items-center">
-          <select
-            className="border p-2 rounded-md w-full max-w-lg"
-            value={selectedEventId}
-            onChange={(e) => setSelectedEventId(e.target.value)}
-          >
-            <option value="">-- select event --</option>
-            {events.map((ev) => (
-              <option key={ev.eventId} value={ev.eventId}>
-                {ev.title}
-              </option>
-            ))}
-          </select>
-          <div className="text-sm text-gray-500">
-            {loadingEvents ? "loading..." : `${events.length} events`}
-          </div>
-        </div>
+        <button
+          onClick={() => setTab("HACKATHON")}
+          className={`px-4 py-2 rounded-lg font-semibold transition ${tab === "HACKATHON"
+              ? "bg-green-600 text-white shadow"
+              : "bg-white border hover:bg-slate-50"
+            }`}
+        >
+          Hackathon Jury
+        </button>
       </div>
-
-      {!selectedEventId ? (
-        <div className="p-6 bg-white border rounded text-center text-gray-600">
-          Select an event to view teams and group chat.
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-          {/* Teams + Scoring */}
-          <div className="lg:col-span-6">
-            <h2 className="text-xl font-semibold mb-3">Teams ({teams.length})</h2>
-
-            {teams.map((team) => (
-              <div key={team.teamId} className="border p-3 rounded bg-white shadow-sm mb-4">
-                <div className="font-bold">{team.teamName}</div>
-
-                {/* Members */}
-                <ul className="mt-2 text-sm ml-5 list-disc">
-                  {team.members.map((m) => (
-                    <li key={m.userId}>
-                      {m.name} — <span className="text-gray-500">{m.email}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                {/* Scoring */}
-                <div className="mt-3 flex gap-2 items-center">
-                  <input
-                    type="number"
-                    placeholder="score"
-                    className="border p-1 rounded w-20 text-sm"
-                    value={scoreMap[team.teamId]?.totalScore ?? ""}
-                    onChange={(e) =>
-                      setScoreMap((s) => ({
-                        ...s,
-                        [team.teamId]: { ...(s[team.teamId] || {}), totalScore: e.target.value }
-                      }))
-                    }
-                  />
-
-                  <button
-                    onClick={() => submitScore(team.teamId)}
-                    className="px-3 py-1 bg-green-600 text-white rounded text-sm"
-                  >
-                    Submit Score
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Jury Group Chat */}
-          <div className="lg:col-span-6 flex flex-col">
-            <h4 className="text-lg font-semibold mb-2">Jury Group Chat</h4>
-
-            {/* Chat messages container */}
-            <div className="flex-1 overflow-y-auto p-4 bg-white border rounded-lg shadow-sm">
-              <div className="flex flex-col gap-3">
-                {sortedChatMessages.map((m) => {
-
-                  const senderId =
-                    (m.senderJuryId ?? m.senderId ?? (m.sender && (m.sender.id || m.sender.userId)) ?? "").toString();
-                  const mine = !!(senderId && juryId && senderId === juryId.toString());
-
-                  const replyObj =
-                    m.replyTo ??
-                    m.ReplyTo ??
-                    m.repliedTo ??
-                    m.RepliedTo ??
-                    (m.replyToMessage ?? null);
-
-                  const displaySender = m.senderName ?? m.SenderName ?? m.senderEmail ?? m.SenderEmail ?? "Unknown";
-
-                  return (
-                    <div
-                      key={m.messageId}
-                      className={`flex ${mine ? "justify-end" : "justify-start"} items-start`}
-                    >
-                      <div
-                        className={`max-w-[75%] p-3 rounded-2xl shadow break-words ${mine ? "bg-blue-500 text-white rounded-br-none" : "bg-gray-100 text-gray-800 rounded-bl-none"
-                          }`}
-                      >
-
-                        {replyObj && (
-                          <div className={`p-2 rounded mb-2 ${mine ? "bg-white/10 border" : "bg-white border"}`}>
-                            <div className="text-[11px] font-semibold opacity-90">
-                              {replyObj.senderName ?? replyObj.SenderName ?? replyObj.senderEmail ?? replyObj.SenderEmail ?? "Unknown"}
-                            </div>
-                            <div className="text-sm text-gray-700 truncate" title={replyObj.message ?? replyObj.Message}>
-                              {replyObj.message ?? replyObj.Message}
-                            </div>
-                          </div>
-                        )}
-
-                        <div className="text-xs font-semibold opacity-90">
-                          {displaySender}
-                        </div>
-
-                        <div className="mt-1 whitespace-pre-wrap">{m.message ?? m.Message}</div>
-
-                        <div className="flex items-center justify-between mt-2">
-                          <div className="text-[10px] opacity-60">
-                            {m.createdOn ? new Date(m.createdOn).toLocaleString() : (m.CreatedOn ? new Date(m.CreatedOn).toLocaleString() : "")}
-                          </div>
-
-                          <button
-                            onClick={() => setReplyTarget(m)}
-                            className={`text-xs ml-3 ${mine ? "text-indigo-200 hover:underline" : "text-indigo-600 hover:underline"}`}
-                          >
-                            Reply
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-                <div ref={chatScrollRef} />
+      {tab === "IDEATHON" && (
+        <>
+          <div className="mb-6">
+            <label className="block text-sm font-medium">Assigned Ideathon Events</label>
+            <div className="flex gap-3 mt-2 items-center">
+              <select
+                className="border p-2 rounded-md w-full max-w-lg"
+                value={selectedEventId}
+                onChange={(e) => setSelectedEventId(e.target.value)}
+              >
+                <option value="">-- select event --</option>
+                {events.map((ev) => (
+                  <option key={ev.eventId} value={ev.eventId}>
+                    {ev.title}
+                  </option>
+                ))}
+              </select>
+              <div className="text-sm text-gray-500">
+                {loadingEvents ? "loading..." : `${events.length} events`}
               </div>
             </div>
-            <div className="mt-3">
-              {replyTarget && (
-                <div className="mb-2 p-2 bg-gray-50 border-l-4 border-indigo-500 rounded flex items-start justify-between">
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[12px] font-semibold">
-                      Replying to {replyTarget.senderName || replyTarget.SenderName || replyTarget.senderEmail || replyTarget.SenderEmail || "Unknown"}
-                    </div>
-                    <div className="text-sm text-gray-700 truncate" title={replyTarget.message ?? replyTarget.Message}>
-                      {replyTarget.message ?? replyTarget.Message}
+          </div>
+
+          {!selectedEventId ? (
+            <div className="p-6 bg-white border rounded text-center text-gray-600">
+              Select an event to view teams and group chat.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              <div className="lg:col-span-6">
+                <h2 className="text-xl font-semibold mb-3">Teams ({teams.length})</h2>
+
+                {teams.map((team) => (
+                  <div key={team.teamId} className="border p-3 rounded bg-white shadow-sm mb-4">
+                    <div className="font-bold">{team.teamName}</div>
+                    <ul className="mt-2 text-sm ml-5 list-disc">
+                      {team.members.map((m) => (
+                        <li key={m.userId}>
+                          {m.name} — <span className="text-gray-500">{m.email}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="mt-3 flex gap-2 items-center">
+                      <input
+                        type="number"
+                        placeholder="score"
+                        className="border p-1 rounded w-20 text-sm"
+                        value={scoreMap[team.teamId]?.totalScore ?? ""}
+                        onChange={(e) =>
+                          setScoreMap((s) => ({
+                            ...s,
+                            [team.teamId]: { ...(s[team.teamId] || {}), totalScore: e.target.value }
+                          }))
+                        }
+                      />
+
+                      <button
+                        onClick={() => submitScore(team.teamId)}
+                        className="px-3 py-1 bg-green-600 text-white rounded text-sm"
+                      >
+                        Submit Score
+                      </button>
                     </div>
                   </div>
-                  <button
-                    onClick={() => setReplyTarget(null)}
-                    className="text-sm text-red-500 ml-3"
-                    aria-label="Cancel reply"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              )}
-
-              <div className="flex gap-2 items-center bg-white p-2 rounded-lg border shadow-sm">
-                <textarea
-                  value={chatText}
-                  onChange={(e) => setChatText(e.target.value)}
-                  onKeyDown={handleChatKeyDown}
-                  placeholder="Type a message..."
-                  rows={1}
-                  className="flex-1 p-2 rounded-full border bg-gray-50 resize-none focus:outline-none text-sm"
-                />
-
-                <button
-                  onClick={postJuryChat}
-                  className="px-4 py-1.5 bg-green-600 text-white rounded-md font-semibold text-sm hover:bg-indigo-700"
-                >
-                  Send
-                </button>
+                ))}
               </div>
-              <div className="text-xs text-gray-400 mt-1">Press Enter to send (Shift+Enter for newline).</div>
+              <div className="lg:col-span-6 flex flex-col">
+                <h4 className="text-lg font-semibold mb-2">Jury Group Chat</h4>
+                <div className="flex-1 overflow-y-auto p-4 bg-white border rounded-lg shadow-sm">
+                  <div className="flex flex-col gap-3">
+                    {sortedChatMessages.map((m) => {
+
+                      const senderId =
+                        (m.senderJuryId ?? m.senderId ?? (m.sender && (m.sender.id || m.sender.userId)) ?? "").toString();
+                      const mine = !!(senderId && juryId && senderId === juryId.toString());
+
+                      const replyObj =
+                        m.replyTo ??
+                        m.ReplyTo ??
+                        m.repliedTo ??
+                        m.RepliedTo ??
+                        (m.replyToMessage ?? null);
+
+                      const displaySender = m.senderName ?? m.SenderName ?? m.senderEmail ?? m.SenderEmail ?? "Unknown";
+
+                      return (
+                        <div
+                          key={m.messageId}
+                          className={`flex ${mine ? "justify-end" : "justify-start"} items-start`}
+                        >
+                          <div
+                            className={`max-w-[75%] p-3 rounded-2xl shadow break-words ${mine ? "bg-blue-500 text-white rounded-br-none" : "bg-gray-100 text-gray-800 rounded-bl-none"
+                              }`}
+                          >
+
+                            {replyObj && (
+                              <div className={`p-2 rounded mb-2 ${mine ? "bg-white/10 border" : "bg-white border"}`}>
+                                <div className="text-[11px] font-semibold opacity-90">
+                                  {replyObj.senderName ?? replyObj.SenderName ?? replyObj.senderEmail ?? replyObj.SenderEmail ?? "Unknown"}
+                                </div>
+                                <div className="text-sm text-gray-700 truncate" title={replyObj.message ?? replyObj.Message}>
+                                  {replyObj.message ?? replyObj.Message}
+                                </div>
+                              </div>
+                            )}
+
+                            <div className="text-xs font-semibold opacity-90">
+                              {displaySender}
+                            </div>
+
+                            <div className="mt-1 whitespace-pre-wrap">{m.message ?? m.Message}</div>
+
+                            <div className="flex items-center justify-between mt-2">
+                              <div className="text-[10px] opacity-60">
+                                {m.createdOn ? new Date(m.createdOn).toLocaleString() : (m.CreatedOn ? new Date(m.CreatedOn).toLocaleString() : "")}
+                              </div>
+
+                              <button
+                                onClick={() => setReplyTarget(m)}
+                                className={`text-xs ml-3 ${mine ? "text-indigo-200 hover:underline" : "text-indigo-600 hover:underline"}`}
+                              >
+                                Reply
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    <div ref={chatScrollRef} />
+                  </div>
+                </div>
+                <div className="mt-3">
+                  {replyTarget && (
+                    <div className="mb-2 p-2 bg-gray-50 border-l-4 border-indigo-500 rounded flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[12px] font-semibold">
+                          Replying to {replyTarget.senderName || replyTarget.SenderName || replyTarget.senderEmail || replyTarget.SenderEmail || "Unknown"}
+                        </div>
+                        <div className="text-sm text-gray-700 truncate" title={replyTarget.message ?? replyTarget.Message}>
+                          {replyTarget.message ?? replyTarget.Message}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setReplyTarget(null)}
+                        className="text-sm text-red-500 ml-3"
+                        aria-label="Cancel reply"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="flex gap-2 items-center bg-white p-2 rounded-lg border shadow-sm">
+                    <textarea
+                      value={chatText}
+                      onChange={(e) => setChatText(e.target.value)}
+                      onKeyDown={handleChatKeyDown}
+                      placeholder="Type a message..."
+                      rows={1}
+                      className="flex-1 p-2 rounded-full border bg-gray-50 resize-none focus:outline-none text-sm"
+                    />
+
+                    <button
+                      onClick={postJuryChat}
+                      className="px-4 py-1.5 bg-green-600 text-white rounded-md font-semibold text-sm hover:bg-indigo-700"
+                    >
+                      Send
+                    </button>
+                  </div>
+                  <div className="text-xs text-gray-400 mt-1">Press Enter to send (Shift+Enter for newline).</div>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          )}
+        </>
       )}
+      {tab === "HACKATHON" && <HackathonJuryTab />}
+
     </div>
   );
 }

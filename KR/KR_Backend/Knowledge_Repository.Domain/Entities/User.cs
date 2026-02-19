@@ -27,6 +27,10 @@ public partial class User
 
     public virtual ICollection<ActivityLog> ActivityLogs { get; set; } = new List<ActivityLog>();
 
+    public virtual ICollection<AiConversation> AiConversations { get; set; } = new List<AiConversation>();
+
+    public virtual ICollection<AiInsight> AiInsights { get; set; } = new List<AiInsight>();
+
     public virtual ICollection<Announcement> Announcements { get; set; } = new List<Announcement>();
 
     public virtual ICollection<Attachment> AttachmentCreatedByNavigations { get; set; } = new List<Attachment>();
@@ -40,6 +44,8 @@ public partial class User
     public virtual ICollection<Category> CategoryCreatedByNavigations { get; set; } = new List<Category>();
 
     public virtual ICollection<Category> CategoryUpdatedByNavigations { get; set; } = new List<Category>();
+
+    public virtual ICollection<CodeSubmission> CodeSubmissions { get; set; } = new List<CodeSubmission>();
 
     public virtual User CreatedByNavigation { get; set; }
 
@@ -72,6 +78,8 @@ public partial class User
     public virtual ICollection<Event> EventOwners { get; set; } = new List<Event>();
 
     public virtual ICollection<Event> EventUpdatedByNavigations { get; set; } = new List<Event>();
+
+    public virtual ICollection<InterviewSession> InterviewSessions { get; set; } = new List<InterviewSession>();
 
     public virtual ICollection<User> InverseCreatedByNavigation { get; set; } = new List<User>();
 
@@ -115,6 +123,8 @@ public partial class User
 
     public virtual ICollection<TeamMember> TeamMembers { get; set; } = new List<TeamMember>();
 
+    public virtual ICollection<TeamTask> TeamTasks { get; set; } = new List<TeamTask>();
+
     public virtual ICollection<Team> Teams { get; set; } = new List<Team>();
 
     public virtual ICollection<Topic> TopicCreatedByNavigations { get; set; } = new List<Topic>();
@@ -125,11 +135,11 @@ public partial class User
 
     public virtual ICollection<UserAssessmentResult> UserAssessmentResults { get; set; } = new List<UserAssessmentResult>();
 
-    public virtual ICollection<UserModuleProgress> UserModuleProgresses { get; set; } = new List<UserModuleProgress>();
-
     public virtual ICollection<UserRole> UserRoleCreatedByNavigations { get; set; } = new List<UserRole>();
 
     public virtual ICollection<UserRole> UserRoleUpdatedByNavigations { get; set; } = new List<UserRole>();
 
     public virtual ICollection<UserRole> UserRoleUsers { get; set; } = new List<UserRole>();
+
+    public virtual ICollection<UserSkill> UserSkills { get; set; } = new List<UserSkill>();
 }

@@ -14,7 +14,7 @@ export default function DaySpotlightSection() {
         setError("");
         const res = await api.get("/DaySpotlight");
         setDaySpotlight(res.data || null);
-      } catch (err) {
+      } catch {
         setError("Failed to load Day Spotlight.");
       } finally {
         setLoading(false);
@@ -23,96 +23,134 @@ export default function DaySpotlightSection() {
     fetchSpotlight();
   }, []);
 
-  if (loading) return <p className="px-6 mt-6 text-xs text-slate-500">Loading Day Spotlight…</p>;
-  if (error) return <p className="px-6 mt-6 text-xs text-red-500">{error}</p>;
+  if (loading) return <p className="px-6 mt-4 text-xs text-gray-500">Loading Day Spotlight…</p>;
+  if (error) return <p className="px-6 mt-4 text-xs text-red-500">{error}</p>;
   if (!daySpotlight) return null;
 
   return (
-    <div className="px-2 mb-8">
-      <article
-        className="
-          w-full max-w-5xl mx-auto rounded-[32px]
-          bg-gradient-to-br from-white via-slate-50 to-indigo-50
-          border border-slate-200 shadow-xl 
-          px-10 py-8
-        "
-      >
-        <div className="flex flex-col md:flex-row md:justify-between gap-10">
+    <div className="px-14 mt-1 mb-2">
 
-          {/* LEFT BLOCK */}
-          <div className="flex-1">
+      <section className="
+        max-w-5xl mx-auto
+        rounded-xl
+        overflow-hidden
+        shadow-md
+        border border-slate-200
+        bg-gradient-to-br
+        from-white
+        via-indigo-50/40
+        to-white
+      ">
+        <div className="
+          flex items-center justify-between
+          px-6 py-2
+          border-b border-indigo-100
+          bg-gradient-to-r
+          from-indigo-300
+          via-sky-50
+          to-indigo-400
+        ">
+          <div className="
+            flex items-center gap-2
+            px-3 py-1.5
+            rounded-md
+            bg-gradient-to-r
+            from-white
+            to-indigo-100
+            border border-indigo-100
+            shadow-sm
+          ">
+            <Sparkles className="w-4 h-4 text-indigo-600" />
 
-            {/* Label */}
-            <div
-              className="
-                inline-flex items-center gap-2 px-4 py-1.5 
-                rounded-full bg-indigo-100 border border-indigo-200 shadow-sm mb-4
-              "
-            >
-              <Sparkles className="w-4 h-4 text-indigo-700" />
-              <span className="text-xs font-bold uppercase text-indigo-700 tracking-wide">
-                Day Spotlight
-              </span>
-            </div>
+            <h3 className="text-sm font-semibold text-indigo-800">
+              Day Spotlight
+            </h3>
+          </div>
 
-            {/* TITLE */}
-            <h2 className="text-2xl md:text-[26px] font-extrabold text-slate-900">
-              Resource to Explore:
+        </div>
+        <div className="grid md:grid-cols-3 gap-6 px-6 py-2">
+          <div className="md:col-span-2 space-y-3">
+
+            <h2 className="
+              text-xl
+              font-bold
+              text-indigo-900
+              leading-snug
+            ">
+              {daySpotlight.resourceTitle}
             </h2>
 
-            {/* RESOURCE TITLE */}
-            <p className="mt-1 text-lg font-semibold text-indigo-800 leading-snug">
-              {daySpotlight.resourceTitle}
-            </p>
-
-            {/* FOCUS */}
-            <div className="mt-3 flex items-center gap-2 text-sm text-slate-600">
-              <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
-              <span className="font-medium">Today&apos;s focus</span>
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"/>
+              Today’s focus
             </div>
 
-            {/* MAIN DESCRIPTION */}
-            <p className="mt-3 text-[14px] text-slate-700 leading-relaxed max-w-2xl">
+            <p className="text-sm text-slate-700 leading-relaxed">
               {daySpotlight.tip}
             </p>
-          </div>
-
-          {/* RIGHT BLOCK */}
-          <div className="w-full md:w-[320px] flex flex-col gap-4">
-
-            {/* Tip Card */}
-            <div
-              className="
-                bg-white rounded-2xl border border-yellow-200 shadow-md px-5 py-4
-              "
-            >
-              <p className="text-xs font-bold uppercase text-yellow-700 tracking-wide flex items-center gap-2 mb-1">
-                <Lightbulb className="w-4 h-4" />
-                Tip of the Day
-              </p>
-              <p className="text-sm text-slate-700 leading-relaxed">
-                {daySpotlight.tip}
-              </p>
-            </div>
-
-            {/* Quote Card */}
-            <div
-              className="
-                bg-indigo-50 rounded-2xl border border-indigo-200 shadow-md px-5 py-4
-              "
-            >
-              <p className="text-xs font-bold uppercase text-indigo-700 tracking-wide flex items-center gap-2 mb-1">
-                <Quote className="w-4 h-4" />
-                Quote / Insight
-              </p>
-              <blockquote className="text-sm italic text-slate-700 leading-relaxed">
-                “{daySpotlight.quote}”
-              </blockquote>
-            </div>
 
           </div>
+          <div className="space-y-2">
+
+            <InfoCard
+              icon={Lightbulb}
+              title="Tip"
+              variant="tip"
+            >
+              {daySpotlight.tip}
+            </InfoCard>
+
+            <InfoCard
+              icon={Quote}
+              title="Insight"
+              variant="insight"
+            >
+              “{daySpotlight.quote}”
+            </InfoCard>
+
+          </div>
+
         </div>
-      </article>
+      </section>
     </div>
   );
+
+function InfoCard({ icon: Icon, title, children, variant }) {
+
+  const styles = {
+    tip: `
+      bg-gradient-to-r
+      from-yellow-50
+      to-yellow-100
+      border-yellow-200
+      text-yellow-700
+    `,
+    insight: `
+      bg-gradient-to-r
+      from-indigo-50
+      to-indigo-100
+      border-indigo-200
+      text-indigo-700
+    `
+  };
+
+  return (
+    <div className={`
+      p-2 rounded-lg border shadow-sm
+      ${styles[variant]}
+    `}>
+
+      <div className="flex items-center gap-2 text-xs font-semibold uppercase mb-1">
+        <Icon size={14}/>
+        {title}
+      </div>
+
+      <p className="text-sm text-slate-700 leading-relaxed">
+        {children}
+      </p>
+
+    </div>
+  );
+}
+
 }

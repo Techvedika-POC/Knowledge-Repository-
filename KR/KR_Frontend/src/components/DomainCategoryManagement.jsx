@@ -6,10 +6,7 @@ import {
   PencilSquareIcon,
   TrashIcon,
   PlusIcon,
-  XMarkIcon,
   CheckIcon,
-  ArrowDownOnSquareIcon,
-  DocumentCheckIcon
 } from "@heroicons/react/24/outline";
 
 export default function DomainCategoryManagement() {
@@ -95,15 +92,31 @@ export default function DomainCategoryManagement() {
 
   const list = activeSection === "domains" ? domains : categories;
 
-  return (
-    <div className="max-w-3xl mx-auto py-6">
-      {/* PAGE TITLE */}
-      <h1 className="text-2xl font-semibold text-gray-900 mb-6">
-        Domain & Category Settings
-      </h1>
+return (
+  <div className="max-w-4xl mx-auto py-8">
+    <div className="flex items-center justify-between mb-6">
+      <div>
+        <h1 className="text-2xl font-semibold text-gray-900">
+          Domain & Category Management
+        </h1>
+        <p className="text-sm text-gray-500 mt-1">
+          Manage knowledge classification structure
+        </p>
+      </div>
 
-      {/* TABS */}
-      <div className="flex items-center gap-6 mb-6">
+      <button
+        onClick={() => {
+          setForm(emptyForm);
+          setShowForm(true);
+        }}
+        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md shadow hover:bg-blue-700 transition"
+      >
+        <PlusIcon className="w-5 h-5" />
+        Add {activeSection === "domains" ? "Domain" : "Category"}
+      </button>
+    </div>
+    <div className="border-b border-gray-200 mb-6">
+      <nav className="flex gap-8">
         {["domains", "categories"].map((tab) => (
           <button
             key={tab}
@@ -112,43 +125,31 @@ export default function DomainCategoryManagement() {
               setForm(emptyForm);
               setShowForm(false);
             }}
-            className={`text-lg pb-1 transition ${activeSection === tab
-                ? "text-blue-600 font-semibold border-b-2 border-blue-600"
-                : "text-gray-600 hover:text-gray-800"
-              }`}
+            className={`pb-3 text-sm font-medium transition
+              ${activeSection === tab
+                ? "text-blue-600 border-b-2 border-blue-600"
+                : "text-gray-500 hover:text-gray-700"}
+            `}
           >
             {tab === "domains" ? "Domains" : "Categories"}
           </button>
         ))}
+      </nav>
+    </div>
 
-        {/* ADD ICON */}
-        <button
-          onClick={() => {
-            setForm(emptyForm);
-            setShowForm(true);
-          }}
-          className="ml-auto p-2 rounded-full hover:bg-gray-100 transition"
-          title="Add"
-        >
-          <PlusIcon className="w-6 h-6 text-blue-600" />
-        </button>
-      </div>
+    {showForm && (
+      <div className="mb-6 bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+        <form onSubmit={handleSubmit} className="flex items-center gap-4">
 
-      {/* ADD/EDIT INLINE FORM */}
-      {showForm && (
-        <form
-          onSubmit={handleSubmit}
-          className="mb-8 flex items-center gap-4 py-2"
-        >
           {activeSection === "categories" && (
             <select
-              className="border-b border-gray-300 px-2 py-1 focus:border-blue-500 outline-none"
+              className="border border-gray-300 rounded-md px-3 py-2 text-sm"
               value={form.domainId}
               onChange={(e) =>
                 setForm({ ...form, domainId: e.target.value })
               }
             >
-              <option value="">Domain</option>
+              <option value="">Select domain</option>
               {domains.map((d) => (
                 <option key={d.domainId} value={d.domainId}>
                   {d.domainName}
@@ -168,87 +169,93 @@ export default function DomainCategoryManagement() {
             onChange={(e) =>
               setForm({ ...form, name: e.target.value })
             }
-            className="border-b border-gray-300 px-2 py-1 focus:border-blue-500 outline-none w-64"
+            className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm"
           />
 
-          {/* SAVE ICON */}
           <button
             type="submit"
-            className="p-2 rounded-full hover:bg-green-50"
-            title="Save"
+            className="inline-flex items-center gap-1 px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
           >
-            <DocumentCheckIcon className="w-6 h-6 text-green-600" />
+            <CheckIcon className="w-4 h-4" />
+            Save
           </button>
-          {/* CANCEL ICON */}
+
           <button
             type="button"
             onClick={() => {
               setShowForm(false);
               setForm(emptyForm);
             }}
-            className="p-2 rounded-full hover:bg-red-50"
-            title="Cancel"
+            className="px-3 py-2 border border-gray-300 rounded-md text-gray-600 hover:bg-gray-50"
           >
-            <XMarkIcon className="w-6 h-6 text-red-600" />
+            Cancel
           </button>
         </form>
-      )}
+      </div>
+    )}
 
-      {/* ITEM LIST */}
-      <div className="space-y-1">
-        {list.map((item) => (
-          <div
-            key={
+    <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
+
+      {list.length === 0 ? (
+        <p className="p-6 text-center text-gray-500 text-sm">
+          No {activeSection} found.
+        </p>
+      ) : (
+        <ul className="divide-y divide-gray-100">
+          {list.map((item) => {
+            const id =
               activeSection === "domains"
                 ? item.domainId
-                : item.categoryId
-            }
-            className="flex justify-between items-center py-2 px-1 border-b border-gray-100 hover:bg-gray-50 transition rounded-md"
-          >
-            <div>
-              <p className="text-base text-gray-900 font-medium">
-                {activeSection === "domains"
-                  ? item.domainName
-                  : item.categoryName}
-              </p>
+                : item.categoryId;
 
-              {activeSection === "categories" && (
-                <p className="text-sm text-gray-500">
-                  {
-                    domains.find(
-                      (d) => d.domainId === item.domainId
-                    )?.domainName
-                  }
-                </p>
-              )}
-            </div>
-
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => handleEdit(item)}
-                className="p-2 rounded-full hover:bg-gray-100 transition"
-                title="Edit"
+            return (
+              <li
+                key={id}
+                className="flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition"
               >
-                <PencilSquareIcon className="w-5 h-5 text-gray-700" />
-              </button>
+                <div>
+                  <p className="text-sm font-medium text-gray-900">
+                    {activeSection === "domains"
+                      ? item.domainName
+                      : item.categoryName}
+                  </p>
 
-              <button
-                onClick={() =>
-                  handleDelete(
-                    activeSection === "domains"
-                      ? item.domainId
-                      : item.categoryId
-                  )
-                }
-                className="p-2 rounded-full hover:bg-red-50 transition"
-                title="Delete"
-              >
-                <TrashIcon className="w-5 h-5 text-red-600" />
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
+                  {activeSection === "categories" && (
+                    <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                      {
+                        domains.find(
+                          (d) => d.domainId === item.domainId
+                        )?.domainName
+                      }
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleEdit(item)}
+                    className="p-2 rounded-md hover:bg-gray-100"
+                    title="Edit"
+                  >
+                    <PencilSquareIcon className="w-5 h-5 text-gray-600" />
+                  </button>
+
+                  <button
+                    onClick={() => handleDelete(id)}
+                    className="p-2 rounded-md hover:bg-red-50"
+                    title="Delete"
+                  >
+                    <TrashIcon className="w-5 h-5 text-red-600" />
+                  </button>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
-  );
+  </div>
+);
+
+
 }

@@ -77,6 +77,13 @@ namespace Knowledge_Repository.Infrastructure.Repositories
             return await _context.UserAssessmentResults
                 .FirstOrDefaultAsync(r => r.AssessmentId == assessmentId && r.UserId == userId);
         }
+        public async Task<Assessment?> GetAssessmentWithQuestionsAsync(Guid assessmentId)
+        {
+            return await _context.Assessments
+                .Include(a => a.AssessmentQuestions)
+                .FirstOrDefaultAsync(a => a.AssessmentId == assessmentId);
+        }
+
         public async Task<AssessmentResultDto?> GetLatestResultAsync(
     Guid userId,
     Guid assessmentId)

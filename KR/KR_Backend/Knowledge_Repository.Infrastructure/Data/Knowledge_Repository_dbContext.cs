@@ -5,8 +5,7 @@ using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 
 using Knowledge_Repository.Domain.Entities;
-namespace Knowledge_Repository .Infrastructure .Data;
-
+namespace Knowledge_Repository.Infrastructure.Data;
 public partial class Knowledge_Repository_dbContext : DbContext
 {
     public Knowledge_Repository_dbContext(DbContextOptions<Knowledge_Repository_dbContext> options)
@@ -15,6 +14,10 @@ public partial class Knowledge_Repository_dbContext : DbContext
     }
 
     public virtual DbSet<ActivityLog> ActivityLogs { get; set; }
+
+    public virtual DbSet<AiConversation> AiConversations { get; set; }
+
+    public virtual DbSet<AiInsight> AiInsights { get; set; }
 
     public virtual DbSet<Announcement> Announcements { get; set; }
 
@@ -30,11 +33,19 @@ public partial class Knowledge_Repository_dbContext : DbContext
 
     public virtual DbSet<Category> Categories { get; set; }
 
+    public virtual DbSet<ChallengeProblem> ChallengeProblems { get; set; }
+
+    public virtual DbSet<CodeSubmission> CodeSubmissions { get; set; }
+
+    public virtual DbSet<CodingChallenge> CodingChallenges { get; set; }
+
     public virtual DbSet<Department> Departments { get; set; }
 
     public virtual DbSet<Domains> Domains { get; set; }
 
     public virtual DbSet<Engagement> Engagements { get; set; }
+
+    public virtual DbSet<EvaluationCriterion> EvaluationCriteria { get; set; }
 
     public virtual DbSet<Event> Events { get; set; }
 
@@ -42,9 +53,15 @@ public partial class Knowledge_Repository_dbContext : DbContext
 
     public virtual DbSet<EventKnowledgeItem> EventKnowledgeItems { get; set; }
 
+    public virtual DbSet<IdeaSubmission> IdeaSubmissions { get; set; }
+
+    public virtual DbSet<InterviewSession> InterviewSessions { get; set; }
+
     public virtual DbSet<JuryChatMessage> JuryChatMessages { get; set; }
 
     public virtual DbSet<JuryFinalScore> JuryFinalScores { get; set; }
+
+    public virtual DbSet<JuryScoreDetail> JuryScoreDetails { get; set; }
 
     public virtual DbSet<KnowledgeItem> KnowledgeItems { get; set; }
 
@@ -58,6 +75,8 @@ public partial class Knowledge_Repository_dbContext : DbContext
 
     public virtual DbSet<Leaderboard> Leaderboards { get; set; }
 
+    public virtual DbSet<LearningEvent> LearningEvents { get; set; }
+
     public virtual DbSet<LearningPlan> LearningPlans { get; set; }
 
     public virtual DbSet<Lesson> Lessons { get; set; }
@@ -70,9 +89,13 @@ public partial class Knowledge_Repository_dbContext : DbContext
 
     public virtual DbSet<Presentation> Presentations { get; set; }
 
+    public virtual DbSet<ProblemTestCase> ProblemTestCases { get; set; }
+
     public virtual DbSet<Resource> Resources { get; set; }
 
     public virtual DbSet<Role> Roles { get; set; }
+
+    public virtual DbSet<Skill> Skills { get; set; }
 
     public virtual DbSet<SpotlightItem> SpotlightItems { get; set; }
 
@@ -86,17 +109,27 @@ public partial class Knowledge_Repository_dbContext : DbContext
 
     public virtual DbSet<TeamMember> TeamMembers { get; set; }
 
+    public virtual DbSet<TeamTask> TeamTasks { get; set; }
+
     public virtual DbSet<Topic> Topics { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
+
+    public virtual DbSet<UserAssessmentProgress> UserAssessmentProgresses { get; set; }
 
     public virtual DbSet<UserAssessmentResult> UserAssessmentResults { get; set; }
 
     public virtual DbSet<UserLearningPlan> UserLearningPlans { get; set; }
 
+    public virtual DbSet<UserLessonProgress> UserLessonProgresses { get; set; }
+
     public virtual DbSet<UserModuleProgress> UserModuleProgresses { get; set; }
 
+    public virtual DbSet<UserPlanEnrollment> UserPlanEnrollments { get; set; }
+
     public virtual DbSet<UserRole> UserRoles { get; set; }
+
+    public virtual DbSet<UserSkill> UserSkills { get; set; }
 
     public virtual DbSet<Week> Weeks { get; set; }
 
@@ -155,6 +188,75 @@ public partial class Knowledge_Repository_dbContext : DbContext
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("activity_log_user_id_fkey");
+        });
+
+        modelBuilder.Entity<AiConversation>(entity =>
+        {
+            entity.HasKey(e => e.ConversationId).HasName("ai_conversations_pkey");
+
+            entity.ToTable("ai_conversations");
+
+            entity.Property(e => e.ConversationId)
+                .ValueGeneratedNever()
+                .HasColumnName("conversation_id");
+            entity.Property(e => e.CreatedOn)
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("created_on");
+            entity.Property(e => e.EventId).HasColumnName("event_id");
+            entity.Property(e => e.Message).HasColumnName("message");
+            entity.Property(e => e.Role).HasColumnName("role");
+            entity.Property(e => e.TeamId).HasColumnName("team_id");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+
+            entity.HasOne(d => d.Event).WithMany(p => p.AiConversations)
+                .HasForeignKey(d => d.EventId)
+                .HasConstraintName("ai_conversations_event_id_fkey");
+
+            entity.HasOne(d => d.Team).WithMany(p => p.AiConversations)
+                .HasForeignKey(d => d.TeamId)
+                .HasConstraintName("ai_conversations_team_id_fkey");
+
+            entity.HasOne(d => d.User).WithMany(p => p.AiConversations)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("ai_conversations_user_id_fkey");
+        });
+
+        modelBuilder.Entity<AiInsight>(entity =>
+        {
+            entity.HasKey(e => e.AiInsightId).HasName("ai_insights_pkey");
+
+            entity.ToTable("ai_insights");
+
+            entity.Property(e => e.AiInsightId)
+                .ValueGeneratedNever()
+                .HasColumnName("ai_insight_id");
+            entity.Property(e => e.CreatedOn)
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("created_on");
+            entity.Property(e => e.EntityId).HasColumnName("entity_id");
+            entity.Property(e => e.EntityType).HasColumnName("entity_type");
+            entity.Property(e => e.EventId).HasColumnName("event_id");
+            entity.Property(e => e.InputContext).HasColumnName("input_context");
+            entity.Property(e => e.InsightType).HasColumnName("insight_type");
+            entity.Property(e => e.OutputResult).HasColumnName("output_result");
+            entity.Property(e => e.Score).HasColumnName("score");
+            entity.Property(e => e.TeamId).HasColumnName("team_id");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+
+            entity.HasOne(d => d.Event).WithMany(p => p.AiInsights)
+                .HasForeignKey(d => d.EventId)
+                .HasConstraintName("ai_insights_event_id_fkey");
+
+            entity.HasOne(d => d.Team).WithMany(p => p.AiInsights)
+                .HasForeignKey(d => d.TeamId)
+                .HasConstraintName("ai_insights_team_id_fkey");
+
+            entity.HasOne(d => d.User).WithMany(p => p.AiInsights)
+                .HasForeignKey(d => d.UserId)
+                .HasConstraintName("ai_insights_user_id_fkey");
         });
 
         modelBuilder.Entity<Announcement>(entity =>
@@ -470,6 +572,83 @@ public partial class Knowledge_Repository_dbContext : DbContext
                 .HasConstraintName("categories_updated_by_fkey");
         });
 
+        modelBuilder.Entity<ChallengeProblem>(entity =>
+        {
+            entity.HasKey(e => e.ProblemId).HasName("challenge_problems_pkey");
+
+            entity.ToTable("challenge_problems");
+
+            entity.Property(e => e.ProblemId)
+                .ValueGeneratedNever()
+                .HasColumnName("problem_id");
+            entity.Property(e => e.ChallengeId).HasColumnName("challenge_id");
+            entity.Property(e => e.ProblemStatement)
+                .IsRequired()
+                .HasColumnName("problem_statement");
+            entity.Property(e => e.Title)
+                .IsRequired()
+                .HasColumnName("title");
+
+            entity.HasOne(d => d.Challenge).WithMany(p => p.ChallengeProblems)
+                .HasForeignKey(d => d.ChallengeId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("challenge_problems_challenge_id_fkey");
+        });
+
+        modelBuilder.Entity<CodeSubmission>(entity =>
+        {
+            entity.HasKey(e => e.SubmissionId).HasName("code_submissions_pkey");
+
+            entity.ToTable("code_submissions");
+
+            entity.Property(e => e.SubmissionId)
+                .ValueGeneratedNever()
+                .HasColumnName("submission_id");
+            entity.Property(e => e.Language).HasColumnName("language");
+            entity.Property(e => e.ProblemId).HasColumnName("problem_id");
+            entity.Property(e => e.Score).HasColumnName("score");
+            entity.Property(e => e.SourceCode)
+                .IsRequired()
+                .HasColumnName("source_code");
+            entity.Property(e => e.SubmittedOn)
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("submitted_on");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+
+            entity.HasOne(d => d.Problem).WithMany(p => p.CodeSubmissions)
+                .HasForeignKey(d => d.ProblemId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("code_submissions_problem_id_fkey");
+
+            entity.HasOne(d => d.User).WithMany(p => p.CodeSubmissions)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("code_submissions_user_id_fkey");
+        });
+
+        modelBuilder.Entity<CodingChallenge>(entity =>
+        {
+            entity.HasKey(e => e.ChallengeId).HasName("coding_challenges_pkey");
+
+            entity.ToTable("coding_challenges");
+
+            entity.Property(e => e.ChallengeId)
+                .ValueGeneratedNever()
+                .HasColumnName("challenge_id");
+            entity.Property(e => e.Difficulty).HasColumnName("difficulty");
+            entity.Property(e => e.EventId).HasColumnName("event_id");
+            entity.Property(e => e.TimeLimitMinutes).HasColumnName("time_limit_minutes");
+            entity.Property(e => e.Title)
+                .IsRequired()
+                .HasColumnName("title");
+
+            entity.HasOne(d => d.Event).WithMany(p => p.CodingChallenges)
+                .HasForeignKey(d => d.EventId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("coding_challenges_event_id_fkey");
+        });
+
         modelBuilder.Entity<Department>(entity =>
         {
             entity.HasKey(e => e.DepartmentId).HasName("departments_pkey");
@@ -589,6 +768,27 @@ public partial class Knowledge_Repository_dbContext : DbContext
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("engagements_user_id_fkey");
+        });
+
+        modelBuilder.Entity<EvaluationCriterion>(entity =>
+        {
+            entity.HasKey(e => e.CriteriaId).HasName("evaluation_criteria_pkey");
+
+            entity.ToTable("evaluation_criteria");
+
+            entity.Property(e => e.CriteriaId)
+                .ValueGeneratedNever()
+                .HasColumnName("criteria_id");
+            entity.Property(e => e.EventId).HasColumnName("event_id");
+            entity.Property(e => e.Name)
+                .IsRequired()
+                .HasColumnName("name");
+            entity.Property(e => e.Weight).HasColumnName("weight");
+
+            entity.HasOne(d => d.Event).WithMany(p => p.EvaluationCriteria)
+                .HasForeignKey(d => d.EventId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("evaluation_criteria_event_id_fkey");
         });
 
         modelBuilder.Entity<Event>(entity =>
@@ -713,6 +913,86 @@ public partial class Knowledge_Repository_dbContext : DbContext
                 .HasConstraintName("event_knowledge_items_updated_by_fkey");
         });
 
+        modelBuilder.Entity<IdeaSubmission>(entity =>
+        {
+            entity.HasKey(e => e.IdeaId).HasName("idea_submissions_pkey");
+
+            entity.ToTable("idea_submissions");
+
+            entity.HasIndex(e => new { e.TeamId, e.EventId }, "uq_idea_team_event").IsUnique();
+
+            entity.Property(e => e.IdeaId)
+                .ValueGeneratedNever()
+                .HasColumnName("idea_id");
+            entity.Property(e => e.CreatedOn)
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("created_on");
+            entity.Property(e => e.DemoUrl)
+                .HasMaxLength(500)
+                .HasColumnName("demo_url");
+            entity.Property(e => e.EventId).HasColumnName("event_id");
+            entity.Property(e => e.IdeaDescription)
+                .IsRequired()
+                .HasColumnName("idea_description");
+            entity.Property(e => e.IdeaTitle)
+                .IsRequired()
+                .HasMaxLength(200)
+                .HasColumnName("idea_title");
+            entity.Property(e => e.RepoUrl)
+                .HasMaxLength(500)
+                .HasColumnName("repo_url");
+            entity.Property(e => e.TeamId).HasColumnName("team_id");
+
+            entity.HasOne(d => d.Event).WithMany(p => p.IdeaSubmissions)
+                .HasForeignKey(d => d.EventId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_idea_event");
+
+            entity.HasOne(d => d.Team).WithMany(p => p.IdeaSubmissions)
+                .HasForeignKey(d => d.TeamId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_idea_team");
+        });
+
+        modelBuilder.Entity<InterviewSession>(entity =>
+        {
+            entity.HasKey(e => e.InterviewId).HasName("interview_sessions_pkey");
+
+            entity.ToTable("interview_sessions");
+
+            entity.Property(e => e.InterviewId)
+                .ValueGeneratedNever()
+                .HasColumnName("interview_id");
+            entity.Property(e => e.CommunicationScore).HasColumnName("communication_score");
+            entity.Property(e => e.CompletedOn)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("completed_on");
+            entity.Property(e => e.CreatedOn)
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("created_on");
+            entity.Property(e => e.FinalFeedback).HasColumnName("final_feedback");
+            entity.Property(e => e.IsCompleted)
+                .HasDefaultValue(false)
+                .HasColumnName("is_completed");
+            entity.Property(e => e.ProblemId).HasColumnName("problem_id");
+            entity.Property(e => e.QuestionCount)
+                .HasDefaultValue(0)
+                .HasColumnName("question_count");
+            entity.Property(e => e.Transcript).HasColumnName("transcript");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+
+            entity.HasOne(d => d.Problem).WithMany(p => p.InterviewSessions)
+                .HasForeignKey(d => d.ProblemId)
+                .HasConstraintName("interview_sessions_problem_id_fkey");
+
+            entity.HasOne(d => d.User).WithMany(p => p.InterviewSessions)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("interview_sessions_user_id_fkey");
+        });
+
         modelBuilder.Entity<JuryChatMessage>(entity =>
         {
             entity.HasKey(e => e.MessageId).HasName("JuryChatMessage_pkey");
@@ -760,6 +1040,18 @@ public partial class Knowledge_Repository_dbContext : DbContext
             entity.HasOne(d => d.Team).WithMany(p => p.JuryFinalScores)
                 .HasForeignKey(d => d.TeamId)
                 .HasConstraintName("FK_JuryFinalScore_Team");
+        });
+
+        modelBuilder.Entity<JuryScoreDetail>(entity =>
+        {
+            entity.HasKey(e => e.ScoreDetailId).HasName("JuryScoreDetails_pkey");
+
+            entity.Property(e => e.ScoreDetailId).HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.CriteriaName).IsRequired();
+
+            entity.HasOne(d => d.Final).WithMany(p => p.JuryScoreDetails)
+                .HasForeignKey(d => d.FinalId)
+                .HasConstraintName("FK_JuryScoreDetails_Final");
         });
 
         modelBuilder.Entity<KnowledgeItem>(entity =>
@@ -992,6 +1284,31 @@ public partial class Knowledge_Repository_dbContext : DbContext
                 .HasConstraintName("leaderboards_user_id_fkey");
         });
 
+        modelBuilder.Entity<LearningEvent>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("learning_events_pkey");
+
+            entity.ToTable("learning_events");
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("gen_random_uuid()")
+                .HasColumnName("id");
+            entity.Property(e => e.CreatedOn)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("created_on");
+            entity.Property(e => e.EntityId).HasColumnName("entity_id");
+            entity.Property(e => e.EntityType)
+                .HasMaxLength(50)
+                .HasColumnName("entity_type");
+            entity.Property(e => e.EventType)
+                .HasMaxLength(50)
+                .HasColumnName("event_type");
+            entity.Property(e => e.Metadata)
+                .HasColumnType("jsonb")
+                .HasColumnName("metadata");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+        });
+
         modelBuilder.Entity<LearningPlan>(entity =>
         {
             entity.HasKey(e => e.PlanId).HasName("learning_plans_pkey");
@@ -1174,6 +1491,29 @@ public partial class Knowledge_Repository_dbContext : DbContext
                 .HasConstraintName("presentations_team_id_fkey");
         });
 
+        modelBuilder.Entity<ProblemTestCase>(entity =>
+        {
+            entity.HasKey(e => e.TestCaseId).HasName("problem_test_cases_pkey");
+
+            entity.ToTable("problem_test_cases");
+
+            entity.Property(e => e.TestCaseId)
+                .ValueGeneratedNever()
+                .HasColumnName("test_case_id");
+            entity.Property(e => e.ExpectedOutput)
+                .IsRequired()
+                .HasColumnName("expected_output");
+            entity.Property(e => e.Input)
+                .IsRequired()
+                .HasColumnName("input");
+            entity.Property(e => e.ProblemId).HasColumnName("problem_id");
+
+            entity.HasOne(d => d.Problem).WithMany(p => p.ProblemTestCases)
+                .HasForeignKey(d => d.ProblemId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("problem_test_cases_problem_id_fkey");
+        });
+
         modelBuilder.Entity<Resource>(entity =>
         {
             entity.HasKey(e => e.ResourceId).HasName("resources_pkey");
@@ -1251,6 +1591,22 @@ public partial class Knowledge_Repository_dbContext : DbContext
                 .HasForeignKey(d => d.UpdatedBy)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("roles_updated_by_fkey");
+        });
+
+        modelBuilder.Entity<Skill>(entity =>
+        {
+            entity.HasKey(e => e.SkillId).HasName("skills_pkey");
+
+            entity.ToTable("skills");
+
+            entity.HasIndex(e => e.Name, "skills_name_key").IsUnique();
+
+            entity.Property(e => e.SkillId)
+                .ValueGeneratedNever()
+                .HasColumnName("skill_id");
+            entity.Property(e => e.Name)
+                .IsRequired()
+                .HasColumnName("name");
         });
 
         modelBuilder.Entity<SpotlightItem>(entity =>
@@ -1408,6 +1764,32 @@ public partial class Knowledge_Repository_dbContext : DbContext
                 .HasConstraintName("team_members_user_id_fkey");
         });
 
+        modelBuilder.Entity<TeamTask>(entity =>
+        {
+            entity.HasKey(e => e.TaskId).HasName("team_tasks_pkey");
+
+            entity.ToTable("team_tasks");
+
+            entity.Property(e => e.TaskId)
+                .ValueGeneratedNever()
+                .HasColumnName("task_id");
+            entity.Property(e => e.AssignedTo).HasColumnName("assigned_to");
+            entity.Property(e => e.Status).HasColumnName("status");
+            entity.Property(e => e.TeamId).HasColumnName("team_id");
+            entity.Property(e => e.Title)
+                .IsRequired()
+                .HasColumnName("title");
+
+            entity.HasOne(d => d.AssignedToNavigation).WithMany(p => p.TeamTasks)
+                .HasForeignKey(d => d.AssignedTo)
+                .HasConstraintName("team_tasks_assigned_to_fkey");
+
+            entity.HasOne(d => d.Team).WithMany(p => p.TeamTasks)
+                .HasForeignKey(d => d.TeamId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("team_tasks_team_id_fkey");
+        });
+
         modelBuilder.Entity<Topic>(entity =>
         {
             entity.HasKey(e => e.TopicId).HasName("topic_pkey");
@@ -1493,6 +1875,35 @@ public partial class Knowledge_Repository_dbContext : DbContext
                 .HasConstraintName("users_updated_by_fkey");
         });
 
+        modelBuilder.Entity<UserAssessmentProgress>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("user_assessment_progress_pkey");
+
+            entity.ToTable("user_assessment_progress");
+
+            entity.HasIndex(e => new { e.UserId, e.AssessmentId }, "user_assessment_progress_user_id_assessment_id_key").IsUnique();
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("gen_random_uuid()")
+                .HasColumnName("id");
+            entity.Property(e => e.AssessmentId).HasColumnName("assessment_id");
+            entity.Property(e => e.Attempts)
+                .HasDefaultValue(0)
+                .HasColumnName("attempts");
+            entity.Property(e => e.CompletedOn).HasColumnName("completed_on");
+            entity.Property(e => e.ModuleId).HasColumnName("module_id");
+            entity.Property(e => e.Passed).HasColumnName("passed");
+            entity.Property(e => e.Score)
+                .HasPrecision(5, 2)
+                .HasColumnName("score");
+            entity.Property(e => e.StartedOn).HasColumnName("started_on");
+            entity.Property(e => e.Status)
+                .HasMaxLength(30)
+                .HasDefaultValueSql("'NotStarted'::character varying")
+                .HasColumnName("status");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+        });
+
         modelBuilder.Entity<UserAssessmentResult>(entity =>
         {
             entity.HasKey(e => e.ResultId);
@@ -1537,47 +1948,81 @@ public partial class Knowledge_Repository_dbContext : DbContext
             entity.Property(e => e.Status).HasMaxLength(50);
         });
 
-        modelBuilder.Entity<UserModuleProgress>(entity =>
+        modelBuilder.Entity<UserLessonProgress>(entity =>
         {
-            entity.HasKey(e => e.ProgressId).HasName("user_module_progress_pkey");
+            entity.HasKey(e => e.Id).HasName("user_lesson_progress_pkey");
 
-            entity.ToTable("user_module_progress");
+            entity.ToTable("user_lesson_progress");
 
-            entity.Property(e => e.ProgressId)
-                .ValueGeneratedNever()
-                .HasColumnName("progress_id");
-            entity.Property(e => e.CompletedLessonsCount).HasDefaultValue(0);
+            entity.HasIndex(e => new { e.UserId, e.LessonId }, "user_lesson_progress_user_id_lesson_id_key").IsUnique();
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("gen_random_uuid()")
+                .HasColumnName("id");
             entity.Property(e => e.CompletedOn).HasColumnName("completed_on");
-            entity.Property(e => e.CreatedAt).HasColumnName("created_at");
-            entity.Property(e => e.CurrentLessonId).HasColumnName("current_lesson_id");
             entity.Property(e => e.LastAccessed).HasColumnName("last_accessed");
-            entity.Property(e => e.LessonProgressPercent).HasPrecision(5, 2);
+            entity.Property(e => e.LessonId).HasColumnName("lesson_id");
             entity.Property(e => e.ModuleId).HasColumnName("module_id");
             entity.Property(e => e.StartedOn).HasColumnName("started_on");
             entity.Property(e => e.Status)
-                .HasMaxLength(100)
+                .HasMaxLength(30)
+                .HasDefaultValueSql("'NotStarted'::character varying")
                 .HasColumnName("status");
-            entity.Property(e => e.TestAttemptedOn).HasColumnName("test_attempted_on");
-            entity.Property(e => e.TestStatus)
-                .HasMaxLength(100)
-                .HasColumnName("test_status");
-            entity.Property(e => e.TopicId).HasColumnName("topic_id");
-            entity.Property(e => e.TotalLessonsCount).HasDefaultValue(0);
-            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+            entity.Property(e => e.TimeSpentSeconds)
+                .HasDefaultValue(0)
+                .HasColumnName("time_spent_seconds");
             entity.Property(e => e.UserId).HasColumnName("user_id");
+        });
 
-            entity.HasOne(d => d.CurrentLesson).WithMany(p => p.UserModuleProgresses)
-                .HasForeignKey(d => d.CurrentLessonId)
-                .OnDelete(DeleteBehavior.SetNull)
-                .HasConstraintName("user_module_progress_current_lesson_id_fkey");
+        modelBuilder.Entity<UserModuleProgress>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("user_module_progress_pkey");
 
-            entity.HasOne(d => d.Module).WithMany(p => p.UserModuleProgresses)
-                .HasForeignKey(d => d.ModuleId)
-                .HasConstraintName("fk_user_module_progress_module");
+            entity.ToTable("user_module_progress");
 
-            entity.HasOne(d => d.User).WithMany(p => p.UserModuleProgresses)
-                .HasForeignKey(d => d.UserId)
-                .HasConstraintName("fk_user_module_progress_user");
+            entity.HasIndex(e => new { e.UserId, e.ModuleId }, "user_module_progress_user_id_module_id_key").IsUnique();
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("gen_random_uuid()")
+                .HasColumnName("id");
+            entity.Property(e => e.CompletedOn).HasColumnName("completed_on");
+            entity.Property(e => e.LastAccessed).HasColumnName("last_accessed");
+            entity.Property(e => e.ModuleId).HasColumnName("module_id");
+            entity.Property(e => e.StartedOn).HasColumnName("started_on");
+            entity.Property(e => e.Status)
+                .HasMaxLength(30)
+                .HasDefaultValueSql("'NotStarted'::character varying")
+                .HasColumnName("status");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+        });
+
+        modelBuilder.Entity<UserPlanEnrollment>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("user_plan_enrollment_pkey");
+
+            entity.ToTable("user_plan_enrollment");
+
+            entity.HasIndex(e => new { e.UserId, e.PlanId }, "user_plan_enrollment_user_id_plan_id_key").IsUnique();
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("gen_random_uuid()")
+                .HasColumnName("id");
+            entity.Property(e => e.AssignedBy).HasColumnName("assigned_by");
+            entity.Property(e => e.AssignedOn)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("assigned_on");
+            entity.Property(e => e.AssignmentType)
+                .HasMaxLength(30)
+                .HasDefaultValueSql("'Manager'::character varying")
+                .HasColumnName("assignment_type");
+            entity.Property(e => e.CompletedOn).HasColumnName("completed_on");
+            entity.Property(e => e.PlanId).HasColumnName("plan_id");
+            entity.Property(e => e.StartedOn).HasColumnName("started_on");
+            entity.Property(e => e.Status)
+                .HasMaxLength(30)
+                .HasDefaultValueSql("'Assigned'::character varying")
+                .HasColumnName("status");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
         });
 
         modelBuilder.Entity<UserRole>(entity =>
@@ -1617,6 +2062,30 @@ public partial class Knowledge_Repository_dbContext : DbContext
             entity.HasOne(d => d.User).WithMany(p => p.UserRoleUsers)
                 .HasForeignKey(d => d.UserId)
                 .HasConstraintName("user_roles_user_id_fkey");
+        });
+
+        modelBuilder.Entity<UserSkill>(entity =>
+        {
+            entity.HasKey(e => e.UserSkillId).HasName("user_skills_pkey");
+
+            entity.ToTable("user_skills");
+
+            entity.Property(e => e.UserSkillId)
+                .ValueGeneratedNever()
+                .HasColumnName("user_skill_id");
+            entity.Property(e => e.Proficiency).HasColumnName("proficiency");
+            entity.Property(e => e.SkillId).HasColumnName("skill_id");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+
+            entity.HasOne(d => d.Skill).WithMany(p => p.UserSkills)
+                .HasForeignKey(d => d.SkillId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("user_skills_skill_id_fkey");
+
+            entity.HasOne(d => d.User).WithMany(p => p.UserSkills)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("user_skills_user_id_fkey");
         });
 
         modelBuilder.Entity<Week>(entity =>

@@ -18,7 +18,6 @@ namespace Knowledge_Repository.API.Controllers
             _planService = planService;
         }
 
-        // ---------------- GET ----------------
 
         [HttpGet]
         public async Task<IActionResult> GetAllPlans()
@@ -40,7 +39,6 @@ namespace Knowledge_Repository.API.Controllers
             return Ok(new { planId, userId, completed = done });
         }
 
-        // ---------------- CREATE ----------------
 
         [HttpPost("generate")]
         public async Task<IActionResult> Generate([FromBody] GeneratePlanRequest request)
@@ -60,7 +58,6 @@ namespace Knowledge_Repository.API.Controllers
             return Ok(await _planService.CreateFullLearningPlanAsync(dto));
         }
 
-        // ---------------- UPDATE ----------------
 
         [HttpPut("{planId}")]
         public async Task<IActionResult> UpdatePlan(Guid planId, [FromBody] LearningPlanFullDto dto)
@@ -94,7 +91,6 @@ namespace Knowledge_Repository.API.Controllers
             return ok ? Ok(dto) : NotFound();
         }
 
-        // ---------------- DELETE ----------------
 
         [HttpDelete("{planId}")]
         public async Task<IActionResult> DeletePlan(Guid planId)

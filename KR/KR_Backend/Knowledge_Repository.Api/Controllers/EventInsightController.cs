@@ -1,7 +1,9 @@
 ﻿using Knowledge_Repository.Application.Interfaces.Services;
-using Microsoft.AspNetCore.Mvc;
 using Knowledge_Repository.Application.Dtos.EventInsight;
+using Knowledge_Repository.Application.Dtos.Common;
+using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Knowledge_Repository.Api.Controllers
@@ -17,24 +19,35 @@ namespace Knowledge_Repository.Api.Controllers
             _insightService = insightService;
         }
 
-        [HttpGet("user/{userId}/event/{eventId}")]
-        public async Task<IActionResult> GetUserEventInsight(Guid userId, Guid eventId)
+        [HttpGet("{eventId:guid}/user/{userId:guid}/insight")]
+        public async Task<IActionResult> GetUserEventInsight(Guid eventId, Guid userId)
         {
-            if (userId == Guid.Empty || eventId == Guid.Empty)
-                return BadRequest("Invalid user or event ID.");
+            if (eventId == Guid.Empty || userId == Guid.Empty)
+                return BadRequest(ApiResponse<object>.Fail(
+                    "Invalid event or user. Please refresh and try again."
+                ));
 
             try
             {
                 var insight = await _insightService.GetUserEventInsightAsync(userId, eventId);
-                return Ok(insight);
+
+                return Ok(ApiResponse<UserEventInsightDto>.Ok(
+                    insight,
+                    "Insight loaded successfully."
+                ));
             }
-            catch (KeyNotFoundException ex)
+            catch (KeyNotFoundException)
             {
-                return NotFound(new { message = ex.Message });
+                return Ok(ApiResponse<object>.Ok(
+                    null,
+                    "You have not joined a team for this event yet."
+                ));
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return StatusCode(500, new { message = "An unexpected error occurred.", detail = ex.Message });
+                return StatusCode(500, ApiResponse<object>.Fail(
+                    "We couldn’t load your event details right now. Please try again later."
+                ));
             }
         }
 
@@ -42,21 +55,19 @@ namespace Knowledge_Repository.Api.Controllers
         public async Task<IActionResult> GetEventInsight(Guid eventId)
         {
             if (eventId == Guid.Empty)
-                return BadRequest("Invalid event ID.");
+                return BadRequest(ApiResponse<object>.Fail("Invalid event ID."));
 
             try
             {
                 var insight = await _insightService.GetEventInsightsAsync(eventId);
-                if (insight == null)
-                    return NotFound("No insights found for this event.");
-
-                return Ok(insight);
+                return Ok(ApiResponse<object>.Ok(insight));
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return StatusCode(500, new { message = "Failed to load event insights.", detail = ex.Message });
+                return StatusCode(500, ApiResponse<object>.Fail(
+                    "Failed to load event insights."
+                ));
             }
         }
-   
     }
 }

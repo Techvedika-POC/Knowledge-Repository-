@@ -1,4 +1,4 @@
-﻿// File: Knowledge_Repository.Application.Dtos.JuryCommunication/JuryChatDtos.cs
+﻿
 using System;
 using System.Collections.Generic;
 
@@ -9,7 +9,7 @@ namespace Knowledge_Repository.Application.Dtos.JuryCommunication
         public Guid EventId { get; set; }
         public Guid SenderJuryId { get; set; }
         public string Message { get; set; } = string.Empty;
-        public Guid? ReplyToMessageId { get; set; } // <-- new optional field
+        public Guid? ReplyToMessageId { get; set; } 
     }
 
     public class ReplyPreviewDto

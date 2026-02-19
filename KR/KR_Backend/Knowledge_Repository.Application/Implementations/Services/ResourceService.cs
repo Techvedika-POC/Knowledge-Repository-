@@ -14,13 +14,16 @@ namespace Knowledge_Repository.Application.Implementations.Services
     public class ResourceService : IResourceService
     {
         private readonly IResourceRepository _resourceRepo;
-        private readonly IUserProgressRepository _userProgressRepo;
+        private readonly IUserModuleProgressRepository _moduleProgressRepo;
 
-        public ResourceService(IResourceRepository resourceRepo, IUserProgressRepository userProgressRepo)
+        public ResourceService(
+            IResourceRepository resourceRepo,
+            IUserModuleProgressRepository moduleProgressRepo)
         {
             _resourceRepo = resourceRepo;
-            _userProgressRepo = userProgressRepo;
+            _moduleProgressRepo = moduleProgressRepo;
         }
+
 
         private ResourceDto MapToDto(Resource r) => new ResourceDto
         {
@@ -179,25 +182,13 @@ namespace Knowledge_Repository.Application.Implementations.Services
         public async Task MarkResourceAccessedAsync(Guid resourceId, Guid userId)
         {
             var resource = await _resourceRepo.GetByIdAsync(resourceId);
-            if (resource == null) return;
+            if (resource == null || resource.ModuleId == null) return;
 
-            await _userProgressRepo.InitializeModuleProgressAsync(
+            await _moduleProgressRepo.TouchAsync(
                 userId,
-                resource.TopicId,
-                resource.ModuleId ?? Guid.Empty
+                resource.ModuleId.Value
             );
-
-            var progress = await _userProgressRepo.GetModuleProgressAsync(
-                userId,
-                resource.TopicId,
-                resource.ModuleId ?? Guid.Empty
-            );
-
-            if (progress != null)
-            {
-                progress.LastAccessed = DateTime.UtcNow; 
-                await _userProgressRepo.UpdateModuleProgressAsync(progress);
-            }
         }
+
     }
 }

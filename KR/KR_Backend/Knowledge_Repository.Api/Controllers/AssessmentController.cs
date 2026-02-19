@@ -9,10 +9,11 @@ namespace Knowledge_Repository.API.Controllers
     public class AssessmentController : ControllerBase
     {
         private readonly IAssessmentService _assessmentService;
-
-        public AssessmentController(IAssessmentService service)
+        private readonly IUserProgressService _userProgressService;
+        public AssessmentController(IAssessmentService service, IUserProgressService userProgressService)
         {
             _assessmentService = service;
+            _userProgressService = userProgressService;
         }
 
         [HttpGet("{assessmentId}")]
@@ -54,18 +55,30 @@ namespace Knowledge_Repository.API.Controllers
             await _assessmentService.DeleteQuestionAsync(questionId);
             return NoContent();
         }
-
-        [HttpPost("submit")]
-        public async Task<ActionResult<AssessmentResultDto>> SubmitTest(SubmitAssessmentDto dto)
+        [HttpPost("{assessmentId}/start/{userId}")]
+        public async Task<IActionResult> Start(Guid assessmentId, Guid userId)
         {
-            var result = await _assessmentService.SubmitAssessmentAsync(dto);
+            await _assessmentService.StartAssessmentAsync(assessmentId, userId);
+            return Ok();
+        }
+        [HttpPost("{assessmentId}/submit")]
+        public async Task<IActionResult> Submit(
+          Guid assessmentId,
+          SubmitAssessmentDto dto)
+        {
+            dto.AssessmentId = assessmentId;
+
+            var result = await _userProgressService
+                .SubmitAssessmentAsync(dto);
+
             return Ok(result);
         }
 
-        [HttpGet("{assessmentId}/user/{userId}/result")]
-        public async Task<ActionResult<AssessmentResultDto>> GetUserResult(Guid assessmentId, Guid userId)
+        [HttpDelete("{assessmentId}")]
+        public async Task<IActionResult> DeleteAssessment(Guid assessmentId)
         {
-            return Ok(await _assessmentService.GetUserAssessmentResultAsync(assessmentId, userId));
+            await _assessmentService.DeleteAssessmentAsync(assessmentId);
+            return NoContent();
         }
     }
 }

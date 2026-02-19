@@ -13,15 +13,19 @@ namespace Knowledge_Repository.Application.Implementations.Services
     public class LessonService : ILessonService
     {
         private readonly ILessonRepository _lessonRepo;
-        private readonly IUserProgressRepository _userProgressRepo;
+        private readonly IUserLessonProgressRepository _lessonProgressRepo;
+        private readonly IUserModuleProgressRepository _moduleProgressRepo;
 
         public LessonService(
             ILessonRepository lessonRepo,
-            IUserProgressRepository userProgressRepo)
+            IUserLessonProgressRepository lessonProgressRepo,
+            IUserModuleProgressRepository moduleProgressRepo)
         {
             _lessonRepo = lessonRepo;
-            _userProgressRepo = userProgressRepo;
+            _lessonProgressRepo = lessonProgressRepo;
+            _moduleProgressRepo = moduleProgressRepo;
         }
+
         private static DateTime Now() =>
             DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
 
@@ -50,8 +54,6 @@ namespace Knowledge_Repository.Application.Implementations.Services
         public async Task<IEnumerable<LessonDto>> GetLessonsByModuleIdAsync(Guid moduleId)
         {
             var entities = await _lessonRepo.GetByModuleIdAsync(moduleId);
-
-            // Always return sorted & normalized
             return entities
                 .OrderBy(x => x.OrderIndex)
                 .Select(Map)
@@ -145,26 +147,30 @@ namespace Knowledge_Repository.Application.Implementations.Services
             if (lesson == null)
                 throw new Exception("Lesson not found.");
 
-            await _userProgressRepo.InitializeModuleProgressAsync(
-                userId,
-                lesson.ModuleId,
-                lesson.ModuleId
-            );
+            await _lessonProgressRepo.CompleteAsync(userId, lessonId);
 
-            var progress = await _userProgressRepo.GetModuleProgressAsync(
-                userId,
-                lesson.ModuleId,
-                lesson.ModuleId
-            );
+            await _moduleProgressRepo.TouchAsync(userId, lesson.ModuleId);
 
-            if (progress != null)
+            var lessons =
+         await _lessonRepo.GetByModuleIdAsync(lesson.ModuleId);
+
+            var userLessons =
+                await _lessonProgressRepo.GetByModuleAsync(
+                    userId,
+                    lesson.ModuleId);
+
+            bool allCompleted =
+                lessons.Count() ==
+                userLessons.Count(l => l.Status == "Completed");
+
+            if (allCompleted)
             {
-                progress.CurrentLessonId = lesson.LessonId;
-                if (progress.Status != "Completed")
-                    progress.Status = "InProgress";
-
-                await _userProgressRepo.UpdateModuleProgressAsync(progress);
+                await _moduleProgressRepo.CompleteAsync(
+                    userId,
+                    lesson.ModuleId);
             }
+
         }
+
     }
 }

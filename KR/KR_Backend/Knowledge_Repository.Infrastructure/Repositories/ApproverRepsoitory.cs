@@ -88,7 +88,6 @@ namespace Knowledge_Repository.Infrastructure.Repositories
 
         public async Task<bool> RejectAsync(Guid itemId, Guid approverId, string feedback)
         {
-            // 1. Direct SQL update (NO tracking, NO concurrency)
             var rows = await _context.KnowledgeItems
                 .Where(x => x.ItemId == itemId)
                 .ExecuteUpdateAsync(setters => setters
@@ -98,9 +97,8 @@ namespace Knowledge_Repository.Infrastructure.Repositories
                 );
 
             if (rows == 0)
-                return false;   // item not found or already gone
+                return false; 
 
-            // 2. Insert review/feedback
             var review = new KnowledgeReview
             {
                 ReviewId = Guid.NewGuid(),

@@ -86,15 +86,14 @@ namespace Knowledge_Repository.Infrastructure.Repositories
 
             if (!lessonIds.Any()) return;
 
-            var progresses = await _context.UserModuleProgresses
-                .Where(p => p.CurrentLessonId != null && lessonIds.Contains(p.CurrentLessonId.Value))
+            var progresses = await _context.UserLessonProgresses
+                .Where(p => lessonIds.Contains(p.LessonId))
                 .ToListAsync();
 
-            foreach (var p in progresses)
-                p.CurrentLessonId = null; 
-
+            _context.UserLessonProgresses.RemoveRange(progresses);
             await _context.SaveChangesAsync();
         }
+
         public override async Task DeleteAsync(Week week)
         {
             if (week == null) return;

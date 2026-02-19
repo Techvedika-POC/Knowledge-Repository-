@@ -11,7 +11,5 @@ public class TrainingModuleDto
 
     public List<string> Prerequisites { get; set; }
     public string Metadata { get; set; }
-
-    // 🔥 ONLY THIS
     public List<TrainingLessonDto> Lessons { get; set; } = new();
 }

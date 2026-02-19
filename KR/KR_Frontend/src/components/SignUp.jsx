@@ -16,8 +16,6 @@ export default function Signup() {
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
-
-  //  Validation function
   const validateForm = () => {
     const newErrors = {};
 
@@ -64,7 +62,6 @@ export default function Signup() {
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Full Name */}
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Full Name
@@ -82,8 +79,6 @@ export default function Signup() {
               <p className="text-red-500 text-xs mt-1">{errors.name}</p>
             )}
           </div>
-
-          {/* Email */}
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Email address
@@ -101,8 +96,6 @@ export default function Signup() {
               <p className="text-red-500 text-xs mt-1">{errors.email}</p>
             )}
           </div>
-
-          {/* Password */}
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Password
@@ -120,8 +113,6 @@ export default function Signup() {
               <p className="text-red-500 text-xs mt-1">{errors.password}</p>
             )}
           </div>
-
-          {/* Department */}
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Department

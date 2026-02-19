@@ -181,11 +181,10 @@ export default function EventManagement() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-slate-50 text-gray-800 font-sans">
       <Toaster position="top-right" />
-      {/* Header */}
       <div className="max-w-6xl mx-auto px-6 pt-8">
         <div className="rounded-2xl bg-white shadow-sm border border-gray-100 p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-extrabold text-slate-800">Event Management</h1>
+            <h1 className="text-2xl md:text-2xl font-bold text-slate-800">Event Management</h1>
             <p className="mt-1 text-sm text-slate-500 max-w-xl">
               Create and manage platform events. Use the form to add or edit events, and the list to review or delete them.
             </p>
@@ -229,7 +228,6 @@ export default function EventManagement() {
 
       <main className="flex-1 p-8">
         <div className="max-w-6xl mx-auto space-y-6">
-          {/* Form */}
           {activeTab === "add" && (
             <form
               onSubmit={handleSubmit}
@@ -393,8 +391,6 @@ export default function EventManagement() {
               </div>
             </form>
           )}
-
-          {/* Events List */}
           {activeTab === "view" && (
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
               <div className="flex items-center justify-between mb-4">

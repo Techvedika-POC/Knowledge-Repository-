@@ -1,17 +1,13 @@
 ﻿using Application.Interfaces;
 using Knowledge_Repository.Application.Implementations.Services;
-using Knowledge_Repository.Application.Interfaces;
 using Knowledge_Repository.Application.Interfaces.Repositories;
 using Knowledge_Repository.Application.Interfaces.Services;
 using Knowledge_Repository.Application.Services;
-using Knowledge_Repository.Application.Services;
 using Knowledge_Repository.Infrastructure.Data;
-using Knowledge_Repository.Infrastructure.Repositories;
 using Knowledge_Repository.Infrastructure.Repositories;
 using Knowledge_Repository.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -77,9 +73,12 @@ builder.Services.AddScoped<IModuleRepository, ModuleRepository>();
 builder.Services.AddScoped<ILessonRepository, LessonRepository>();
 builder.Services.AddScoped<IResourceRepository, ResourceRepository>();
 builder.Services.AddScoped<IAssessmentRepository, AssessmentRepository>();
-builder.Services.AddScoped<IUserProgressRepository, UserProgressRepository>();
+builder.Services.AddScoped<IUserModuleProgressRepository, UserModuleProgressRepository>();
 
-// ===== REGISTER SERVICES =====
+builder.Services.AddScoped<IUserLessonProgressRepository, UserLessonProgressRepository>();
+builder.Services.AddScoped<IUserAssessmentProgressRepository, UserAssessmentProgressRepository>();
+builder.Services.AddScoped<IUserPlanEnrollmentRepository, UserPlanEnrollmentRepository>();
+builder.Services.AddScoped<ILearningEventRepository, LearningEventRepository>();
 builder.Services.AddScoped<IUserProgressService, UserProgressService>();
 builder.Services.AddScoped<IAssessmentService, AssessmentService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -110,7 +109,6 @@ builder.Services.AddScoped<IJuryChatService, JuryChatService>();
 builder.Services.AddScoped<IJuryPanelService, JuryPanelService>();
 builder.Services.AddScoped<ICommunicationService, CommunicationService>();
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<IUserProgressAggregateService, UserProgressAggregateService>();
 builder.Services.AddScoped<ILearningPlanService, LearningPlanService>();
 builder.Services.AddScoped<IWeekService, WeekService>();
 builder.Services.AddScoped<IModuleService, ModuleService>();
@@ -119,7 +117,10 @@ builder.Services.AddScoped<IResourceService, ResourceService>();
 builder.Services.AddScoped<IAssessmentService, AssessmentService>();
 builder.Services.AddScoped<IManagerRepository, ManagerRepository>();
 builder.Services.AddScoped<IManagerService, ManagerService>();
+builder.Services.AddScoped<IHackathonJuryService, HackathonJuryService>();
+builder.Services.AddScoped<IIdeaSubmissionRepository, IdeaSubmissionRepository>();
 
+builder.Services.AddScoped<IAiSkillInferenceService, AiSkillInferenceService>();
 // ENRICHMENT
 builder.Services.AddScoped<TrainingPlanEnrichmentProcessor>();
 builder.Services.AddScoped<TrainingPlanEnrichmentProcessor>();
@@ -136,18 +137,75 @@ builder.Services.AddScoped<ITrainingPlanIngestionService, TrainingPlanIngestionS
 builder.Services.AddScoped<ITrainingPlanMappingService, TrainingPlanMappingService>();
 builder.Services.AddScoped<ITrainingPlanRepository, TrainingPlanRepository>();
 
+
+builder.Services.AddScoped<ITeamService, TeamService>();
+builder.Services.AddScoped<ICodingChallengeRepository, CodingChallengeRepository>();
+builder.Services.AddScoped<ICodingChallengeService, CodingChallengeService>();
+builder.Services.AddScoped<IAiService, AiService>();
+builder.Services.AddScoped<IAiRepository, AiRepository>();
+builder.Services.AddHttpClient<ILlmClient, GroqClient>();
+
+builder.Services.AddScoped<ISkillRepository, SkillRepository>();
+builder.Services.AddScoped<ISkillService, SkillService>();
+builder.Services.AddScoped<IInterviewRepository, InterviewRepository>();
+builder.Services.AddScoped<IInterviewService, InterviewService>();
+builder.Services.AddScoped<IJuryAnalyticsRepository, JuryAnalyticsRepository>();
+builder.Services.AddScoped<IJuryAnalyticsService, JuryAnalyticsService>();
+builder.Services.AddScoped<ISkillInferenceService, SkillInferenceService>();
+
+builder.Services.AddScoped<ILearningEventService, LearningEventService>();
+builder.Services.AddScoped<IIdeaService, IdeaService>();
+
+//builder.Services.AddScoped<IEnrichmentLlmService>(sp =>
+//{
+//    var configuration = sp.GetRequiredService<IConfiguration>();
+
+//    var apiKey = configuration["OpenAI:ApiKey"];
+
+//    if (string.IsNullOrWhiteSpace(apiKey))
+//        throw new Exception("OpenAI:ApiKey is missing in appsettings.json");
+
+//    return new Gpt4oMiniEnrichmentService(apiKey);
+//});
+
+//builder.Services.AddScoped<IEnrichmentLlmService>(sp =>
+//{
+//    var config = sp.GetRequiredService<IConfiguration>();
+//    var key = config["Gemini:ApiKey"];
+
+//    if (string.IsNullOrWhiteSpace(key))
+//        throw new Exception("Gemini ApiKey missing");
+
+//    return new GeminiEnrichmentService(key);
+//});
+
 builder.Services.AddScoped<IEnrichmentLlmService>(sp =>
 {
-    var apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
+    var config = sp.GetRequiredService<IConfiguration>();
 
+    var provider = config["LLM_PROVIDER"]?.ToLowerInvariant();
+
+    if (provider == "ollama")
+    {
+        var baseUrl = config["OLLAMA_BASE_URL"];
+        var model = config["OLLAMA_MODEL"];
+
+        if (string.IsNullOrWhiteSpace(baseUrl))
+            throw new Exception("OLLAMA_BASE_URL is missing");
+
+        if (string.IsNullOrWhiteSpace(model))
+            throw new Exception("OLLAMA_MODEL is missing");
+
+        return new OllamaEnrichmentService(baseUrl, model);
+    }
+
+    // fallback (optional)
+    var apiKey = config["OpenAI:ApiKey"];
     if (string.IsNullOrWhiteSpace(apiKey))
-        throw new Exception("OPENAI_API_KEY environment variable is missing");
+        throw new Exception("OpenAI:ApiKey is missing");
 
     return new Gpt4oMiniEnrichmentService(apiKey);
 });
-
-builder.Configuration
-    .AddEnvironmentVariables();
 
 
 // ===== EVALUATION STRATEGIES =====

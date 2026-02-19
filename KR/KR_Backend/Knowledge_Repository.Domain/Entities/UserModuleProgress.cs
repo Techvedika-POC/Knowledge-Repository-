@@ -7,11 +7,9 @@ namespace Knowledge_Repository.Domain.Entities;
 
 public partial class UserModuleProgress
 {
-    public Guid ProgressId { get; set; }
+    public Guid Id { get; set; }
 
     public Guid UserId { get; set; }
-
-    public Guid TopicId { get; set; }
 
     public Guid ModuleId { get; set; }
 
@@ -21,29 +19,5 @@ public partial class UserModuleProgress
 
     public DateTime? CompletedOn { get; set; }
 
-    public string TestStatus { get; set; }
-
-    public DateTime? TestAttemptedOn { get; set; }
-
     public DateTime? LastAccessed { get; set; }
-
-    public DateTime? CreatedAt { get; set; }
-
-    public DateTime? UpdatedAt { get; set; }
-
-    public Guid? CurrentLessonId { get; set; }
-
-    public int CompletedLessonsCount { get; set; }
-
-    public int TotalLessonsCount { get; set; }
-
-    public string CompletedLessonIds { get; set; }
-
-    public decimal LessonProgressPercent { get; set; }
-
-    public virtual Lesson CurrentLesson { get; set; }
-
-    public virtual Module Module { get; set; }
-
-    public virtual User User { get; set; }
 }

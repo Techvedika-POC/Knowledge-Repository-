@@ -29,8 +29,6 @@ export default function MentorDashboard() {
   const [chatMessages, setChatMessages] = useState([]);
   const [chatText, setChatText] = useState("");
   const [isPosting, setIsPosting] = useState(false);
-
-  // ---------- LOAD GROUPS ----------
   useEffect(() => {
     const fetchGroups = async () => {
       if (!mentorId) {
@@ -54,7 +52,6 @@ export default function MentorDashboard() {
     fetchGroups();
   }, [mentorId]);
 
-  // ---------- TEAM SELECTION ----------
   const handleSelectTeam = async (teamId) => {
     if (!teamId) return;
 
@@ -93,7 +90,6 @@ export default function MentorDashboard() {
     setChatMessages([]);
   };
 
-  // ---------- FEEDBACK ----------
   const loadFeedbacks = async (teamId) => {
     if (!teamId || !mentorId) return;
     try {
@@ -144,8 +140,6 @@ export default function MentorDashboard() {
       setIsPosting(false);
     }
   };
-
-  // ---------- CHAT ----------
   const loadChat = async (teamId) => {
     if (!teamId || !mentorId) return;
     try {
@@ -215,8 +209,6 @@ export default function MentorDashboard() {
       </div>
     );
   };
-
-  // ---------- HEADER STATS ----------
   const totalTeams = groups.reduce(
     (acc, g) => acc + (g.teams?.length || 0),
     0
@@ -280,8 +272,6 @@ export default function MentorDashboard() {
               >
                 <FiUsers className="w-6 h-6 text-indigo-600" />
               </div>
-
-              {/* Title + workspace label */}
               <div className="flex flex-col">
                 <p className="text-[11px] uppercase tracking-[0.12em] font-semibold text-indigo-500">
                   Mentor Workspace
@@ -292,8 +282,6 @@ export default function MentorDashboard() {
                 </h1>
               </div>
             </div>
-
-            {/* Inline monitoring labels (inside header, not below) */}
             <div className="mt-3 flex flex-wrap gap-2">
               <span className="px-3 py-1 rounded-full bg-white/80 text-[11px] font-medium text-purple-600 border border-purple-300">
                 Monitor teams
@@ -307,8 +295,6 @@ export default function MentorDashboard() {
             </div>
 
           </div>
-
-          {/* Right Stats Section */}
           <div className="grid grid-cols-3 gap-3 w-full lg:w-auto">
             <div
               className="
@@ -383,7 +369,6 @@ export default function MentorDashboard() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.04 }}
             >
-              {/* month header */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-2">
@@ -400,7 +385,6 @@ export default function MentorDashboard() {
                   {(grp.teams && grp.teams.length) || 0} teams
                 </p>
               </div>
-              {/* team cards*/}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {(grp.teams || []).map((team) => {
                   const isSelected = expandedTeamId === team.teamId;
@@ -426,7 +410,6 @@ export default function MentorDashboard() {
           ${isSelected ? "border-indigo-400" : "border-slate-200 hover:border-indigo-200"}
         `}
                     >
-                      {/* header: title + submissions pill */}
                       <div className="flex items-start justify-between mb-2">
                         <h3 className="text-sm font-semibold text-slate-900 group-hover:text-indigo-700">
                           {team.teamName}
@@ -437,12 +420,9 @@ export default function MentorDashboard() {
                         </span>
                       </div>
 
-                      {/* description */}
                       <p className="text-xs text-slate-600 line-clamp-3">
                         {team.description || "No description available."}
                       </p>
-
-                      {/* footer meta */}
                       <div className="mt-3 flex items-center justify-between">
                         <span className="inline-flex items-center gap-2 text-[11px] text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
@@ -453,7 +433,6 @@ export default function MentorDashboard() {
                   );
                 })}
               </div>
-              {/* expanded card */}
               {grp.teams?.some((t) => t.teamId === expandedTeamId) &&
                 expandedTeamDetails && (
                   <motion.div
@@ -462,7 +441,6 @@ export default function MentorDashboard() {
                     initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
                   >
-                    {/* header */}
                     <div className="flex items-start justify-between px-6 py-4 border-b border-slate-100">
                       <div className="flex-1">
                         <div className="mb-2 flex items-center gap-2">
@@ -505,8 +483,6 @@ export default function MentorDashboard() {
                         Close
                       </button>
                     </div>
-
-                    {/* tabs */}
                     <div className="px-6 pt-3 pb-1 bg-slate-50 border-b border-slate-100">
                       <div className="inline-flex bg-white rounded-full p-1 border border-slate-100">
                         {["overview", "submissions", "feedback"].map((tab) => (
@@ -537,9 +513,7 @@ export default function MentorDashboard() {
                       </div>
                     </div>
 
-                    {/* tab content */}
                     <div className="p-6 bg-slate-50">
-                      {/* overview */}
                       {activeTab === "overview" && (
                         <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-6">
                           <h4 className="text-sm font-semibold text-slate-800 mb-4">
@@ -573,8 +547,6 @@ export default function MentorDashboard() {
                           )}
                         </div>
                       )}
-
-                      {/* submissions */}
                       {activeTab === "submissions" && (
                         <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-6">
                           <div className="flex items-center justify-between mb-4">
@@ -609,10 +581,8 @@ export default function MentorDashboard() {
                         </div>
                       )}
 
-                      {/* feedback + chat */}
                       {activeTab === "feedback" && (
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                          {/* feedback */}
                           <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-6 h-[520px] flex flex-col">
                             <div className="flex items-center justify-between mb-4">
                               <h4 className="text-sm font-semibold text-slate-800">
@@ -717,8 +687,6 @@ export default function MentorDashboard() {
                               </div>
                             </div>
                           </div>
-
-                          {/* chat */}
                           <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-6 h-[520px] flex flex-col">
                             <div className="flex items-center justify-between mb-4">
                               <h4 className="text-sm font-semibold text-slate-800">

@@ -53,8 +53,6 @@ export default function AppHighlights() {
   return (
     <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 font-sans pt-0 mt-0">
       <div className="max-w-7xl mx-auto px-4 pt-5">
-
-        {/* ---------------- FEATURES SECTION (Moved to Top) ---------------- */}
         <section className="mb-12">
           <h2 className="text-[22px] font-bold text-center text-black mb-2">
             KnowLedger Synaptix Features
@@ -109,8 +107,6 @@ export default function AppHighlights() {
             <div className="swiper-button-next !w-6 !h-6 !text-blue-600 hover:!text-blue-800"></div>
           </Swiper>
         </section>
-
-        {/* ---------------- ABOUT SECTION ---------------- */}
         <section className="text-center mb-14">
           <h2 className="text-3xl font-bold text-indigo-800 mb-4">
             About KnowLedger Synaptix
@@ -125,8 +121,6 @@ export default function AppHighlights() {
             KnowLedger Synaptix is your trusted digital workspace for innovation.
           </p>
         </section>
-
-        {/* ---------------- MISSION & VISION ---------------- */}
         <div className="grid md:grid-cols-2 gap-8 mb-16 text-center">
           <div className="bg-white p-8 rounded-2xl shadow-md hover:shadow-xl transition duration-300 transform hover:-translate-y-1">
             <Rocket className="w-10 h-10 text-indigo-700 mx-auto mb-3" />
@@ -152,8 +146,6 @@ export default function AppHighlights() {
             </p>
           </div>
         </div>
-
-        {/* ---------------- CORE VALUES ---------------- */}
         <section className="mb-16">
           <h2 className="text-2xl font-bold text-center text-indigo-900 mb-8">
             Our Core Values

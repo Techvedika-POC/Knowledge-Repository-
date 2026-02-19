@@ -11,5 +11,7 @@ namespace Knowledge_Repository.Application.Interfaces.Repositories
     {
         Task AddRangeAsync(IEnumerable<KnowledgeTag> tags);
         Task<List<KnowledgeTag>> GetTagsByItemIdAsync(Guid itemId);
+        Task<List<KnowledgeTag>> GetByItemAndVersionAsync(Guid itemId, Guid versionId);
+
     }
 }

@@ -45,11 +45,9 @@ export default function EventKnowledgeItemsPage() {
 
   return (
     <div className="min-h-screen w-full bg-slate-50 px-6 py-6">
-      {/* Top hero / header */}
       <div className="max-w-6xl mx-auto mb-6">
         <div className="rounded-3xl border border-slate-200 bg-gradient-to-r from-indigo-50 via-sky-50 to-emerald-50 px-6 py-5 shadow-sm">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            {/* Left: title + copy */}
             <div>
               <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-[15px] font-medium text-emerald-700 border border-emerald-200 mb-2">
                 <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
@@ -70,8 +68,6 @@ export default function EventKnowledgeItemsPage() {
                 reuse, learning and implementation.
               </p>
             </div>
-
-            {/* Right: small stats */}
             <div className="flex flex-col items-end gap-2">
               <p className="text-[11px] text-slate-500 flex items-center gap-1">
                 <Flag className="w-3.5 h-3.5 text-amber-500" />
@@ -81,10 +77,7 @@ export default function EventKnowledgeItemsPage() {
           </div>
         </div>
       </div>
-
-      {/* Inner content card */}
       <div className="max-w-6xl mx-auto">
-        {/* Section heading bar */}
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-6 rounded-full bg-indigo-500" />
@@ -141,8 +134,6 @@ export default function EventKnowledgeItemsPage() {
           </div>
         )}
       </div>
-
-      {/* global PreviewModal */}
       {selectedItem && (
         <PreviewModal
           item={selectedItem}

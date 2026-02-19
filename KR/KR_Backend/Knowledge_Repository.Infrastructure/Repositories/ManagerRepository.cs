@@ -18,8 +18,6 @@ namespace Knowledge_Repository.Infrastructure.Repositories
         {
             _context = context;
         }
-
-        // ---------------- ASSIGN PLAN ----------------
         public async Task AssignLearningPlanAsync(Guid planId, Guid managerId, List<Guid> userIds)
         {
             foreach (var userId in userIds)
@@ -44,44 +42,66 @@ namespace Knowledge_Repository.Infrastructure.Repositories
 
             await _context.SaveChangesAsync();
         }
-
-        // ---------------- PLAN PROGRESS ----------------
         public async Task<List<UserLearningProgressDto>> GetPlanProgressAsync(Guid planId)
         {
-            var query =
+            var assignments =
                 from ulp in _context.UserLearningPlans
                 join u in _context.Users on ulp.UserId equals u.UserId
                 where ulp.PlanId == planId
-                select new UserLearningProgressDto
+                select new { ulp, u };
+
+            var data = await assignments.ToListAsync();
+            var result = new List<UserLearningProgressDto>();
+
+            foreach (var row in data)
+            {
+                var userModules = await _context.UserModuleProgresses
+                    .Where(m => m.UserId == row.u.UserId)
+                    .ToListAsync();
+
+                int totalModules = userModules.Count;
+                int completedModules = userModules.Count(m => m.Status == "Completed");
+                decimal progressPercent =
+                    totalModules == 0
+                        ? 0m
+                        : Math.Round(
+                            ((decimal)completedModules / totalModules) * 100m,
+                            2,
+                            MidpointRounding.AwayFromZero
+                          );
+
+                var assessment = await _context.UserAssessmentProgresses
+                    .Where(a => a.UserId == row.u.UserId)
+                    .OrderByDescending(a => a.CompletedOn)
+                    .FirstOrDefaultAsync();
+
+                string status =
+                    progressPercent >= 100m ? "Completed" :
+                    progressPercent > 0m ? "InProgress" :
+                    "Assigned";
+
+                result.Add(new UserLearningProgressDto
                 {
-                    UserId = u.UserId,
-                    UserName = u.Name,
-                    PlanStatus = ulp.Status,
-                    ProgressPercent = ulp.ProgressPercent ?? 0,
+                    UserId = row.u.UserId,
+                    UserName = row.u.Name,
 
-                    TotalModules = _context.UserModuleProgresses
-                        .Count(m => m.UserId == u.UserId),
+                    PlanStatus = status,
 
-                    CompletedModules = _context.UserModuleProgresses
-                        .Count(m => m.UserId == u.UserId && m.Status == "Completed"),
+                    TotalModules = totalModules,
+                    CompletedModules = completedModules,
 
-                    LatestAssessmentScore = _context.UserAssessmentResults
-                        .Where(a => a.UserId == u.UserId)
-                        .OrderByDescending(a => a.AttemptedOn)
-                        .Select(a => (double?)a.ScorePercentage)
-                        .FirstOrDefault(),
+                    ProgressPercent = progressPercent,  
 
-                    Passed = _context.UserAssessmentResults
-                        .Where(a => a.UserId == u.UserId)
-                        .OrderByDescending(a => a.AttemptedOn)
-                        .Select(a => (bool?)a.Passed)
-                        .FirstOrDefault()
-                };
+                    LatestAssessmentScore = assessment?.Score != null
+                        ? (double?)assessment.Score
+                        : null,
 
-            return await query.ToListAsync(); 
+                    Passed = assessment?.Passed
+                });
+            }
+
+            return result;
         }
-
-        // ---------------- GET ALL PLANS ----------------
         public async Task<List<LearningPlanDto>> GetAllLearningPlansAsync()
         {
             return await _context.LearningPlans

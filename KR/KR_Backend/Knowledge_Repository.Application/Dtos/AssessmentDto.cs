@@ -9,16 +9,16 @@ namespace Knowledge_Repository.Application.Dtos
         public Guid? ModuleId { get; set; }
         public Guid TopicId { get; set; }
         public string Title { get; set; } = string.Empty;
-        public int Difficulty { get; set; } = 0;
-        public bool IsAiGenerated { get; set; } = false;
+        public int Difficulty { get; set; }
+        public bool IsAiGenerated { get; set; }
         public string Metadata { get; set; } = "{}";
         public string Description { get; set; } = string.Empty;
         public string LearningObjectives { get; set; } = string.Empty;
         public string AssessmentType { get; set; } = string.Empty;
-        public int EstimatedDurationMinutes { get; set; } = 0;
+        public int EstimatedDurationMinutes { get; set; }
         public List<AssessmentQuestionDto> Questions { get; set; } = new();
-        public DateTime? CreatedOn { get; set; }
-        public DateTime? UpdatedOn { get; set; }
+        public AssessmentResultDto? LatestResult { get; set; }
+
     }
 
     public class AssessmentQuestionDto
@@ -38,8 +38,6 @@ namespace Knowledge_Repository.Application.Dtos
         public Guid AssessmentId { get; set; }
         public Guid UserId { get; set; }
         public Guid WeekId { get; set; }
-
-        // JSON dictionary: { "questionId": "userAnswer" }
         public string UserAnswers { get; set; } = "{}";
     }
 

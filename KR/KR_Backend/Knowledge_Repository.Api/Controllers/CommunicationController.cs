@@ -15,7 +15,6 @@ namespace Knowledge_Repository.Api.Controllers
         private readonly ICommunicationService _service;
         public CommunicationController(ICommunicationService service) { _service = service; }
 
-        // GET chat messages for team
         [HttpGet("team/{teamId:guid}/chat")]
         public async Task<IActionResult> GetTeamChat(Guid teamId, [FromQuery] Guid? userId)
         {
@@ -26,8 +25,6 @@ namespace Knowledge_Repository.Api.Controllers
             var msgs = await _service.GetTeamChatMessagesAsync(callerId, teamId);
             return Ok(msgs);
         }
-
-        // POST chat message
         [HttpPost("team/{teamId:guid}/chat")]
         public async Task<IActionResult> PostTeamChat(Guid teamId, [FromBody] ChatPostRequest req, [FromQuery] Guid? userId)
         {
@@ -39,7 +36,6 @@ namespace Knowledge_Repository.Api.Controllers
             return CreatedAtAction(nameof(GetTeamChat), new { teamId }, msg);
         }
 
-        // delete chat message
         [HttpDelete("chat/{messageId:guid}")]
         public async Task<IActionResult> DeleteChatMessage(Guid messageId, [FromQuery] Guid? userId)
         {
@@ -54,7 +50,6 @@ namespace Knowledge_Repository.Api.Controllers
             catch (System.Security.SecurityException se) { return Forbid(se.Message); }
         }
 
-        // Feedback endpoints
         [HttpGet("team/{teamId:guid}/feedbacks")]
         public async Task<IActionResult> GetTeamFeedbacks(Guid teamId, [FromQuery] Guid? userId)
         {
@@ -87,10 +82,6 @@ namespace Knowledge_Repository.Api.Controllers
                 return Problem(detail: ex.Message);
             }
         }
-
-
-
-
 
         [HttpPost("feedback/{feedbackId:guid}/reply")]
         public async Task<IActionResult> ReplyToFeedback(Guid feedbackId, [FromBody] FeedbackReplyCreateRequest req)

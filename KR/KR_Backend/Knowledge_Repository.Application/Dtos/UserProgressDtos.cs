@@ -10,8 +10,6 @@ namespace Knowledge_Repository.Application.Dtos
         public bool IsUnlocked { get; set; } = false;
         public bool IsCompleted { get; set; } = false;
         public string TestStatus { get; set; } = "NotTaken";
-
-        // ✅ NEW – for simple progress display per module
         public decimal LessonProgressPercent { get; set; } = 0m;
         public int CompletedLessons { get; set; }
         public int TotalLessons { get; set; }

@@ -10,12 +10,12 @@ namespace Knowledge_Repository.Application.Dtos
     {
         public Guid ItemId { get; set; }
         public Guid TeamId { get; set; }
-        public string Type { get; set; }           // "Chat" | "Feedback" | "FeedbackReply"
+        public string Type { get; set; }          
         public Guid SenderId { get; set; }
         public string SenderName { get; set; }
         public string Text { get; set; }
         public DateTimeOffset CreatedOn { get; set; }
-        public Guid? ParentFeedbackId { get; set; } // for replies
+        public Guid? ParentFeedbackId { get; set; } 
     }
 
     

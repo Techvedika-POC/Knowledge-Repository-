@@ -65,7 +65,7 @@ namespace Knowledge_Repository.Application.Implementations.Services
                 DomainId = item.DomainId,
                 CategoryId = item.CategoryId,
                 IsEventItem = item.IsEventItem ?? false,
-                EventId = item.EventKnowledgeItems?.FirstOrDefault()?.EventId, // optional
+                EventId = item.EventKnowledgeItems?.FirstOrDefault()?.EventId,
                 ContributorName = item.Owner?.Name ?? "",
                 EngagementScore = item.Engagements?.Count ?? 0,
                 CreatedOn = item.CreatedOn ?? DateTime.MinValue,
@@ -256,6 +256,11 @@ namespace Knowledge_Repository.Application.Implementations.Services
             {
               
                 var changed = false;
+                if (knowledgeItem.Status == "Rejected")
+                {
+                    knowledgeItem.Status = "Pending";
+                    changed = true;
+                }
 
                 if (!string.IsNullOrWhiteSpace(dto.Title) && dto.Title != knowledgeItem.Title)
                 {
@@ -362,14 +367,27 @@ namespace Knowledge_Repository.Application.Implementations.Services
 
                 if (dto.Tags != null && dto.Tags.Any())
                 {
-                    var tagEntities = dto.Tags
+                    var cleanTags = dto.Tags
                         .Where(t => !string.IsNullOrWhiteSpace(t))
+                        .Select(t => t.Trim())
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .ToList();
+
+                    var existingTags = await _knowledgeTagRepository
+                        .GetByItemAndVersionAsync(knowledgeItem.ItemId, newVersion.VersionId);
+
+                    var existingTagNames = existingTags
+                        .Select(t => t.TagName.ToLower())
+                        .ToHashSet();
+
+                    var newTags = cleanTags
+                        .Where(t => !existingTagNames.Contains(t.ToLower()))
                         .Select(t => new KnowledgeTag
                         {
                             TagId = Guid.NewGuid(),
                             ItemId = knowledgeItem.ItemId,
                             VersionId = newVersion.VersionId,
-                            TagName = t.Trim(),
+                            TagName = t,
                             CreatedOn = DateTime.UtcNow,
                             CreatedBy = userId,
                             UpdatedOn = DateTime.UtcNow,
@@ -377,9 +395,10 @@ namespace Knowledge_Repository.Application.Implementations.Services
                         })
                         .ToList();
 
-                    if (tagEntities.Count > 0)
-                        await _knowledgeTagRepository.AddRangeAsync(tagEntities);
+                    if (newTags.Any())
+                        await _knowledgeTagRepository.AddRangeAsync(newTags);
                 }
+
                 var replace = dto.ReplaceAttachments; 
 
                 if (replace)

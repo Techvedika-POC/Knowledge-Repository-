@@ -21,7 +21,8 @@ import {
   ListChecks,
   Layers,
   RefreshCcw,
-  ChevronDown
+  ChevronDown,
+  TrendingUp, Flame, Clock
 } from "lucide-react";
 export default function LearningManagement() {
   const [plans, setPlans] = useState([]);
@@ -52,6 +53,7 @@ export default function LearningManagement() {
   const modulesPanelRef = useRef(null);
   const safeProgressModules = planProgress?.modules || [];
 
+
   useEffect(() => {
     loadPlans();
     const onResize = () => equalizeHeights();
@@ -62,18 +64,68 @@ export default function LearningManagement() {
   useEffect(() => {
     setTimeout(equalizeHeights, 120);
   }, [weeks, modules, moduleDetail, weekDetails, planDetails]);
-  const refreshProgress = async () => {
-    if (!selectedPlan || !userId) return null;
+  const normalizePlanProgress = (data) => {
+    if (!data) return null;
+
+    return {
+      userId: data.userId,
+      planId: data.planId,
+      modules: (data.modules || []).map(m => ({
+        moduleId: m.moduleId,
+        isUnlocked: m.isUnlocked,
+        isCompleted: m.isCompleted,
+        lessonProgressPercent: m.lessonProgressPercent ?? 0,
+
+        lessons: (m.lessons || []).map(l => ({
+          lessonId: l.lessonId,
+          isCompleted: l.isCompleted
+        })),
+
+        assessments: (m.assessments || []).map(a => ({
+          assessmentId: a.assessmentId,
+          latestResult: a.latestResult
+        }))
+      }))
+    };
+  };
+  const refreshProgress = async (planIdOverride) => {
+    const planId = planIdOverride || selectedPlan?.planId;
+    if (!planId || !userId) return null;
 
     const res = await fetch(
-      `/api/UserProgressAggregate/${userId}/plan/${selectedPlan.planId}`
+      `/api/UserProgressAggregate/${userId}/plan/${planId}`
     );
-    if (!res.ok) throw new Error("Failed to refresh progress");
 
-    const data = await res.json();
-    setPlanProgress(data);
+    if (!res.ok) {
+      console.error("Progress API failed:", res.status);
+      setPlanProgress(null);
+      return null;
+    }
 
-    return data;
+    const text = await res.text();
+
+    if (!text || !text.trim()) {
+      // 👇 No progress yet (new user / new plan)
+      const empty = {
+        userId,
+        planId,
+        modules: []
+      };
+      setPlanProgress(empty);
+      return empty;
+    }
+
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      console.error("Invalid JSON from progress API:", text);
+      return null;
+    }
+
+    const normalized = normalizePlanProgress(data);
+    setPlanProgress(normalized);
+    return normalized;
   };
   const equalizeHeights = () => {
     try {
@@ -90,114 +142,6 @@ export default function LearningManagement() {
     } catch (e) {
       // ignore
     }
-  };
-  const buildProgressMap = (progressList = []) => {
-    const map = new Map();
-    if (!Array.isArray(progressList)) return map;
-    progressList.forEach((p) => {
-      const moduleId =
-        p.moduleId || p.ModuleId || p.moduleID || p.ModuleID || p.ModuleId;
-      if (!moduleId) return;
-      map.set(String(moduleId).toLowerCase(), {
-        isUnlocked: !!(p.isUnlocked ?? p.IsUnlocked ?? p.IsUnlocked === true),
-        isCompleted: !!(
-          p.isCompleted ??
-          p.IsCompleted ??
-          (p.Status === "Completed") ??
-          (p.status === "Completed")
-        ),
-        testStatus:
-          p.testStatus ?? p.TestStatus ?? p.teststatus ?? p.Teststatus ?? "NotTaken",
-        weekId: p.weekId ?? p.WeekId ?? p.topicId ?? p.TopicId ?? null,
-      });
-    });
-    return map;
-  };
-  const mergeModuleProgressToModules = (modulesList = [], progressMap) => {
-    const pm =
-      progressMap instanceof Map ? progressMap : buildProgressMap(progressMap || []);
-    return (Array.isArray(modulesList) ? modulesList : []).map((m, idx) => {
-      const moduleId = m.moduleId ?? m.ModuleId ?? m.ModuleID ?? m.ModuleId;
-      const key = moduleId ? String(moduleId).toLowerCase() : null;
-      const prog = key ? pm.get(key) : null;
-      const isUnlocked = prog ? !!prog.isUnlocked : !!m.isUnlocked;
-      const isCompleted = prog ? !!prog.isCompleted : !!m.isCompleted;
-      const testStatus = prog?.testStatus || "NotTaken";
-      const percentCompleted = testStatus === "Passed" ? 100 : 0;
-
-      return {
-        ...m,
-        isUnlocked,
-        isLocked: !isUnlocked,
-        isCompleted,
-        _progress: { ...(prog || {}), percentCompleted, testStatus },
-        orderNo:
-          m.orderNo ??
-          m.OrderNo ??
-          m.OrderIndex ??
-          m.orderIndex ??
-          idx + 1,
-      };
-    });
-  };
-  const applyWeekUnlocks = async (weeksArr = [], progressMap, planId = null) => {
-    if (!Array.isArray(weeksArr) || weeksArr.length === 0) return weeksArr;
-    const weeksClone = weeksArr.map((w) => ({
-      ...w,
-      isUnlocked: false,
-      isCompleted: !!w.isCompleted,
-    }));
-    weeksClone.sort((a, b) => {
-      const na = a.weekNumber ?? a.WeekNumber ?? 99999;
-      const nb = b.weekNumber ?? b.WeekNumber ?? 99999;
-      return na - nb;
-    });
-    if (weeksClone.length > 0) weeksClone[0].isUnlocked = true;
-
-    const fetchModules = async (weekId) => {
-      if (!weekId) return [];
-      try {
-        const res = await api.get(`/Module/week/${weekId}`);
-        const arr = Array.isArray(res.data) ? res.data : [];
-        return arr.map((m) => ({ ...m, weekId }));
-      } catch {
-        return [];
-      }
-    };
-
-    const pm =
-      progressMap instanceof Map ? progressMap : buildProgressMap(progressMap || []);
-
-    for (let i = 1; i < weeksClone.length; i++) {
-      const prevWeek = weeksClone[i - 1];
-      if (!prevWeek.isUnlocked) {
-        weeksClone[i].isUnlocked = false;
-        continue;
-      }
-      const prevModules = await fetchModules(
-        prevWeek.weekId ?? prevWeek.id ?? prevWeek.weekId
-      );
-      if (prevModules.length === 0) {
-        weeksClone[i].isUnlocked = true;
-        continue;
-      }
-      let allCompleted = true;
-      for (const m of prevModules) {
-        const moduleId = m.moduleId ?? m.ModuleId ?? m.ModuleID;
-        if (!moduleId) {
-          allCompleted = false;
-          break;
-        }
-        const key = String(moduleId).toLowerCase();
-        const p = pm.get(key);
-        if (!p || p.isCompleted !== true) {
-          allCompleted = false;
-          break;
-        }
-      }
-      weeksClone[i].isUnlocked = allCompleted;
-    }
-    return weeksClone;
   };
   const loadPlans = async () => {
     try {
@@ -235,26 +179,16 @@ export default function LearningManagement() {
 
     try {
       setLoading(true);
+
+      await refreshProgress(p.planId);   
+
       const weeksRes = await api.get(`/Week/full/plan/${p.planId}`, {
         params: { userId }
       });
-      const weeksData = weeksRes.data || [];
-      const progress = await refreshProgress();
-      const progressMap = new Map(
-        (progress?.modules || []).map(m => [
-          String(m.moduleId).toLowerCase(),
-          m
-        ])
-      );
-      const unlockedWeeks = await applyWeekUnlocks(
-        weeksData,
-        progressMap,
-        p.planId
-      );
-      setWeeks(unlockedWeeks);
+
+      setWeeks(weeksRes.data || []);
       await fetchPlanDetails(p);
-    } catch (err) {
-      toast.error("Failed to load plan");
+
     } finally {
       setLoading(false);
     }
@@ -284,29 +218,35 @@ export default function LearningManagement() {
     setSelectedModule(null);
     setModuleDetail(null);
 
-    const res = await api.get(`/Module/week/${w.weekId}`);
-    const modulesData = res.data || [];
+    try {
+      setLoading(true);
 
-    const progressMap = new Map(
-      (planProgress?.modules || []).map(m => [
-        String(m.moduleId).toLowerCase(),
-        m
-      ])
-    );
+      const res = await api.get(`/Module/week/${w.weekId}`, {
+        params: { userId }
+      });
 
-    let merged = mergeModuleProgressToModules(
-      modulesData,
-      progressMap
-    );
-    if (merged.length > 0) {
-      merged = merged.map((m, idx) => ({
-        ...m,
-        isUnlocked: idx === 0 ? true : m.isUnlocked,
-        isLocked: idx === 0 ? false : !m.isUnlocked
-      }));
+      const merged = (res.data || []).map(m => {
+        const p = planProgress?.modules?.find(x => x.moduleId === m.moduleId);
+        return {
+          ...m,
+          isCompleted: p?.isCompleted ?? m.isCompleted,
+          lessonProgressPercent: p?.lessonProgressPercent ?? m.lessonProgressPercent
+        };
+      });
+
+      setModules(merged);
+
+
+      setModules(res.data || []);
+
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to load modules");
+    } finally {
+      setLoading(false);
     }
-    setModules(merged);
   };
+
   function attachResourcesAndAssessments(detail) {
     if (!detail || !Array.isArray(detail.lessons)) return detail;
     const lessonsMap = new Map();
@@ -332,7 +272,6 @@ export default function LearningManagement() {
     );
     return { ...detail, lessons: resultLessons };
   }
-
   const openModule = async (m) => {
     if (!m.isUnlocked) {
       toast.error("This module is locked.");
@@ -340,73 +279,56 @@ export default function LearningManagement() {
     }
 
     setSelectedModule(m);
-    setModuleDetail(null);
     setLoading(true);
 
     try {
+      // content
       const res = await api.get(`/Module/${m.moduleId}`, {
         params: { userId }
       });
 
+      // progress
+      const progress = planProgress?.modules
+        ?.find(x => x.moduleId === m.moduleId);
+
       const content = attachResourcesAndAssessments(res.data || {});
-      const pm =
-        planProgress?.modules?.find(
-          x => String(x.moduleId).toLowerCase() === String(m.moduleId).toLowerCase()
-        ) || null;
-      if (!pm) {
-        setModuleDetail(content);
-        return;
-      }
-      const assessmentProgressMap = new Map(
-        (pm.assessments || []).map(a => [
-          String(a.assessmentId).toLowerCase(),
-          a.latestResult || null
-        ])
-      );
-      const lessonProgressMap = new Map(
-        (pm.lessons || []).map(l => [
-          String(l.lessonId).toLowerCase(),
-          l.isCompleted === true
-        ])
-      );
+
+      // 🔑 MERGE CONTENT + PROGRESS
       const merged = {
         ...content,
-        isUnlocked: pm.isUnlocked,
-        isCompleted: pm.isCompleted,
-        lessonProgressPercent: pm.lessonProgressPercent ?? 0,
-
-        lessons: content.lessons.map(ls => ({
-          ...ls,
-
+        isCompleted: progress?.isCompleted ?? false,
+        lessonProgressPercent: progress?.lessonProgressPercent ?? 0,
+        lessons: content.lessons.map(l => ({
+          ...l,
           isCompleted:
-            lessonProgressMap.get(
-              String(ls.lessonId).toLowerCase()
-            ) === true,
-
-          assessments: (ls.assessments || []).map(a => ({
-            ...a,
-            latestResult: assessmentProgressMap.get(
-              String(a.assessmentId).toLowerCase()
-            )
-          }))
+            progress?.lessons?.find(p => p.lessonId === l.lessonId)
+              ?.isCompleted ?? false
+        })),
+        assessments: content.assessments.map(a => ({
+          ...a,
+          latestResult:
+            progress?.assessments?.find(p => p.assessmentId === a.assessmentId)
+              ?.latestResult ?? null
         }))
       };
+
       setModuleDetail(merged);
 
-      setTimeout(() => {
-        document
-          .getElementById("module-detail-inline")
-          ?.scrollIntoView({ behavior: "smooth" });
-      }, 100);
-
-    } catch (e) {
-      console.error(e);
-      toast.error("Failed to load module");
     } finally {
       setLoading(false);
     }
   };
+  const refreshAndReopenModule = async () => {
+    const updated = await refreshProgress();
+    if (!updated || !selectedModule) return;
 
+    const freshModule =
+      updated.modules.find(m => m.moduleId === selectedModule.moduleId);
+
+    if (freshModule) {
+      await openModule(freshModule); 
+    }
+  };
   const startAssessment = (assessment) => {
     if (assessment.isLocked) {
       toast.error("Assessment locked.");
@@ -424,68 +346,10 @@ export default function LearningManagement() {
     setAssessmentModalOpen(true);
   };
   const currentUserId = localStorage.getItem("userId");
-  async function submitAssessmentApi(payload) {
-    try {
-      const res = await fetch("/api/assessment/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        let text = await res.text().catch(() => "");
-        console.error("Submit API error body:", text);
-        return null;
-      }
-
-      const text = await res.text();
-      if (!text || !text.trim()) return null;
-
-      try {
-        return JSON.parse(text);
-      } catch (err) {
-        console.warn("Submit returned invalid JSON:", text);
-        return null;
-      }
-    } catch (err) {
-      console.error("submitAssessmentApi failed:", err);
-      return null;
-    }
-  }
-
-  async function getAssessmentResultApi(assessmentId, userId) {
-    if (!userId) return null;
-    try {
-      const res = await fetch(
-        `/api/assessment/${assessmentId}/user/${userId}/result`
-      );
-
-      if (res.status === 404) return null;
-      if (!res.ok) {
-        let text = await res.text().catch(() => "");
-        console.error("Assessment result error:", text);
-        return null;
-      }
-
-      const text = await res.text();
-      if (!text || !text.trim()) return null;
-
-      try {
-        return JSON.parse(text);
-      } catch (err) {
-        console.warn("Assessment result invalid JSON:", text);
-        return null;
-      }
-    } catch (err) {
-      console.error("getAssessmentResultApi() crashed:", err);
-      return null;
-    }
-  }
   const handleShowPlanDetails = async (plan) => {
     await fetchPlanDetails(plan);
     setPlanDetailsVisible(true);
   };
-
-  // --------------------- UI COMPONENTS ---------------------
   const PlansBar = ({ plans = [], selected, onSelect, onShowDetails, loadPlans }) => {
     const sortedPlans = [...plans].reverse();
 
@@ -804,6 +668,36 @@ export default function LearningManagement() {
   };
 
   const ModulesGrid = ({ modules, onOpen }) => {
+    const ProgressRing = ({ percent }) => (
+      <div className="relative w-12 h-12">
+        <svg className="w-full h-full rotate-[-90deg]">
+          <circle
+            cx="24"
+            cy="24"
+            r="20"
+            stroke="#e5e7eb"
+            strokeWidth="4"
+            fill="none"
+          />
+          <circle
+            cx="24"
+            cy="24"
+            r="20"
+            stroke="#3b82f6"
+            strokeWidth="4"
+            fill="none"
+            strokeDasharray={2 * Math.PI * 20}
+            strokeDashoffset={
+              2 * Math.PI * 20 * (1 - percent / 100)
+            }
+          />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center text-xs font-bold">
+          {percent}%
+        </div>
+      </div>
+    );
+
     return (
       <section
         ref={modulesPanelRef}
@@ -846,18 +740,17 @@ export default function LearningManagement() {
 
                     <div className="flex gap-4 text-xs text-slate-500 mt-1">
                       {m.duration && <span>{m.duration} mins</span>}
-                      {m._progress && (
-                        <span>
-                          {m._progress.percentCompleted ?? 0}% completed
-                        </span>
-                      )}
+                      <span>
+                        {m.lessonProgressPercent ?? 0}% completed
+                      </span>
+
                     </div>
                   </div>
                 </div>
 
                 {/* Right: status / action */}
                 <div className="flex flex-col items-end gap-2">
-                  {m.isLocked || m.isUnlocked === false ? (
+                  {!m.isUnlocked ? (
                     <div className="flex items-center gap-1 text-xs text-slate-400">
                       <Lock className="w-4 h-4" />
                       Locked
@@ -898,6 +791,22 @@ export default function LearningManagement() {
       </section>
     );
   };
+  async function submitAssessmentApi(payload) {
+    const res = await fetch(
+      `/api/assessment/${payload.assessmentId}/submit`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      }
+    );
+
+    if (!res.ok) {
+      throw new Error("Assessment scoring failed");
+    }
+
+    return await res.json();
+  }
 
   const ModuleDetailInline = ({ detail, userId, refreshProgress, planProgress }) => {
     const [activeLessonLocal, setActiveLessonLocal] = useState(null);
@@ -906,43 +815,25 @@ export default function LearningManagement() {
     const [activeAssessmentLocal, setActiveAssessmentLocal] = useState(null);
     const [answersLocal, setAnswersLocal] = useState({});
     const [assessmentResult, setAssessmentResult] = useState(null);
-    const [testTakenLocal, setTestTakenLocal] = useState(false);
-    const [testScoreLocal, setTestScoreLocal] = useState(null);
-    const [testPassedLocal, setTestPassedLocal] = useState(false);
     const [showIncompleteAssessmentsModalLocal, setShowIncompleteAssessmentsModalLocal] =
       useState(false);
     const [incompleteAssessmentsLocal, setIncompleteAssessmentsLocal] = useState([]);
-    const autoCompleteRef = useRef(false);
-    const allAssessments =
-      (detail.lessons || []).flatMap(
-        lesson => lesson.assessments || []
-      );
+    const allAssessments = detail.assessments || [];
+
 
     if (!detail) return null;
-    const allLessons = detail.lessons || [];
-    const completedLessons = allLessons.filter((l) => l.isCompleted).length;
-    const completedAssessments = allAssessments.filter((a) => a.latestResult?.passed).length;
 
-    const totalLessons = allLessons.length;
-    const totalAssessments = allAssessments.length;
-
-    const percent = Math.round(
-      ((completedLessons + completedAssessments) / (totalLessons + totalAssessments || 1)) * 100
-    );
     const completeLessonLocal = async (lessonId) => {
       try {
         const res = await fetch(
-          `/api/userprogress/${userId}/module/${detail.moduleId}/lesson/${lessonId}/complete`,
+          `/api/user-progress/${userId}/lesson/${lessonId}/complete`,
           { method: "POST" }
         );
 
         if (!res.ok) throw new Error();
 
         toast.success("Lesson completed");
-
-        // 🔑 backend is source of truth
-        await refreshProgress();
-        await openModule({ moduleId: detail.moduleId, isUnlocked: true });
+        await refreshAndReopenModule();
 
       } catch {
         toast.error("Failed to mark lesson complete");
@@ -950,25 +841,31 @@ export default function LearningManagement() {
     };
     const pendingAssessments =
       allAssessments.filter(
-        a => !a.latestResult || a.latestResult.passed !== true
+        a => !a.latestResult || a.latestResult.isCompleted !== true
       );
-    const ensureLatestResultLoaded = async (assessment) => {
-      if (assessment.latestResult) return assessment.latestResult;
-      const fetched = await getAssessmentResultApi(assessment.assessmentId, userId);
-      if (fetched) assessment.latestResult = fetched;
-      return fetched;
-    };
     const startAssessmentLocal = async (assessment) => {
-      await ensureLatestResultLoaded(assessment);
-      setAssessmentReviewMode(false);
-      setActiveAssessmentLocal(assessment);
-      setAssessmentModalOpenLocal(true);
-      setAssessmentResult(null);
-      setAnswersLocal({});
-      setTestTakenLocal(false);
-      setTestScoreLocal(null);
-      setTestPassedLocal(false);
+      if (assessment.latestResult?.passed === true) {
+        toast.success("Assessment already completed. Review only.");
+        reviewAssessmentLocal(assessment);
+        return;
+      }
+
+      try {
+        await fetch(
+          `/api/user-progress/${userId}/assessment/${assessment.assessmentId}/start?moduleId=${detail.moduleId}`,
+          { method: "POST" }
+        );
+
+        setAssessmentReviewMode(false);
+        setActiveAssessmentLocal(assessment);
+        setAssessmentModalOpenLocal(true);
+        setAssessmentResult(null);
+        setAnswersLocal({});
+      } catch (err) {
+        toast.error("Failed to start assessment");
+      }
     };
+
 
     const reviewAssessmentLocal = async (assessment) => {
       const result = assessment.latestResult;
@@ -995,79 +892,53 @@ export default function LearningManagement() {
 
       const answers = {};
       activeAssessmentLocal.questions.forEach((q, i) => {
-        if (answersLocal[i]) answers[q.questionId] = answersLocal[i];
+        if (answersLocal[i]) {
+          answers[q.questionId] = answersLocal[i];
+        }
       });
 
-      const result = await submitAssessmentApi({
-        userId,
-        assessmentId: activeAssessmentLocal.assessmentId,
-        weekId: detail.weekId,
-        userAnswers: JSON.stringify(answers)
-      });
-
-      if (!result) {
-        toast.error("Failed to submit test");
+      if (Object.keys(answers).length === 0) {
+        toast.error("Please answer at least one question");
         return;
       }
 
-      toast.success("Test submitted");
+      try {
+        const result = await submitAssessmentApi({
+          userId,
+          assessmentId: activeAssessmentLocal.assessmentId,
+          userAnswers: JSON.stringify(answers)
+        });
 
-      setAssessmentModalOpenLocal(false);
+        toast.success(
+          result.passed
+            ? `Passed (${Math.round(result.scorePercentage)
+            }%)`
+            : `Failed (${Math.round(result.scorePercentage)
+            }%)`
+        );
+        await refreshProgress();
+        await openModule({
+          moduleId: detail.moduleId,
+          isUnlocked: true
+        });
 
-      if (!autoCompleteRef.current) {
-        autoCompleteRef.current = true;
+        setAssessmentModalOpenLocal(false);
+        setActiveAssessmentLocal(null);
+        setAssessmentReviewMode(false);
+        setAnswersLocal({});
+        setAssessmentResult(null);
 
-        for (const l of detail.lessons || []) {
-          if (!l.isCompleted) {
-            await fetch(
-              `/api/userprogress/${userId}/module/${detail.moduleId}/lesson/${l.lessonId}/complete`,
-              { method: "POST" }
-            );
-          }
-        }
+      } catch (e) {
+        console.error(e);
+        toast.error("Failed to submit assessment");
       }
-
-      const freshProgress = await refreshProgress();
-
-      if (selectedWeek && freshProgress) {
-        const updatedModulesRes = await api.get(
-          `/Module/week/${selectedWeek.weekId}`
-        );
-
-        const progressMap = new Map(
-          (freshProgress.modules || []).map(m => [
-            String(m.moduleId).toLowerCase(),
-            m
-          ])
-        );
-
-        let rebuilt = mergeModuleProgressToModules(
-          updatedModulesRes.data,
-          progressMap
-        );
-
-        // 🔑 always unlock first module
-        if (rebuilt.length > 0) {
-          rebuilt = rebuilt.map((m, idx) => ({
-            ...m,
-            isUnlocked: idx === 0 ? true : m.isUnlocked,
-            isLocked: idx === 0 ? false : !m.isUnlocked
-          }));
-        }
-
-        setModules(rebuilt);
-      }
-
-      await openModule({ moduleId: detail.moduleId, isUnlocked: true });
-
     };
     const lessonsDone =
       (detail.lessons || []).length === 0 ||
       detail.lessons.every(l => l.isCompleted === true);
-
-    const assessmentsDone =
-      allAssessments.length === 0 ||
-      allAssessments.every(a => a.latestResult?.passed === true);
+    const assessmentsDone = allAssessments.every(
+      a => a.latestResult?.isCompleted === true
+    );
 
     const canCompleteModule = lessonsDone && assessmentsDone;
     const handleMarkModuleCompleteLocal = async () => {
@@ -1078,71 +949,32 @@ export default function LearningManagement() {
       }
 
       try {
-        // 1️⃣ Ensure all lessons completed
-        for (const l of detail.lessons || []) {
-          if (!l.isCompleted) {
-            await fetch(
-              `/api/userprogress/${userId}/module/${detail.moduleId}/lesson/${l.lessonId}/complete`,
-              { method: "POST" }
-            );
-          }
-        }
-
-        // 2️⃣ Mark module complete
         const res = await fetch(
-          `/api/userprogress/${userId}/module/${detail.moduleId}/complete`,
+          `/api/user-progress/${userId}/module/${detail.moduleId}/complete
+`,
           { method: "POST" }
         );
 
         if (!res.ok) {
-          toast.error("Lessons or assessments incomplete");
+          toast.error("Cannot complete module");
           return;
         }
 
-        toast.success("Module completed 🎉");
+        toast.success("Module completed ");
+        await refreshAndReopenModule();
 
-        // 🔑 1️⃣ Get fresh progress from backend
-        const freshProgress = await refreshProgress();
-
-        if (selectedWeek && freshProgress) {
-          const updatedModulesRes = await api.get(
-            `/Module/week/${selectedWeek.weekId}`
-          );
-
-          const progressMap = new Map(
-            (freshProgress.modules || []).map(m => [
-              String(m.moduleId).toLowerCase(),
-              m
-            ])
-          );
-
-          let rebuilt = mergeModuleProgressToModules(
-            updatedModulesRes.data,
-            progressMap
-          );
-
-          // 🔑 always unlock first module
-          if (rebuilt.length > 0) {
-            rebuilt = rebuilt.map((m, idx) => ({
-              ...m,
-              isUnlocked: idx === 0 ? true : m.isUnlocked,
-              isLocked: idx === 0 ? false : !m.isUnlocked
-            }));
-          }
-
-          setModules(rebuilt);
-        }
       } catch (err) {
         console.error(err);
         toast.error("Failed to mark module complete");
       }
     };
+
+
     return (
       <div
-        className="bg-white rounded-2xl shadow-sm p-8 border border-slate-200 mt-6 space-y-8"
+        className="bg-white rounded-2xl shadow-sm p-5 border border-slate-200 mt-2 space-y-4"
         id="module-detail-inline"
       >
-        {/* ================= HEADER ================= */}
         <div className="flex justify-between items-start gap-6">
           <div className="space-y-2">
             <h3 className="text-2xl font-semibold text-slate-800">
@@ -1151,21 +983,7 @@ export default function LearningManagement() {
             <p className="text-sm text-slate-500 max-w-2xl">
               {detail.description}
             </p>
-
-            {/* Progress */}
             <div className="mt-4 space-y-2">
-              <div className="flex items-center justify-between text-xs text-slate-500">
-                <span>📘 Lessons {completedLessons}/{totalLessons}</span>
-                <span>📝 Tests {completedAssessments}/{totalAssessments}</span>
-                <span className="font-semibold text-blue-600">{percent}%</span>
-              </div>
-
-              <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
-                <div
-                  className="h-2 bg-gradient-to-r from-blue-500 to-emerald-500 rounded-full"
-                  style={{ width: `${percent}%` }}
-                />
-              </div>
             </div>
           </div>
 
@@ -1189,8 +1007,6 @@ export default function LearningManagement() {
             </button>
           )}
         </div>
-
-        {/* ================= LESSON LIST ================= */}
         {!activeLessonLocal && (
           <div className="space-y-4">
             {detail.lessons.map((ls, idx) => (
@@ -1222,21 +1038,18 @@ export default function LearningManagement() {
             ))}
           </div>
         )}
-
-        {/* ================= LESSON DETAIL ================= */}
         {activeLessonLocal && (
-          <div className="space-y-8">
-            <button
-              onClick={async () => {
-                await completeLessonLocal(activeLessonLocal.lessonId);
-                setActiveLessonLocal(null);
-              }}
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Back to lessons
-            </button>
+          <div className="space-y-5">
 
             <div className="space-y-1">
+              <button
+                onClick={async () => {
+                  await completeLessonLocal(activeLessonLocal.lessonId);
+                  setActiveLessonLocal(null);
+                }}
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </button>
               <h3 className="text-xl font-semibold text-slate-800">
                 {activeLessonLocal.title}
               </h3>
@@ -1244,8 +1057,6 @@ export default function LearningManagement() {
                 {activeLessonLocal.overview}
               </p>
             </div>
-
-            {/* CONTENT */}
             <div className="border border-slate-200 rounded-xl overflow-hidden bg-white">
               {activeLessonLocal.content?.includes("youtube") ? (
                 <iframe
@@ -1289,71 +1100,50 @@ export default function LearningManagement() {
                 <ClipboardCheck className="w-4 h-4" />
                 Assessments
               </h4>
-
-              {(activeLessonLocal.assessments || []).map((a) => {
+              {(detail.assessments || []).map(a => {
                 const r = a.latestResult;
+
                 return (
                   <div
                     key={a.assessmentId}
-                    className="flex justify-between items-center
-                           border border-slate-200 rounded-xl p-5"
+                    className="flex justify-between items-center p-5 border rounded-xl"
                   >
-                    <div className="space-y-1">
-                      <div className="font-medium text-slate-800">
-                        {a.title}
-                      </div>
+                    {/* LEFT SIDE */}
+                    <div>
+                      <div className="font-medium">{a.title}</div>
+
+                      {!r && (
+                        <div className="text-xs text-slate-400">Not taken</div>
+                      )}
+
                       {r && (
                         <div
-                          className={`text-xs ${r.passed ? "text-emerald-600" : "text-red-600"
+                          className={`text-xs ${r.passed ? "text-green-600" : "text-red-600"
                             }`}
                         >
-                          {r.passed ? "Passed" : "Failed"} •{" "}
-                          {r.scorePercentage?.toFixed(0)}%
-                        </div>
-                      )}
-                      {!r && (
-                        <div className="text-xs text-slate-400">
-                          Not taken yet
+                          {r.passed ? "Passed" : "Failed"} • {r.scorePercentage}%
                         </div>
                       )}
                     </div>
+                    <div className="flex gap-2">
+                      {!r && (
+                        <button onClick={() => startAssessmentLocal(a)}>
+                          Take Test
+                        </button>
+                      )}
 
-                    {/* ACTIONS */}
-                    {!r && (
-                      <button
-                        onClick={() => startAssessmentLocal(a)}
-                        className="inline-flex items-center gap-2
-                               px-4 py-2 text-xs font-semibold
-                               bg-blue-600 text-white rounded-md"
-                      >
-                        <PlayCircle className="w-4 h-4" />
-                        Take Test
-                      </button>
-                    )}
+                      {r?.passed === true && (
+                        <button onClick={() => reviewAssessmentLocal(a)}>
+                          Review
+                        </button>
+                      )}
 
-                    {r && r.passed && (
-                      <button
-                        onClick={() => reviewAssessmentLocal(a)}
-                        className="inline-flex items-center gap-2
-                               px-4 py-2 text-xs font-semibold
-                               border border-blue-600 text-blue-600 rounded-md"
-                      >
-                        <EyeIcon className="w-4 h-4" />
-                        Review
-                      </button>
-                    )}
-
-                    {r && !r.passed && (
-                      <button
-                        onClick={() => startAssessmentLocal(a)}
-                        className="inline-flex items-center gap-2
-                               px-4 py-2 text-xs font-semibold
-                               bg-orange-500 text-white rounded-md"
-                      >
-                        <RotateCcw className="w-4 h-4" />
-                        Retake
-                      </button>
-                    )}
+                      {r?.passed === false && (
+                        <button onClick={() => startAssessmentLocal(a)}>
+                          Retake
+                        </button>
+                      )}
+                    </div>
                   </div>
                 );
               })}
@@ -1443,10 +1233,11 @@ export default function LearningManagement() {
                 </button>
               </div>
 
-              {/* QUESTIONS */}
               <div className="space-y-4 max-h-[60vh] overflow-auto pr-2">
                 {(activeAssessmentLocal.questions || []).map((q, qi) => {
                   const options = JSON.parse(q.options || "[]");
+                  const userAnswer = answersLocal[qi];
+                  const isCorrect = userAnswer === q.correctAnswer;
 
                   return (
                     <div key={qi} className="border rounded-lg p-4">
@@ -1455,44 +1246,72 @@ export default function LearningManagement() {
                       </div>
 
                       <div className="space-y-2">
-                        {options.map((opt, oi) => (
-                          <label key={oi} className="flex items-center gap-2 text-sm">
-                            <input
-                              type="radio"
-                              checked={answersLocal[qi] === String.fromCharCode(65 + oi)}
-                              onChange={() =>
-                                setAnswersLocal(prev => ({
-                                  ...prev,
-                                  [qi]: String.fromCharCode(65 + oi) // A, B, C, D
-                                }))
-                              }
-                            />
+                        {options.map((opt, oi) => {
+                          const optionKey = String.fromCharCode(65 + oi);
+                          const checked = userAnswer === optionKey;
 
-                            {opt}
-                          </label>
-                        ))}
+                          return (
+                            <label
+                              key={oi}
+                              className={`flex items-center gap-2 text-sm ${assessmentReviewMode
+                                ? optionKey === q.correctAnswer
+                                  ? "text-green-600 font-semibold"
+                                  : checked
+                                    ? "text-red-600"
+                                    : ""
+                                : ""
+                                }`}
+                            >
+                              <input
+                                type="radio"
+                                disabled={assessmentReviewMode}
+                                checked={checked}
+                                onChange={() =>
+                                  !assessmentReviewMode &&
+                                  setAnswersLocal(prev => ({
+                                    ...prev,
+                                    [qi]: optionKey
+                                  }))
+                                }
+                              />
+                              {opt}
+                            </label>
+                          );
+                        })}
                       </div>
+
+                      {assessmentReviewMode && (
+                        <div className="mt-3 text-xs">
+                          <div className="text-green-600">
+                            Correct answer: {q.correctAnswer}
+                          </div>
+                          <div className="text-slate-500">
+                            Your answer: {userAnswer || "—"}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
               </div>
-
-              {/* ACTIONS */}
               <div className="mt-6 flex justify-end gap-3">
                 <button
                   onClick={() => setAssessmentModalOpenLocal(false)}
                   className="px-4 py-2 bg-slate-200 rounded-md"
                 >
-                  Cancel
+                  Close
                 </button>
 
-                <button
-                  onClick={submitAssessmentLocal}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md"
-                >
-                  Submit
-                </button>
+                {!assessmentReviewMode && (
+                  <button
+                    onClick={submitAssessmentLocal}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md"
+                  >
+                    Submit
+                  </button>
+                )}
               </div>
+
             </div>
           </div>
         )}
@@ -1579,6 +1398,18 @@ export default function LearningManagement() {
       </div>
     );
   }
+  const overallPercent =
+    !planProgress || planProgress.modules.length === 0
+      ? 0
+      : Math.round(
+        (planProgress.modules.filter(m => m.isCompleted).length /
+          planProgress.modules.length) * 100
+      );
+
+  const streak =
+    planProgress?.modules?.filter(
+      m => (m.lessonProgressPercent || 0) > 0
+    ).length || 0;
 
   // ================== MAIN RENDER ==================
   return (
@@ -1609,6 +1440,122 @@ export default function LearningManagement() {
             )}
           </div>
         )}
+
+        {planProgress && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+          >
+            {/* PROGRESS */}
+            <motion.div
+              whileHover={{ y: -4 }}
+              className="bg-gradient-to-br from-blue-50 to-indigo-100
+                 border border-blue-100
+                 rounded-2xl p-5 shadow-sm"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-blue-100 text-blue-600">
+                  <TrendingUp className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-xs uppercase tracking-wide text-blue-500">
+                    Overall Progress
+                  </div>
+                  <div className="text-2xl font-bold text-blue-700">
+                    {overallPercent}%
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-3 h-2 bg-blue-100 rounded-full overflow-hidden">
+                <motion.div
+                  className="h-2 bg-blue-500 rounded-full"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${overallPercent}%` }}
+                  transition={{ duration: 0.8 }}
+                />
+              </div>
+            </motion.div>
+
+            {/* STREAK */}
+            <motion.div
+              whileHover={{ y: -4 }}
+              className="bg-gradient-to-br from-orange-50 to-amber-100
+                 border border-orange-100
+                 rounded-2xl p-5 shadow-sm"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-orange-100 text-orange-600">
+                  <Flame className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-xs uppercase tracking-wide text-orange-500">
+                    Active Streak
+                  </div>
+                  <div className="text-2xl font-bold text-orange-700">
+                    {streak}
+                  </div>
+                  <div className="text-xs text-orange-600">
+                    Active modules
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* COMPLETED */}
+            <motion.div
+              whileHover={{ y: -4 }}
+              className="bg-gradient-to-br from-emerald-50 to-teal-100
+                 border border-emerald-100
+                 rounded-2xl p-5 shadow-sm"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-emerald-100 text-emerald-600">
+                  <CheckCircle2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-xs uppercase tracking-wide text-emerald-500">
+                    Completed
+                  </div>
+                  <div className="text-2xl font-bold text-emerald-700">
+                    {planProgress.modules.filter(m => m.isCompleted).length}
+                  </div>
+                  <div className="text-xs text-emerald-600">
+                    Modules done
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* REMAINING */}
+            <motion.div
+              whileHover={{ y: -4 }}
+              className="bg-gradient-to-br from-purple-50 to-fuchsia-100
+                 border border-purple-100
+                 rounded-2xl p-5 shadow-sm"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-purple-100 text-purple-600">
+                  <Clock className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-xs uppercase tracking-wide text-purple-500">
+                    Remaining
+                  </div>
+                  <div className="text-2xl font-bold text-purple-700">
+                    {planProgress.modules.filter(m => !m.isCompleted).length}
+                  </div>
+                  <div className="text-xs text-purple-600">
+                    Modules left
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1">
             <WeeksPanel weeks={weeks} onSelect={selectWeek} selected={selectedWeek} />

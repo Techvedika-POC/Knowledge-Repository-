@@ -142,8 +142,6 @@ export default function TopicsSection({ topics, userId }) {
           </SwiperSlide>
         ))}
       </Swiper>
-
-      {/* Knowledge Cards (after clicking a topic) */}
       {selectedTopic && domainKnowledgeItems.length > 0 && (
         <div className="mt-8">
           <h3 className="text-xl font-semibold text-purple-600 mb-4">
@@ -162,8 +160,6 @@ export default function TopicsSection({ topics, userId }) {
           />
         </div>
       )}
-
-      {/* Preview Modal */}
       {selectedItem && (
         <PreviewModal
           item={selectedItem}

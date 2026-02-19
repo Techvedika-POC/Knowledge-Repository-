@@ -436,90 +436,85 @@ export default function ModuleModal({
       toast.error("Failed deleting assessment");
     }
   };
-  const persistAssessmentsBatch = async (li) => {
-    const lesson = lessons[li];
-    const moduleId = localModuleId ?? moduleData?.moduleId;
-    const existing = lesson.assessments.filter(a => a.assessmentId);
-    const create = lesson.assessments.filter(a => !a.assessmentId);
+  const saveAssessmentWithQuestions = async (lessonIndex, assessmentIndex) => {
+    const lesson = lessons[lessonIndex];
+    const assessment = lesson.assessments[assessmentIndex];
+
+    if (!lesson.lessonId) {
+      toast.error("Save lesson first");
+      return;
+    }
+
     try {
-      if (create.length) {
-        const payload = create.map(a => ({
-          moduleId,
+      let assessmentId = assessment.assessmentId;
+
+      /* =========================
+         1️⃣ CREATE or UPDATE ASSESSMENT
+         ========================= */
+      if (!assessmentId) {
+        const res = await api.post("/Assessment", {
+          moduleId: localModuleId ?? moduleData?.moduleId,
           topicId: lesson.lessonId,
-          title: a.title,
-          description: a.description,
-          difficulty: a.difficulty,
-          metadata: a.metadata
-        }));
+          title: assessment.title,
+          description: assessment.description,
+          difficulty: assessment.difficulty,
+          metadata: assessment.metadata ?? "{}",
+          learningObjectives: assessment.learningObjectives ?? "",
+          estimatedDurationMinutes: assessment.estimatedDurationMinutes ?? 0,
+          assessmentType: "MCQ"
+        });
 
-        const res = await api.post("/Assessment/batch", payload);
-        const created = res.data;
+        assessmentId = res.data.assessmentId;
 
-        let idx = 0;
-        const updated = lesson.assessments.map(a =>
-          a.assessmentId ? a : { ...a, assessmentId: created[idx++].assessmentId }
-        );
-
-        updateLessonLocal(li, { assessments: updated });
-      }
-      for (const a of existing) {
-        await api.put(`/Assessment/${a.assessmentId}`, {
-          title: a.title,
-          description: a.description,
-          difficulty: a.difficulty,
-          metadata: a.metadata
+        updateAssessment(lessonIndex, assessmentIndex, { assessmentId });
+      } else {
+        await api.post("/Assessment", {
+          assessmentId,
+          title: assessment.title,
+          description: assessment.description,
+          difficulty: assessment.difficulty,
+          metadata: assessment.metadata ?? "{}"
         });
       }
 
-      toast.success("Assessment saved!");
-    } catch (e) {
-      console.error(e);
-      toast.error("Failed to save assessment");
-    }
-  };
-  const saveQuestions = async (li, ai) => {
-    const lesson = lessons[li];
-    const assessment = lesson.assessments[ai];
+      /* =========================
+         2️⃣ SAVE QUESTIONS
+         ========================= */
+      const newQuestions = assessment.questions.filter(q => !q.questionId);
+      const existingQuestions = assessment.questions.filter(q => q.questionId);
 
-    if (!assessment.assessmentId) {
-      return toast.error("Save assessment first!");
-    }
-
-    try {
-      for (const q of assessment.questions) {
-
-        if (!q.questionId) {
-          await api.post(`/Assessment/${assessment.assessmentId}/questions`, [
-            {
-              question: q.question,
-              options: JSON.stringify(q.options || []),
-              correctAnswer: q.correctAnswer,
-              explanation: q.explanation,
-              hint: q.hint,
-              questionType: "multiple-choice"
-            }
-          ]);
-        }
-        else {
-          await api.put(`/Assessment/question/${q.questionId}`, {
-            questionId: q.questionId,
+      if (newQuestions.length) {
+        await api.post(
+          `/Assessment/${assessmentId}/questions`,
+          newQuestions.map(q => ({
             question: q.question,
             options: JSON.stringify(q.options || []),
             correctAnswer: q.correctAnswer,
             explanation: q.explanation,
             hint: q.hint,
             questionType: "multiple-choice"
-          });
-        }
+          }))
+        );
       }
 
-      toast.success("Questions saved!");
+      for (const q of existingQuestions) {
+        await api.put(`/Assessment/question/${q.questionId}`, {
+          questionId: q.questionId,
+          question: q.question,
+          options: JSON.stringify(q.options || []),
+          correctAnswer: q.correctAnswer,
+          explanation: q.explanation,
+          hint: q.hint,
+          questionType: "multiple-choice"
+        });
+      }
+
+      toast.success("Assessment and questions saved");
     } catch (err) {
       console.error(err);
-      toast.error("Failed saving questions");
+      toast.error("Failed to save assessment");
     }
   };
-
   const addQuestion = (li, ai) => {
     const ass = [...lessons[li].assessments];
     ass[ai] = {
@@ -567,25 +562,23 @@ export default function ModuleModal({
   const selectedLesson = selectedLessonIndex != null ? lessons[selectedLessonIndex] : null;
   const handleSaveAll = async (e) => {
     e?.preventDefault?.();
+
+    // 1️⃣ Save module info first
     await saveModuleInfo();
+
+    // 2️⃣ Save lessons, assessments, and questions
     for (let i = 0; i < lessons.length; i++) {
       await persistLesson(i);
-      await persistResourcesBatch(i);
-      await persistAssessmentsBatch(i);
-    }
-    toast.success("All saved");
-    onModuleSaved?.({ moduleId: localModuleId ?? moduleData?.moduleId });
-    onClose?.();
-  };
-  const handleSaveAssessment = async (li) => {
-    const lesson = lessons[li];
-    if (!lesson) return;
-    await persistAssessmentsBatch(li);
-    for (let ai = 0; ai < lesson.assessments.length; ai++) {
-      await saveQuestions(li, ai);
+
+      for (let ai = 0; ai < lessons[i].assessments.length; ai++) {
+        await saveAssessmentWithQuestions(i, ai);
+      }
     }
 
-    toast.success("Assessment + questions saved!");
+    // 3️⃣ Final success
+    toast.success("All saved successfully");
+    onModuleSaved?.({ moduleId: localModuleId ?? moduleData?.moduleId });
+    onClose?.();
   };
 
   function detectResourceType(filename) {
@@ -607,7 +600,6 @@ export default function ModuleModal({
     <div className="fixed inset-0 z-50 bg-black/40 flex justify-center items-start overflow-auto">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-7xl mx-4 md:mx-8 mt-4 mb-4">
         <form onSubmit={handleSaveAll} className="p-6">
-          {/* HEADER */}
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-2xl font-semibold text-[#0A2342]">
@@ -637,8 +629,6 @@ export default function ModuleModal({
               )}
             </div>
           </div>
-
-          {/* TOP TABS */}
           <div className="flex gap-3 mb-6">
             <button
               type="button"
@@ -661,8 +651,6 @@ export default function ModuleModal({
               Lessons
             </button>
           </div>
-
-          {/* CONTENT */}
           {loading ? (
             <div className="py-12 flex justify-center"><Loader2 className="animate-spin" /></div>
           ) : (
@@ -758,7 +746,6 @@ export default function ModuleModal({
 
               {activeTab === "lessons" && (
                 <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  {/* Left: lesson list */}
                   <aside className="col-span-1 bg-white border rounded-lg p-4 h-full">
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="font-semibold text-[#0A2342]">Lessons</h3>
@@ -1094,202 +1081,200 @@ export default function ModuleModal({
                             </div>
                           </div>
                         )}
-
-
-                        {/* Assessments view */}
                         {lessonSubTab === "assessments" && (
-                          <div className="space-y-4">
-                            <div className="flex items-center justify-between mb-3">
+                          <div className="space-y-6">
+
+                            <div className="flex justify-between items-center">
                               <h4 className="font-semibold text-[#0A2342]">
-                                Assessments for: {selectedLesson.title || `Lesson ${selectedLessonIndex + 1}`}
+                                Assessments for: {selectedLesson.title}
                               </h4>
+
                               {!isViewOnly && (
-                                <div className="flex gap-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => addAssessmentToLesson(selectedLessonIndex)}
-                                    className="inline-flex items-center gap-1 text-white hover:text-white bg-blue-500 px-3 py-1 rounded-md"
-                                  >
-                                    <PlusIcon /> Add
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleSaveAssessment(selectedLessonIndex)}
-                                    className="px-3 py-1 rounded bg-green-600 text-white hover:bg-[#1C3C5A]"
-                                  >
-                                    Save Assessment
-                                  </button>
-                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => addAssessmentToLesson(selectedLessonIndex)}
+                                  className="bg-blue-600 text-white px-3 py-1 rounded"
+                                >
+                                  <PlusIcon className="inline w-4 h-4" /> Add Assessment
+                                </button>
                               )}
                             </div>
 
-                            {/* Assessments List */}
-                            <div className="space-y-3">
-                              {(selectedLesson.assessments || []).map((a, ai) => {
-                                const key = a.assessmentId ?? `a-${ai}`;
-                                return (
-                                  <div key={key} className="bg-white rounded border shadow-sm">
-                                    <div className="flex justify-between items-start gap-4 p-3 cursor-pointer hover:bg-gray-50">
-                                      <div className="flex-1">
-                                        <input
-                                          placeholder="Assessment title"
-                                          value={a.title}
-                                          onChange={(e) => updateAssessment(selectedLessonIndex, ai, { title: e.target.value })}
-                                          className="w-full p-2 rounded border mb-2"
-                                          disabled={isViewOnly}
-                                        />
-                                        <textarea
-                                          placeholder="Description"
-                                          value={a.description}
-                                          onChange={(e) => updateAssessment(selectedLessonIndex, ai, { description: e.target.value })}
-                                          className="w-full p-2 rounded border mb-2"
-                                          disabled={isViewOnly}
-                                        />
-                                        <div className="flex gap-2 items-center">
-                                          <label className="text-sm">Difficulty:</label>
-                                          <input
-                                            type="number"
-                                            min={1}
-                                            max={5}
-                                            value={a.difficulty}
-                                            onChange={(e) =>
-                                              updateAssessment(selectedLessonIndex, ai, { difficulty: Number(e.target.value) })
-                                            }
-                                            className="p-2 rounded border w-20"
-                                            disabled={isViewOnly}
-                                          />
-                                        </div>
-                                      </div>
+                            {(selectedLesson.assessments || []).map((a, ai) => (
+                              <div key={a.assessmentId ?? ai} className="bg-white border rounded shadow">
 
-                                      <div className="flex flex-col items-end gap-2">
-                                        {!isViewOnly && (
-                                          <button
-                                            type="button"
-                                            onClick={() => removeAssessment(selectedLessonIndex, ai)}
-                                            className="text-red-600 hover:text-red-800"
-                                          >
-                                            <TrashIcon />
-                                          </button>
-                                        )}
-                                        <div className="text-xs text-[#1C3C5A]">
-                                          {a.questions?.length ?? 0} question{(a.questions?.length ?? 0) !== 1 && "s"}
-                                        </div>
-                                      </div>
+                                {/* =========================
+            ASSESSMENT HEADER
+        ========================= */}
+                                <div className="p-4 border-b flex justify-between gap-4">
+                                  <div className="flex-1 space-y-2">
+                                    <input
+                                      value={a.title}
+                                      onChange={(e) =>
+                                        updateAssessment(selectedLessonIndex, ai, { title: e.target.value })
+                                      }
+                                      className="w-full border p-2 rounded"
+                                      placeholder="Assessment title"
+                                      disabled={isViewOnly}
+                                    />
+
+                                    <textarea
+                                      value={a.description}
+                                      onChange={(e) =>
+                                        updateAssessment(selectedLessonIndex, ai, { description: e.target.value })
+                                      }
+                                      className="w-full border p-2 rounded"
+                                      placeholder="Description"
+                                      disabled={isViewOnly}
+                                    />
+                                  </div>
+
+                                  {!isViewOnly && (
+                                    <div className="flex flex-col gap-2">
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          saveAssessmentWithQuestions(selectedLessonIndex, ai)
+                                        }
+                                        className="bg-green-600 text-white px-3 py-1 rounded text-sm"
+                                      >
+                                        Save Assessment
+                                      </button>
+
+                                      <button
+                                        type="button"
+                                        onClick={() => removeAssessment(selectedLessonIndex, ai)}
+                                        className="text-red-600 text-sm"
+                                      >
+                                        <TrashIcon />
+                                      </button>
                                     </div>
+                                  )}
+                                </div>
 
-                                    {/* Questions Section */}
-                                    <div className="p-3 border-t space-y-2">
-                                      <div className="flex justify-between items-center mb-2">
-                                        <div className="text-sm font-medium">Questions</div>
-                                        {!isViewOnly && (
-                                          <button
-                                            type="button"
-                                            onClick={() => addQuestion(selectedLessonIndex, ai)}
-                                            className="inline-flex items-center gap-1  text-white bg-blue-500 hover:text-white rounded-md px-3 py-1"
-                                          >
-                                            <PlusIcon /> Add
-                                          </button>
-                                        )}
-                                      </div>
+                                {/* =========================
+            QUESTIONS SECTION
+        ========================= */}
+                                <div className="p-4 space-y-4">
 
-                                      {(a.questions || []).map((q, qi) => {
-                                        const qkey = q.questionId ?? `q-${qi}`;
-                                        return (
-                                          <div key={qkey} className="bg-[#FAFAFA] p-2 rounded border space-y-2">
+                                  {(a.questions || []).map((q, qi) => (
+                                    <div key={q.questionId ?? qi} className="border rounded p-3 space-y-3 bg-gray-50">
+
+                                      {/* QUESTION TEXT */}
+                                      <input
+                                        value={q.question}
+                                        onChange={(e) =>
+                                          updateQuestion(selectedLessonIndex, ai, qi, {
+                                            question: e.target.value
+                                          })
+                                        }
+                                        className="w-full border p-2 rounded"
+                                        placeholder="Question text"
+                                        disabled={isViewOnly}
+                                      />
+
+                                      {/* OPTIONS */}
+                                      <div className="space-y-2">
+                                        <div className="text-sm font-medium">Options</div>
+
+                                        {(q.options || []).map((opt, oi) => (
+                                          <div key={oi} className="flex gap-2 items-center">
+
                                             <input
-                                              placeholder="Question text"
-                                              value={q.question}
-                                              onChange={(e) =>
-                                                updateQuestion(selectedLessonIndex, ai, qi, { question: e.target.value })
-                                              }
-                                              className="p-2 rounded border w-full"
+                                              value={opt}
+                                              onChange={(e) => {
+                                                const updated = [...(q.options || [])];
+                                                updated[oi] = e.target.value;
+                                                updateQuestion(selectedLessonIndex, ai, qi, {
+                                                  options: updated
+                                                });
+                                              }}
+                                              className="flex-1 border p-2 rounded"
+                                              placeholder={`Option ${oi + 1}`}
                                               disabled={isViewOnly}
                                             />
 
-                                            {/* Options */}
-                                            <div className="space-y-1">
-                                              {(q.options || []).map((opt, oi) => (
-                                                <div key={oi} className="flex gap-2 items-center">
-                                                  <input
-                                                    value={opt}
-                                                    onChange={(e) => {
-                                                      const newOptions = [...(q.options || [])];
-                                                      newOptions[oi] = e.target.value;
-                                                      updateQuestion(selectedLessonIndex, ai, qi, { options: newOptions });
-                                                    }}
-                                                    placeholder={`Option ${oi + 1}`}
-                                                    className="p-2 rounded border flex-1"
-                                                    disabled={isViewOnly}
-                                                  />
-                                                  {!isViewOnly && (
-                                                    <button
-                                                      type="button"
-                                                      onClick={() => {
-                                                        const newOptions = [...(q.options || [])];
-                                                        newOptions.splice(oi, 1);
-                                                        updateQuestion(selectedLessonIndex, ai, qi, { options: newOptions });
-                                                      }}
-                                                      className="text-red-600 hover:text-red-800"
-                                                    >
-                                                      <TrashIcon />
-                                                    </button>
-                                                  )}
-                                                </div>
-                                              ))}
-
-                                              {!isViewOnly && (
-                                                <button
-                                                  type="button"
-                                                  onClick={() => {
-                                                    const newOptions = [...(q.options || []), ""];
-                                                    updateQuestion(selectedLessonIndex, ai, qi, { options: newOptions });
-                                                  }}
-                                                  className="text-sm text-[#1C3C5A] hover:text-[#0A2342]"
-                                                >
-                                                  + Add Option
-                                                </button>
-                                              )}
-                                            </div>
-
+                                            {/* Correct answer radio */}
                                             <input
-                                              placeholder="Correct answer"
-                                              value={q.correctAnswer}
-                                              onChange={(e) =>
-                                                updateQuestion(selectedLessonIndex, ai, qi, { correctAnswer: e.target.value })
+                                              type="radio"
+                                              name={`correct-${ai}-${qi}`}
+                                              checked={q.correctAnswer === opt}
+                                              onChange={() =>
+                                                updateQuestion(selectedLessonIndex, ai, qi, {
+                                                  correctAnswer: opt
+                                                })
                                               }
-                                              className="p-2 rounded border w-full"
                                               disabled={isViewOnly}
                                             />
 
                                             {!isViewOnly && (
                                               <button
                                                 type="button"
-                                                onClick={() => removeQuestion(selectedLessonIndex, ai, qi)}
-                                                className="p-1 text-red-600 hover:text-red-800 transition"
-                                                title="Delete Question"
+                                                onClick={() => {
+                                                  const updated = [...(q.options || [])];
+                                                  updated.splice(oi, 1);
+                                                  updateQuestion(selectedLessonIndex, ai, qi, {
+                                                    options: updated
+                                                  });
+                                                }}
+                                                className="text-red-600"
                                               >
-                                                <TrashIcon className="w-5 h-5" />
+                                                <TrashIcon size={16} />
                                               </button>
-
                                             )}
                                           </div>
-                                        );
-                                      })}
+                                        ))}
 
-                                      {!a.questions?.length && (
-                                        <div className="text-sm text-[#1C3C5A]">No questions yet</div>
+                                        {!isViewOnly && (
+                                          <button
+                                            type="button"
+                                            onClick={() =>
+                                              updateQuestion(selectedLessonIndex, ai, qi, {
+                                                options: [...(q.options || []), ""]
+                                              })
+                                            }
+                                            className="text-blue-600 text-sm"
+                                          >
+                                            + Add Option
+                                          </button>
+                                        )}
+                                      </div>
+
+                                      {/* DELETE QUESTION */}
+                                      {!isViewOnly && (
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            removeQuestion(selectedLessonIndex, ai, qi)
+                                          }
+                                          className="text-red-600 text-sm"
+                                        >
+                                          Delete Question
+                                        </button>
                                       )}
                                     </div>
-                                  </div>
-                                );
-                              })}
-                              {!selectedLesson.assessments?.length && (
-                                <div className="text-sm text-[#1C3C5A]">No assessments yet</div>
-                              )}
-                            </div>
+                                  ))}
+
+                                  {!isViewOnly && (
+                                    <button
+                                      type="button"
+                                      onClick={() => addQuestion(selectedLessonIndex, ai)}
+                                      className="bg-blue-500 text-white px-3 py-1 rounded text-sm"
+                                    >
+                                      + Add Question
+                                    </button>
+                                  )}
+
+                                  {!a.questions?.length && (
+                                    <div className="text-gray-500 text-sm">
+                                      No questions yet
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         )}
-
                       </>
                     )}
                   </div>

@@ -14,17 +14,28 @@ namespace Knowledge_Repository.Application.Implementations.Services
     public class ModuleService : IModuleService
     {
         private readonly IModuleRepository _moduleRepo;
-        private readonly IUserProgressRepository _userProgressRepo;
+        private readonly IUserModuleProgressRepository _moduleProgressRepo;
+        private readonly ILessonRepository _lessonRepo;
+        private readonly IUserLessonProgressRepository _lessonProgressRepo;
+        private readonly IUserAssessmentProgressRepository _assessmentProgressRepo;
+        private readonly IAssessmentRepository _assessmentRepo;
+
 
         public ModuleService(
-            IModuleRepository moduleRepo,
-            IUserProgressRepository userProgressRepo)
+        IModuleRepository moduleRepo,
+        IUserModuleProgressRepository moduleProgressRepo,
+        ILessonRepository lessonRepo,
+        IUserLessonProgressRepository lessonProgressRepo,
+          IUserAssessmentProgressRepository assessmentProgressRepo,
+           IAssessmentRepository assessmentRepo)
         {
             _moduleRepo = moduleRepo;
-            _userProgressRepo = userProgressRepo;
+            _moduleProgressRepo = moduleProgressRepo;
+            _lessonRepo = lessonRepo;
+            _lessonProgressRepo = lessonProgressRepo;
+            _assessmentProgressRepo = assessmentProgressRepo;
+            _assessmentRepo = assessmentRepo;
         }
-
-        // CREATE MODULE
         public async Task<ModuleDto> CreateModuleAsync(Guid weekId, ModuleDto dto)
         {
             var module = new Module
@@ -48,33 +59,83 @@ namespace Knowledge_Repository.Application.Implementations.Services
             dto.ModuleId = module.ModuleId;
             return dto;
         }
-
-        // GET MODULES BY WEEK
-        public async Task<IEnumerable<ModuleDto>> GetModulesByWeekAsync(Guid weekId)
+        public async Task<IEnumerable<ModuleDto>> GetModulesByWeekAsync(
+         Guid weekId,
+         Guid userId)
         {
-            var modules = await _moduleRepo.GetByWeekIdAsync(weekId);
+            var modules = (await _moduleRepo.GetByWeekIdAsync(weekId))
+                .OrderBy(m => m.OrderNo)
+                .ToList();
 
-            return modules.Select(m => new ModuleDto
+            var result = new List<ModuleDto>();
+
+            bool previousCompleted = true; 
+
+            foreach (var m in modules)
             {
-                ModuleId = m.ModuleId,
-                WeekId = m.WeekId,
-                ModuleName = m.ModuleName ?? "",
-                Description = m.Description ?? "",
-                Overview = m.Overview ?? "",
-                ExtendedDescription = m.Description1 ?? "",
-                Prerequisites = m.Prerequisites ?? "",
-                DurationDays = m.DurationDays,
-                OrderNo = m.OrderNo ?? 0,
-                IsAiGenerated = m.IsAiGenerated ?? false,
-                Metadata = m.Metadata ?? ""
-            }).ToList();
-        }
+                var moduleProgress = await _moduleProgressRepo
+                    .GetAsync(userId, m.ModuleId);
 
-        // GET FULL MODULE DETAILS 
-        public async Task<ModuleDetailDto?> GetModuleDetailAsync(Guid moduleId, Guid userId)
+                bool isCompleted =
+                    moduleProgress != null &&
+                    moduleProgress.Status == "Completed";
+
+                bool isUnlocked = previousCompleted;
+
+                var lessons = (await _lessonRepo
+                    .GetByModuleIdAsync(m.ModuleId))
+                    .ToList();
+
+                var lessonProgress =
+                    await _lessonProgressRepo
+                        .GetByModuleAsync(userId, m.ModuleId);
+
+                int totalLessons = lessons.Count;
+
+                int completedLessons =
+                    lessonProgress.Count(lp =>
+                        lp.Status == "Completed");
+
+                int progressPercent =
+                    totalLessons == 0
+                        ? 0
+                        : (completedLessons * 100) / totalLessons;
+
+                result.Add(new ModuleDto
+                {
+                    ModuleId = m.ModuleId,
+                    WeekId = m.WeekId,
+                    ModuleName = m.ModuleName ?? "",
+                    Description = m.Description ?? "",
+                    Overview = m.Overview ?? "",
+                    ExtendedDescription = m.Description1 ?? "",
+                    Prerequisites = m.Prerequisites ?? "",
+                    DurationDays = m.DurationDays,
+                    OrderNo = m.OrderNo ?? 0,
+                    IsAiGenerated = m.IsAiGenerated ?? false,
+                    Metadata = m.Metadata ?? "",
+
+                    IsUnlocked = isUnlocked,
+                    IsCompleted = isCompleted,
+                    LessonProgressPercent = progressPercent
+                });
+
+                previousCompleted = isCompleted;
+            }
+
+            return result;
+        }
+        public async Task<ModuleDetailDto?> GetModuleDetailAsync(
+            Guid moduleId,
+            Guid userId)
         {
             var module = await _moduleRepo.GetModuleFullAsync(moduleId);
             if (module == null) return null;
+            var lessonProgress =
+                await _lessonProgressRepo.GetByModuleAsync(userId, moduleId);
+
+            var assessmentProgress =
+                await _assessmentProgressRepo.GetByModuleAsync(userId, moduleId);
 
             return new ModuleDetailDto
             {
@@ -89,21 +150,28 @@ namespace Knowledge_Repository.Application.Implementations.Services
                 OrderNo = module.OrderNo ?? 0,
                 IsAiGenerated = module.IsAiGenerated ?? false,
                 Metadata = module.Metadata ?? "",
-
                 Lessons = module.Lessons
                     .OrderBy(l => l.OrderIndex)
-                    .Select(l => new LessonDto
+                    .Select(l =>
                     {
-                        LessonId = l.LessonId,
-                        ModuleId = l.ModuleId,
-                        Title = l.Title ?? "",
-                        Content = l.Content ?? "",
-                        LessonType = l.LessonType ?? "Text",
-                        OrderIndex = l.OrderIndex ?? 0,
-                        Overview = l.Overview ?? "",
-                        Prerequisites = l.Prerequisites ?? "",
-                        DurationMinutes = l.DurationMinutes
-                    }).ToList(),
+                        var lp = lessonProgress
+                            .FirstOrDefault(x => x.LessonId == l.LessonId);
+
+                        return new LessonDto
+                        {
+                            LessonId = l.LessonId,
+                            ModuleId = l.ModuleId,
+                            Title = l.Title ?? "",
+                            Content = l.Content ?? "",
+                            LessonType = l.LessonType ?? "Text",
+                            OrderIndex = l.OrderIndex ?? 0,
+                            Overview = l.Overview ?? "",
+                            Prerequisites = l.Prerequisites ?? "",
+                            DurationMinutes = l.DurationMinutes,
+                            IsCompleted = lp?.Status == "Completed"
+                        };
+                    })
+                    .ToList(),
 
                 Resources = module.Resources
                     .Select(r => new ResourceDto
@@ -117,39 +185,54 @@ namespace Knowledge_Repository.Application.Implementations.Services
                         Description = r.Description ?? "",
                         Metadata = r.Metadata ?? "",
                         IsAiGenerated = r.IsAiGenerated ?? false
-                    }).ToList(),
+                    })
+                    .ToList(),
 
                 Assessments = module.Assessments
-                    .OrderBy(a => a.CreatedOn)
-                    .Select(a => new AssessmentDto
-                    {
-                        AssessmentId = a.AssessmentId,
-                        ModuleId = a.ModuleId,
-                        TopicId = a.TopicId,
-                        Title = a.Title ?? "",
-                        Difficulty = a.Difficulty ?? 1,
-                        Description = a.Description ?? "",
-                        LearningObjectives = a.LearningObjectives ?? "",
-                        Metadata = a.Metadata ?? "",
-                        IsAiGenerated = a.IsAiGenerated ?? false,
+    .OrderBy(a => a.CreatedOn)
+    .Select(a =>
+    {
+        var latestResult =
+            _assessmentRepo.GetLatestResultAsync(userId, a.AssessmentId)
+                .GetAwaiter()
+                .GetResult();
 
-                        Questions = a.AssessmentQuestions
-                            .Select(q => new AssessmentQuestionDto
-                            {
-                                QuestionId = q.QuestionId,
-                                Question = q.Question ?? "",
-                                Options = q.Options ?? "",
-                                CorrectAnswer = q.CorrectAnswer ?? "",
-                                Explanation = q.Explanation ?? "",
-                                Hint = q.Hint ?? "",
-                                QuestionType = q.QuestionType ?? "multiple-choice",
-                                Metadata = q.Metadata ?? ""
-                            }).ToList()
-                    }).ToList()
+        return new AssessmentDto
+        {
+            AssessmentId = a.AssessmentId,
+            ModuleId = a.ModuleId,
+            TopicId = a.TopicId,
+            Title = a.Title ?? "",
+            Difficulty = a.Difficulty ?? 1,
+            Description = a.Description ?? "",
+            LearningObjectives = a.LearningObjectives ?? "",
+            Metadata = a.Metadata ?? "",
+            IsAiGenerated = a.IsAiGenerated ?? false,
+
+            Questions = a.AssessmentQuestions
+                .Select(q => new AssessmentQuestionDto
+                {
+                    QuestionId = q.QuestionId,
+                    Question = q.Question ?? "",
+                    Options = q.Options ?? "",
+                    CorrectAnswer = q.CorrectAnswer ?? "",
+                    Explanation = q.Explanation ?? "",
+                    Hint = q.Hint ?? "",
+                    QuestionType = q.QuestionType ?? "multiple-choice",
+                    Metadata = q.Metadata ?? ""
+                })
+                .ToList(),
+
+            LatestResult = latestResult   
+        };
+    })
+    .ToList()
+
+
             };
         }
 
-        // UPDATE MODULE
+
         public async Task UpdateModuleAsync(Guid moduleId, ModuleDto dto)
         {
             var module = await _moduleRepo.GetByIdAsync(moduleId);
@@ -169,7 +252,6 @@ namespace Knowledge_Repository.Application.Implementations.Services
             await _moduleRepo.UpdateAsync(module);
         }
 
-        // DELETE MODULE
         public async Task DeleteModuleAsync(Guid moduleId)
         {
             var module = await _moduleRepo.GetByIdAsync(moduleId);
@@ -178,22 +260,54 @@ namespace Knowledge_Repository.Application.Implementations.Services
             await _moduleRepo.DeleteAsync(module);
         }
 
-        // GET MODULE PROGRESS
-        public async Task<ModuleProgressDto?> GetModuleProgressAsync(Guid moduleId, Guid userId)
+        public async Task<ModuleProgressDto?> GetModuleProgressAsync(
+      Guid moduleId,
+      Guid userId)
         {
             var module = await _moduleRepo.GetByIdAsync(moduleId);
             if (module == null) return null;
+            var weekModules = await _moduleRepo
+                .GetByWeekIdAsync(module.WeekId);
 
-            var progress = await _userProgressRepo.GetModuleProgressAsync(userId, module.WeekId, moduleId);
+            var ordered = weekModules
+                .OrderBy(m => m.OrderNo)
+                .ToList();
+
+            var index = ordered.FindIndex(m => m.ModuleId == moduleId);
+
+            bool isUnlocked;
+
+            if (index == 0)
+            {
+                isUnlocked = true;
+            }
+            else
+            {
+                var prev = ordered[index - 1];
+
+                var prevProgress = await _moduleProgressRepo.GetAsync(
+                    userId,
+                    prev.ModuleId);
+
+                isUnlocked = prevProgress != null &&
+                             prevProgress.Status == "Completed";
+            }
+
+            var progress = await _moduleProgressRepo.GetAsync(
+                userId,
+                moduleId);
 
             return new ModuleProgressDto
             {
                 ModuleId = moduleId,
                 ModuleName = module.ModuleName ?? "",
                 OrderNo = module.OrderNo ?? 0,
-                IsUnlocked = progress != null,
-                IsCompleted = progress?.Status == "Completed"
+                IsUnlocked = isUnlocked,
+                IsCompleted = progress != null &&
+                              progress.Status == "Completed"
             };
         }
+
+
     }
 }

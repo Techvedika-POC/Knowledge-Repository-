@@ -25,5 +25,7 @@ public partial class JuryFinalScore
 
     public virtual Event Event { get; set; }
 
+    public virtual ICollection<JuryScoreDetail> JuryScoreDetails { get; set; } = new List<JuryScoreDetail>();
+
     public virtual Team Team { get; set; }
 }

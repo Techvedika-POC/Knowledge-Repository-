@@ -28,9 +28,6 @@ namespace Knowledge_Repository.Application.Dtos.EventInsight
         public DateTime? CreatedOn { get; set; }
     }
 
-
- 
-
     public class EventInsightSummaryDto
     {
         public Guid TeamId { get; set; }

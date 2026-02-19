@@ -26,8 +26,8 @@ const QuickEvents = ({ navigate }) => {
   ];
 
   return (
-    <div className="bg-gradient-to-r from-[#E0F7FA] to-[#E0F2FE] rounded-2xl p-10 shadow-md mt-0">
-      <h3 className="text-[20px] font-semibold text-[#0284c7] mb-4">
+    <div className="bg-gradient-to-r from-[#E0F7FA] to-[#E0F2FE] rounded-2xl px-6 py-6 shadow-md mt-0">
+      <h3 className="text-[20px] font-semibold text-[#0284c7] mb-2">
         Quick Events
       </h3>
       <div className="flex flex-wrap gap-4">

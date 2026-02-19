@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import api from "../api";
 import { Check, X, Eye, ChevronLeft, ChevronRight } from "lucide-react";
+import PreviewModal from "./PreviewModal";
 
 export default function ApproverPage() {
   const [tab, setTab] = useState("normal");
@@ -9,7 +10,7 @@ export default function ApproverPage() {
   const [selectedEventType, setSelectedEventType] = useState("");
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(null);
-  const [previewItem, setPreviewItem] = useState(null);
+  const [fullPreviewItem, setFullPreviewItem] = useState(null);
   const [error, setError] = useState("");
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize] = useState(10);
@@ -17,6 +18,24 @@ export default function ApproverPage() {
   const totalPages = Math.ceil(totalItems / pageSize);
   const [rejectItem, setRejectItem] = useState(null);
   const [feedback, setFeedback] = useState("");
+  const openFullPreview = async (item) => {
+    const itemId = getItemId(item);
+    if (!itemId) return;
+
+    try {
+      const token = localStorage.getItem("token");
+
+      const res = await api.get(
+        `/KnowledgeItem/${itemId}/details`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setFullPreviewItem(res.data);
+    } catch (err) {
+      console.error("Failed to load preview", err.response?.data || err);
+      setError("Failed to load preview details.");
+    }
+  };
 
   const getItemId = (item) =>
     item.knowledgeItemId ||
@@ -107,7 +126,7 @@ export default function ApproverPage() {
       if (action === "reject") {
         await api.post(
           `/approver/reject/${itemId}`,
-          { feedback }, 
+          { feedback },
           { headers: { Authorization: `Bearer ${token}` } }
         );
       } else {
@@ -119,7 +138,7 @@ export default function ApproverPage() {
       }
 
       setRejectItem(null);
-      setFeedback("");    
+      setFeedback("");
       fetchData();
     } catch (err) {
       console.error("Action failed", err);
@@ -135,8 +154,6 @@ export default function ApproverPage() {
   return (
     <div className="p-10 min-h-screen bg-gradient-to-br from-[#F7F9FC] to-[#EDF2FA]">
       <div className="max-w-6xl mx-auto">
-
-        {/* HEADER */}
         <div className="mb-10 text-center">
           <h1 className="text-3xl font-extrabold text-gray-700 tracking-wide">
             Knowledge Approval Center
@@ -146,7 +163,6 @@ export default function ApproverPage() {
           </p>
         </div>
 
-        {/* TABS */}
         <div className="flex gap-3 mb-6 justify-center">
           {[
             { key: "normal", label: "Normal Items" },
@@ -171,8 +187,6 @@ export default function ApproverPage() {
             </button>
           ))}
         </div>
-
-        {/* EVENT TYPE DROPDOWN */}
         {tab === "eventType" && (
           <div className="flex justify-center mb-5">
             <select
@@ -189,15 +203,11 @@ export default function ApproverPage() {
             </select>
           </div>
         )}
-
-        {/* ERROR */}
         {error && (
           <p className="text-red-500 text-center bg-red-50 py-2 rounded-lg mb-4 border border-red-200">
             {error}
           </p>
         )}
-
-        {/* DATA DISPLAY */}
         {loading ? (
           <p className="text-center text-gray-500">Loading...</p>
         ) : items.length === 0 ? (
@@ -250,11 +260,18 @@ export default function ApproverPage() {
                           </button>
 
                           <button
-                            onClick={() => setPreviewItem(item)}
+                            onClick={() => openFullPreview(item)}
                             className="px-3 py-1.5 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-full flex items-center gap-1 text-xs"
                           >
                             <Eye size={14} /> Preview
                           </button>
+                          {fullPreviewItem && (
+                            <PreviewModal
+                              item={fullPreviewItem}
+                              onClose={() => setFullPreviewItem(null)}
+                            />
+                          )}
+
                         </td>
 
                       </tr>
@@ -343,7 +360,6 @@ export default function ApproverPage() {
                 </div>
               </div>
             )}
-            {/* PAGINATION */}
             {tab !== "all" && (
               <div className="flex justify-end items-center gap-3 mt-4">
                 <button
@@ -370,37 +386,8 @@ export default function ApproverPage() {
           </>
         )}
 
-        {/* PREVIEW MODAL */}
-        {previewItem && (
-          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center">
-            <div className="bg-white rounded-2xl p-6 shadow-xl w-full max-w-lg border border-gray-100 relative animate-fadeIn">
-              <button
-                className="absolute right-4 top-4 text-gray-500 hover:text-gray-700"
-                onClick={() => setPreviewItem(null)}
-              >
-                <X />
-              </button>
-
-              <h2 className="text-xl font-bold text-gray-700">
-                {previewItem.title}
-              </h2>
-
-              <div className="mt-3 space-y-2 text-sm text-gray-600">
-                <p><strong>Description:</strong> {previewItem.description}</p>
-                <p><strong>Submitted By:</strong> {previewItem.createdByName}</p>
-
-                <div className="grid grid-cols-2 gap-3 border-t pt-3 mt-3 text-gray-600">
-                  <p><strong>Domain:</strong> {previewItem.domainName}</p>
-                  <p><strong>Category:</strong> {previewItem.categoryName}</p>
-                  <p><strong>Framework:</strong> {previewItem.framework}</p>
-                  <p><strong>Language:</strong> {previewItem.language}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
       </div>
     </div>
+
   );
 }

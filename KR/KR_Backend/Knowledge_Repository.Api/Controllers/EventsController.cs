@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Knowledge_Repository.Application.Dtos.Common;
+
 
 namespace Knowledge_Repository.Controllers
 {
@@ -43,14 +45,10 @@ namespace Knowledge_Repository.Controllers
         [HttpGet("type/{eventType}")]
         public async Task<ActionResult<IEnumerable<Event>>> GetEventsByType(string eventType)
         {
-            if (string.IsNullOrWhiteSpace(eventType))
-                return BadRequest(new { success = false, message = "Event type is required." });
-
             var events = await _eventService.GetEventsByTypeAsync(eventType);
-            return (events == null || events.Count == 0)
-                ? NotFound(new { success = false, message = $"No events found for type: {eventType}" })
-                : Ok(events);
+            return Ok(events);
         }
+
 
 
         [HttpPost]
@@ -151,22 +149,42 @@ namespace Knowledge_Repository.Controllers
         public async Task<IActionResult> GetUserEventInsight(Guid eventId, Guid userId)
         {
             if (eventId == Guid.Empty || userId == Guid.Empty)
-                return BadRequest(new { success = false, message = "Invalid event or user ID." });
+                return BadRequest(new ApiResponse<object>
+                {
+                    Success = false,
+                    Message = "Invalid event or user."
+                });
 
             try
             {
                 var insight = await _insightService.GetUserEventInsightAsync(userId, eventId);
-                return Ok(new { success = true, data = insight });
+
+                return Ok(new ApiResponse<UserEventInsightDto>
+                {
+                    Success = true,
+                    Message = "Insight loaded successfully.",
+                    Data = insight
+                });
             }
-            catch (KeyNotFoundException ex)
+            catch (KeyNotFoundException)
             {
-                return NotFound(new { success = false, message = ex.Message });
+                return Ok(new ApiResponse<object>
+                {
+                    Success = true,
+                    Message = "You have not joined a team for this event yet.",
+                    Data = null
+                });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return StatusCode(500, new { success = false, message = "Failed to fetch user event insight.", details = ex.Message });
+                return StatusCode(500, new ApiResponse<object>
+                {
+                    Success = false,
+                    Message = "We couldn’t load your event details right now. Please try again later."
+                });
             }
         }
+
         [HttpGet("type/Ideathon/current")]
         public async Task<IActionResult> GetCurrentIdeathons()
         {
@@ -194,6 +212,31 @@ namespace Knowledge_Repository.Controllers
                 return StatusCode(500, new { message = "Failed to load ideathon events for month.", detail = ex.Message });
             }
         }
+        [HttpGet("hackathons/teams/count")]
+        public async Task<IActionResult> GetTotalHackathonTeams()
+        {
+            var count = await _eventService.GetTotalHackathonTeamsAsync();
+            return Ok(new { totalTeams = count });
+        }
+
+        [HttpGet("active")]
+        public async Task<IActionResult> GetActiveEvents()
+        {
+            try
+            {
+                var events = await _eventService.GetActiveEventsAsync();
+                return Ok(events);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    message = "Failed to load active events",
+                    detail = ex.Message
+                });
+            }
+        }
+
         [HttpGet("grouped-by-type-month")]
         public async Task<IActionResult> GetGroupedByTypeAndMonth()
         {

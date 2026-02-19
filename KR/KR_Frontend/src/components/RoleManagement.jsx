@@ -169,12 +169,10 @@ export default function RoleManagement() {
   return (
     <div className="max-w-4xl mx-auto py-6 space-y-10">
       <section className="space-y-4">
-        {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-semibold text-gray-900 tracking-tight">
+          <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">
             Role Management
           </h1>
-          {/* Add Role Button */}
           <button
             onClick={() => {
               setForm(emptyForm);       
@@ -210,13 +208,9 @@ export default function RoleManagement() {
               }
               className="border rounded-md p-2 w-64"
             />
-
-            {/* Save */}
             <button type="submit" title="Save">
               <DocumentCheckIcon className="w-6 h-6 text-green-600 hover:text-green-700" />
             </button>
-
-            {/* Close */}
             <button
               type="button"
               title="Close"
@@ -229,8 +223,6 @@ export default function RoleManagement() {
             </button>
           </form>
         )}
-
-        {/* Roles List */}
         {roles.map((role) => (
           <div
             key={role.roleId}
@@ -244,15 +236,12 @@ export default function RoleManagement() {
             </div>
 
             <div className="flex gap-3">
-              {/* Edit */}
               <button
                 onClick={() => handleEdit(role)} 
                 title="Edit"
               >
                 <PencilSquareIcon className="w-5 h-5 text-gray-700 hover:text-black" />
               </button>
-
-              {/* Delete */}
               <button
                 onClick={() => handleDelete(role.roleId)}
                 title="Delete"
@@ -263,9 +252,6 @@ export default function RoleManagement() {
           </div>
         ))}
       </section>
-
-
-      {/* --- USERS --------------------------------------------------------- */}
       <section className="space-y-3">
         <h2 className="text-xl font-semibold text-gray-800">Users</h2>
 
@@ -335,8 +321,6 @@ export default function RoleManagement() {
           </button>
         </div>
       </section>
-
-      {/* --- ASSIGN ROLES -------------------------------------------------- */}
       {selectedUser && (
         <>
           <hr className="border-gray-300" />
@@ -377,8 +361,6 @@ export default function RoleManagement() {
           </section>
         </>
       )}
-
-      {/* --- AUDIT LOG ----------------------------------------------------- */}
       <hr className="border-gray-300" />
 
       <section>

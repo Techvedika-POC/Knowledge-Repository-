@@ -17,11 +17,17 @@ public partial class Team
 
     public DateTime? CreatedOn { get; set; }
 
+    public virtual ICollection<AiConversation> AiConversations { get; set; } = new List<AiConversation>();
+
+    public virtual ICollection<AiInsight> AiInsights { get; set; } = new List<AiInsight>();
+
     public virtual User CreatedByNavigation { get; set; }
 
     public virtual Event Event { get; set; }
 
     public virtual ICollection<EventKnowledgeItem> EventKnowledgeItems { get; set; } = new List<EventKnowledgeItem>();
+
+    public virtual ICollection<IdeaSubmission> IdeaSubmissions { get; set; } = new List<IdeaSubmission>();
 
     public virtual ICollection<JuryFinalScore> JuryFinalScores { get; set; } = new List<JuryFinalScore>();
 
@@ -34,4 +40,6 @@ public partial class Team
     public virtual ICollection<TeamFeedback> TeamFeedbacks { get; set; } = new List<TeamFeedback>();
 
     public virtual ICollection<TeamMember> TeamMembers { get; set; } = new List<TeamMember>();
+
+    public virtual ICollection<TeamTask> TeamTasks { get; set; } = new List<TeamTask>();
 }

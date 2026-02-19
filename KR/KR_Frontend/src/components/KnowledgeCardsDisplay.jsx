@@ -4,9 +4,8 @@ import EngagementButtons from "./EngagementButtons";
 import VersionFilesModal from "./VersionFilesModal"; // 
 import {
   FileText,
-  Tag,
+  BookOpen,
   User,
-  Type,
   MessageCircle,
   Send,
   X,
@@ -260,166 +259,179 @@ export default function KnowledgeCardsDisplay({ items = [], onPreview, userId, o
       </div>
     ));
 
-  return (
-    <div className="pb-16 p-6">
-      {loading && (
-        <p className="text-center text-gray-500">Loading engagements...</p>
-      )}
-      {/* Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {items.slice(0, showAll ? items.length : 3).map((item, idx) => {
-          const id = item.itemId || item.id;
-          const data = engagementData[id] || {};
-          return (
-            <div
-              key={id || idx}
-              className="bg-white rounded-2xl shadow-md border border-gray-200 hover:shadow-lg transition flex flex-col relative"
-            >
-              {/* Highlight strip */}
-              <div
-                className={`h-2 w-full rounded-t-2xl bg-${cardHighlightColor}-100`}
-              ></div>
+ return (
+  <div className="pb-2 pt-3 px-7 bg-slate-50 ">
+    {loading && (
+      <p className="text-center text-gray-500">Loading engagements...</p>
+    )}
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      {items.slice(0, showAll ? items.length : 3).map((item, idx) => {
+        const id = item.itemId || item.id;
+        const data = engagementData[id] || {};
 
-              {/* File icon - top-right */}
-              <div className="absolute top-3 right-3 z-10">
-                <button
-                  onClick={() => setFilesItemId(id)}
-                  className="p-2 rounded-full hover:bg-gray-100 transition"
-                  aria-label="Open version files"
-                >
-                  <FileText className="w-5 h-5 text-indigo-600" />
-                </button>
-              </div>
-
-              <div className="p-6 flex flex-col flex-grow">
-                <div className="mb-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Type className="w-4 h-4 text-purple-500" />
-                    <span className="font-semibold text-sm text-gray-600">
-                      Title:
-                    </span>
-                  </div>
-                  <span className="font-medium text-gray-900">{item.title}</span>
+        return (
+          <div
+            key={id || idx}
+            className="
+              bg-white 
+              border border-slate-200 
+              rounded-xl 
+              shadow-sm 
+              hover:shadow-md 
+              transition 
+              flex flex-col 
+              h-[320px]
+            "
+          >
+            {/* Header */}
+            <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-start">
+              <div className="flex gap-3">
+                <div className="p-2">
+                  <BookOpen className="w-4 h-4 text-indigo-600" />
                 </div>
-
-                <div className="mb-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <FileText className="w-4 h-4 text-indigo-500" />
-                    <span className="font-semibold text-sm text-gray-600">
-                      Description:
-                    </span>
-                  </div>
-                  <p className="text-gray-700 text-sm truncate">
-                    {item.description || "No description available."}
+                <div>
+                  <h3 className="font-semibold text-slate-900 leading-tight line-clamp-2">
+                    {item.title}
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {item.domainName || "Domain"} •{" "}
+                    {item.categoryName || "Category"}
                   </p>
                 </div>
-
-                {item.tags?.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {item.tags.map((tag, tIdx) => (
-                      <span
-                        key={tIdx}
-                        className={`px-2 py-1 text-xs rounded-full bg-${themeColor}-100 text-${themeColor}-800 font-medium flex items-center gap-1`}
-                      >
-                        <Tag className="w-3 h-3" /> {tag}
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                <div className="flex items-center gap-2 mb-4">
-                  <User className={`w-5 h-5 text-${themeColor}-500`} />
-                  <span className="px-2 py-1 text-xs font-medium text-${themeColor}-800 rounded-full hover:bg-blue-100 transition cursor-pointer">
-                    {item.ownerName || item.submittedBy || "Unknown Contributor"}
-                  </span>
-                </div>
-
-                <div className="border-t border-gray-300 mb-2"></div>
-
-                <div className="mt-auto flex justify-center">
-                  <EngagementButtons
-                    item={item}
-                    onPreview={onPreview}
-                    onLike={handleLike}
-                    onFavourite={handleFavourite}
-                    onCommentOpen={openCommentsModal}
-                    isLiked={data.userEngagementTypes?.includes("Like")}
-                    isFav={data.userEngagementTypes?.includes("Favourite")}
-                    likeCount={data.likesCount || 0}
-                    comments={data.comments || []}
-                    themeColor={themeColor}
-                  />
-                </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
 
-      {/* View More & Reset Buttons */}
-      <div className="flex justify-center mt-8 space-x-4">
-        <button
-          onClick={() => setShowAll(!showAll)}
-          className={`px-6 py-2 text-sm font-medium text-black bg-blue-300 rounded-full shadow hover:bg-${themeColor}-600 transition`}
-        >
-          {showAll ? "View Less" : "View More"}
-        </button>
-        <button
-          onClick={() => {
-            setShowAll(false);
-            fetchEngagementData();
-            if (onReset) onReset();
-          }}
-          className={`px-6 py-2 text-sm font-medium text-black bg-blue-300 rounded-full shadow hover:bg-${themeColor}-600 transition`}
-        >
-          Reset
-        </button>
-      </div>
-
-      {/* Comments Modal */}
-      {commentModalItem && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 relative">
-            <button
-              className="absolute top-4 right-4 text-gray-600 hover:text-gray-900"
-              onClick={() => setCommentModalItem(null)}
-            >
-              <X size={20} />
-            </button>
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <MessageCircle size={18} /> Comments
-            </h2>
-
-            <div className="max-h-80 overflow-y-auto mb-3 space-y-3">
-              {comments.length > 0 ? (
-                renderComments(comments)
-              ) : (
-                <p className="text-sm text-gray-500">No comments yet.</p>
-              )}
-            </div>
-
-            {/* Add New Comment */}
-            <div className="flex gap-2 mt-4">
-              <textarea
-                className="flex-1 border rounded-full px-4 py-2 text-sm resize-none focus:ring-2 focus:ring-indigo-300 outline-none"
-                placeholder="Add a comment..."
-                value={newComment}
-                rows={1}
-                onChange={(e) => setNewComment(e.target.value)}
-                onKeyDown={(e) => handleKeyDown(e, () => handleAddComment(newComment))}
-              />
               <button
-                disabled={!newComment.trim()}
-                onClick={() => handleAddComment(newComment)}
-                className={`px-4 py-2 bg-${themeColor}-500 text-white rounded-full hover:bg-${themeColor}-600 flex items-center gap-1 disabled:opacity-50`}
+                onClick={() => setFilesItemId(id)}
+                className="p-2 rounded-lg hover:bg-slate-100 transition"
+                title="View versions & files"
               >
-                <Send size={16} /> Send
+                <FileText className="w-4 h-4 text-slate-500" />
               </button>
             </div>
+
+            {/* Body */}
+            <div className="px-5 py-3 flex flex-col flex-grow gap-3">
+              {/* Description */}
+              <p className="text-sm text-slate-700 line-clamp-3">
+                {item.description || "No description available."}
+              </p>
+
+              {/* Tags (max 2 rows) */}
+              <div className="flex flex-wrap gap-2 max-h-[48px] overflow-hidden">
+                {item.tags?.slice(0, 6).map((tag, tIdx) => (
+                  <span
+                    key={tIdx}
+                    className="
+                      px-2 py-0.5 
+                      text-xs 
+                      rounded-md 
+                      bg-slate-100 
+                      text-slate-700
+                      border border-slate-200
+                    "
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+
+              {/* Owner */}
+              <div className="flex items-center gap-2 text-xs text-slate-500 mt-auto">
+                <User size={12} />
+                <span>
+                  {item.ownerName || item.submittedBy || "Unknown"}
+                </span>
+              </div>
+            </div>
+
+            {/* Footer (fixed height) */}
+            <div className="border-t border-slate-100 px-4 py-2 bg-slate-50">
+              <EngagementButtons
+                item={item}
+                onPreview={onPreview}
+                onLike={handleLike}
+                onFavourite={handleFavourite}
+                onCommentOpen={openCommentsModal}
+                isLiked={data.userEngagementTypes?.includes("Like")}
+                isFav={data.userEngagementTypes?.includes("Favourite")}
+                likeCount={data.likesCount || 0}
+                comments={data.comments || []}
+                themeColor="slate"
+              />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+{items.length > 3 && (
+  <div className="flex justify-center mt-4">
+    <button
+      onClick={() => setShowAll(!showAll)}
+      className="
+        px-6 py-2 
+        text-sm font-medium 
+        rounded-lg 
+        border border-slate-300 
+        bg-white 
+        hover:bg-slate-100
+      "
+    >
+      {showAll ? "View Less" : "View More"}
+    </button>
+  </div>
+)}
+    {commentModalItem && (
+      <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+        <div className="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 relative">
+          <button
+            className="absolute top-4 right-4 text-gray-600 hover:text-gray-900"
+            onClick={() => setCommentModalItem(null)}
+          >
+            <X size={20} />
+          </button>
+
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <MessageCircle size={18} /> Comments
+          </h2>
+
+          <div className="max-h-80 overflow-y-auto mb-3 space-y-3">
+            {comments.length > 0 ? (
+              renderComments(comments)
+            ) : (
+              <p className="text-sm text-gray-500">No comments yet.</p>
+            )}
+          </div>
+
+          <div className="flex gap-2 mt-4">
+            <textarea
+              className="flex-1 border rounded-lg px-3 py-2 text-sm resize-none"
+              placeholder="Add a comment..."
+              value={newComment}
+              rows={1}
+              onChange={(e) => setNewComment(e.target.value)}
+              onKeyDown={(e) =>
+                handleKeyDown(e, () => handleAddComment(newComment))
+              }
+            />
+            <button
+              disabled={!newComment.trim()}
+              onClick={() => handleAddComment(newComment)}
+              className="px-4 py-2 bg-slate-800 text-white rounded-lg disabled:opacity-50"
+            >
+              <Send size={16} />
+            </button>
           </div>
         </div>
-      )}
-      {filesItemId && <VersionFilesModal itemId={filesItemId} onClose={() => setFilesItemId(null)} />}
-    </div>
-  );
+      </div>
+    )}
+
+    {filesItemId && (
+      <VersionFilesModal
+        itemId={filesItemId}
+        onClose={() => setFilesItemId(null)}
+      />
+    )}
+  </div>
+);
+
 }

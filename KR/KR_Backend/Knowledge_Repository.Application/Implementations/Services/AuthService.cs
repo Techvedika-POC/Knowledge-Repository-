@@ -12,9 +12,6 @@ using BCryptNet = BCrypt.Net.BCrypt;
 
 namespace Knowledge_Repository.Application.Implementations.Services
 {
-    /// <summary>
-    /// Handles user authentication, registration, and JWT token generation.
-    /// </summary>
     public class AuthService : IAuthService
     {
         private readonly IUserRepository _userRepository;
@@ -43,9 +40,6 @@ namespace Knowledge_Repository.Application.Implementations.Services
             _eventJuryRepo = eventJuryRepo ?? throw new ArgumentNullException(nameof(eventJuryRepo));
         }
 
-        /// <summary>
-        /// Registers a new user and assigns the default "Contributor" role.
-        /// </summary>
         public async Task<bool> RegisterAsync(RegisterDto dto, Guid? createdBy = null)
         {
             if (dto == null)
@@ -74,15 +68,12 @@ namespace Knowledge_Repository.Application.Implementations.Services
 
             await _userRepository.AddAsync(user);
 
-            // If self-registered, set CreatedBy and UpdatedBy to the user's own ID
             if (createdBy == null)
             {
                 user.CreatedBy = user.UserId;
                 user.UpdatedBy = user.UserId;
                 await _userRepository.UpdateAsync(user);
             }
-
-            // Assign default Contributor role
             var contributorRole = await _roleRepository.GetByNameAsync("Contributor");
             if (contributorRole == null)
                 throw new InvalidOperationException(
@@ -104,9 +95,6 @@ namespace Knowledge_Repository.Application.Implementations.Services
             return true;
         }
 
-        /// <summary>
-        /// Authenticates a user and returns a JWT token with role and event jury claims.
-        /// </summary>
         public async Task<AuthResponseDto?> LoginAsync(LoginDto dto)
         {
             if (dto == null)
@@ -116,16 +104,13 @@ namespace Knowledge_Repository.Application.Implementations.Services
 
             var user = await _userRepository.GetUserWithRolesByEmailAsync(dto.Email);
 
-            // Validate credentials
             if (user == null || !BCryptNet.Verify(dto.Password, user.PasswordHash))
             {
                 _logger.LogWarning("Login failed due to invalid credentials: {Email}", dto.Email);
                 return null;
             }
 
-            // Fetch event jury assignments for claims
             var eventIds = await _eventJuryRepo.GetEventIdsForUserAsync(user.UserId);
-            // JWT configuration (from environment)
             var secretKey = Environment.GetEnvironmentVariable("JWT_SECRET");
 
             if (string.IsNullOrWhiteSpace(secretKey))

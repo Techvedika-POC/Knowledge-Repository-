@@ -22,6 +22,19 @@ namespace Knowledge_Repository.Infrastructure.Repositories
         {
             return await _context.Events.AsNoTracking().ToListAsync();
         }
+        public async Task<List<Event>> GetActiveEventsAsync(DateOnly today)
+        {
+            return await _context.Events
+                .Where(e =>
+                    e.StartDate.HasValue &&
+                    e.EndDate.HasValue &&
+                    e.StartDate.Value <= today &&
+                    e.EndDate.Value >= today
+                )
+                .OrderBy(e => e.StartDate)
+                .ToListAsync();
+        }
+
 
         public async Task<List<Event>> GetEventsByTypeAsync(string eventType)
         {

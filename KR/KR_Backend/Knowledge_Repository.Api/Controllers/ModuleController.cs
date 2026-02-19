@@ -24,12 +24,17 @@ namespace Knowledge_Repository.API.Controllers
             return Ok(created);
         }
 
-        [HttpGet("week/{weekId}")]
-        public async Task<IActionResult> GetModulesByWeek(Guid weekId)
-        {
-            var modules = await _moduleService.GetModulesByWeekAsync(weekId);
-            return Ok(modules);
-        }
+   [HttpGet("week/{weekId}")]
+public async Task<IActionResult> GetModulesByWeek(
+    Guid weekId,
+    [FromQuery] Guid userId)
+{
+    var modules = await _moduleService
+        .GetModulesByWeekAsync(weekId, userId);
+
+    return Ok(modules);
+}
+
 
         [HttpGet("{moduleId}")]
         public async Task<IActionResult> GetModuleDetail(Guid moduleId, [FromQuery] Guid userId)

@@ -43,7 +43,6 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white">
-      {/* Header */}
       <header className="flex justify-between items-center px-8 py-4 bg-white shadow sticky top-0 z-50">
         <h1 className="text-xl font-bold text-gray-800">KnowLedger Synaptix</h1>
         <div className="space-x-4">
@@ -61,10 +60,7 @@ export default function LandingPage() {
           </button>
         </div>
       </header>
-
-      {/* Hero + Carousel */}
       <section className="flex flex-col md:flex-row h-screen w-full">
-        {/* Left: Hero Message */}
         <div className="flex-1 md:flex-[1] flex flex-col justify-center px-6 md:px-12 text-center md:text-left">
           <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">
             Welcome to <span className="text-blue-600">KnowLedger Synaptix</span>
@@ -88,8 +84,6 @@ export default function LandingPage() {
             </button>
           </div>
         </div>
-
-        {/* Right: Carousel */}
         <div className="flex-1 md:flex-[2] relative flex items-center justify-center overflow-hidden">
           {features.map((feature, i) => (
             <div
@@ -100,7 +94,6 @@ export default function LandingPage() {
                   : "opacity-0 z-0 -translate-x-20"
               }`}
             >
-              {/* Image */}
               <div className="w-full h-full md:h-[28rem] rounded-xl overflow-hidden shadow-2xl relative">
                 <img
                   src={feature.image}
@@ -131,8 +124,6 @@ export default function LandingPage() {
               </div>
             </div>
           ))}
-
-          {/* Carousel Controls */}
           <button
             onClick={prevSlide}
             className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-2 shadow hover:bg-gray-50 transition"
@@ -147,8 +138,6 @@ export default function LandingPage() {
           </button>
         </div>
       </section>
-
-      {/* Footer */}
       <footer className="mt-auto py-6 text-center text-gray-500 text-sm">
         © {new Date().getFullYear()} KnowLedger. All rights reserved.
       </footer>

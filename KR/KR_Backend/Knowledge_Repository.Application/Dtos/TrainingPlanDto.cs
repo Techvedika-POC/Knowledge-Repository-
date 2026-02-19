@@ -15,8 +15,6 @@ namespace Knowledge_Repository.Application.Dtos
 
         public int DurationWeeks { get; set; }
         public int TotalDays { get; set; }
-
-        // Stored as JSON strings later
         public List<string> Prerequisites { get; set; }
         public List<string> TechnicalRequirements { get; set; }
         public List<string> SelfAssessmentChecklist { get; set; }

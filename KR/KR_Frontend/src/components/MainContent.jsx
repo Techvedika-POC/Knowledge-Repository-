@@ -26,8 +26,6 @@ const MainContent = () => {
 
   const navigate = useNavigate();
   const userId = localStorage.getItem("userId");
-
-  // ------------------ Fetch Fresh Picks ------------------
   useEffect(() => {
     const loadFreshPicks = async () => {
       try {
@@ -44,15 +42,12 @@ const MainContent = () => {
     loadFreshPicks();
   }, []);
 
-  // ------------------ Fetch Trending ------------------
   useEffect(() => {
     api
       .get("/Trending")
       .then((res) => setTrending(res.data || []))
       .catch(() => {});
   }, []);
-
-  // ------------------ Fetch Topics ------------------
   useEffect(() => {
     api
       .get("/TopicHighlight/topics?top=10")
@@ -66,23 +61,23 @@ const MainContent = () => {
       <Navbar />
 
       {/* ANNOUNCEMENT SECTION */}
-      <div className="px-6 mt-3 mb-6">
+      <div className="px-3 mt-1">
         <AnnouncementSection />
       </div>
 
       {/* QUICK EVENTS */}
-      <div className="px-6 mt-5 mb-5">
+      <div className="px-8 mt-1 mb-2">
         <QuickEvents navigate={navigate} />
       </div>
 
       {/* SECTION TABS + CONTENT (Fresh, Trending, Topics) */}
-      <div className="px-6 mt-4 mb-2">
+      <div className="px-3 mt-2 mb-1">
         <SectionTabs
           activeSection={activeSection}
           onSectionChange={setActiveSection}
         />
 
-        <div className="mt-4">
+        <div className="mt-2">
           {activeSection === "freshPicks" && (
             <FreshPicksSection freshPicks={freshPicks} userId={userId} />
           )}

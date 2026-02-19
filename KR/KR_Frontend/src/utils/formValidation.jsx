@@ -20,7 +20,6 @@ export default class FormValidator {
     return errors;
   }
 
-  // Validate Knowledge Item Upload form
   static validateKnowledgeItem(form, files) {
     const errors = {};
 
@@ -35,8 +34,6 @@ export default class FormValidator {
 
     if (!form.description?.trim())
       errors.description = "Description is required";
-
-    // Validate languages if present
     if (form.languages && typeof form.languages === "string") {
       const langs = form.languages
         .split(",")
@@ -45,15 +42,11 @@ export default class FormValidator {
       if (langs.length === 0)
         errors.languages = "At least one language must be specified";
     }
-
-    // Optional: Ensure at least one file if File upload tab is active
     if (files?.length === 0)
       errors.files = "Please upload at least one file";
 
     return errors;
   }
-
-  // Utility to check if form is valid
   static isValid(errors) {
     return Object.keys(errors).length === 0;
   }

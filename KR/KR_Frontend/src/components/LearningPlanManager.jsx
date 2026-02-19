@@ -139,7 +139,6 @@ export default function LearningPlanManager() {
 
       toast.success("Evaluation completed successfully");
     } catch (err) {
-      console.error(err);
       toast.error("Failed to upload learning plan");
     } finally {
       setUploading(false);
@@ -150,7 +149,6 @@ export default function LearningPlanManager() {
       toast.error("Evaluation data missing");
       return;
     }
-    const missingFieldsBefore = pipelineReport.ruleBased.missingFields ?? [];
     setEnriching(true);
 
     try {
@@ -393,7 +391,6 @@ export default function LearningPlanManager() {
     ml?.metrics?.ML_Confidence != null
       ? Math.round(ml.metrics.ML_Confidence * 100)
       : 0;
-  // ===== QUALITY SIGNALS =====
   const qualitySignals = ml
     ? [
       { label: "Missing Fields", value: ml.metrics?.MissingFields ?? 0 },
@@ -404,11 +401,7 @@ export default function LearningPlanManager() {
     : [];
 
   const hasQualitySignals = qualitySignals.some(s => s.value > 0);
-
-  // ===== HYBRID DECISION LOGIC =====
   const hybridMetrics = pipelineReport?.hybrid?.metrics ?? {};
-
-  // ===== SCORE COMPOSITION (ONLY IF BOTH WEIGHTS EXIST) =====
   const hasWeights =
     hybridMetrics.RuleWeight != null &&
     hybridMetrics.MLWeight != null;
@@ -433,11 +426,10 @@ export default function LearningPlanManager() {
           </div>
         </div>
       )}
-      {/* ================= HEADER ================= */}
       <header >
         <div className="max-w-7xl mx-auto  px-6 py-1 flex justify-between items-center">
           <div>
-            <h1 className="text-xl font-semibold text-slate-900">
+            <h1 className="text-xl font-semibold text-slate-900 mt-2">
               Learning Platform Manager
             </h1>
             <p className="text-sm text-slate-500">
@@ -464,12 +456,9 @@ export default function LearningPlanManager() {
               <PlusIcon className="w-5 h-5" />
               Create Plan
             </button>
-            {/* ================= AI EVALUATION REPORT ================= */}
             {pipelineReport && (
               <div className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center">
                 <div className="bg-white max-w-6xl w-full rounded-2xl p-8 mt-1 overflow-y-auto max-h-[90vh] shadow-2xl">
-
-                  {/* ================= HEADER ================= */}
                   <div className="flex justify-between items-center mb-3 border-b pb-2">
                     <div className="flex items-center gap-3">
                       <ScaleIcon className="w-7 h-7 text-indigo-600" />
@@ -489,15 +478,12 @@ export default function LearningPlanManager() {
                       <XMarkIcon className="w-6 h-6 text-slate-500 hover:text-slate-800" />
                     </button>
                   </div>
-                  {/* ================= RULE-BASED VALIDATION ================= */}
                   <section className="mb-2">
                     <SectionTitle
                       icon={ScaleIcon}
                       title="Content & Structure Review"
                       subtitle="Checks whether all required sections are present and clearly defined"
                     />
-
-                    {/* ================= REVIEW SUMMARY STRIP ================= */}
                     <div className="mt-1 rounded-lg border border-slate-200 bg-slate-50 px-8 py-3 flex items-center justify-between">
                       <div>
                         <p className="text-sm text-slate-600">Overall Structure Quality</p>
@@ -515,8 +501,6 @@ export default function LearningPlanManager() {
                         }
                       />
                     </div>
-
-                    {/* ================= ISSUES OVERVIEW ================= */}
                     <div className="mt-2 grid grid-cols-2 gap-4">
                       <div className="rounded-lg border border-red-100 bg-red-50 px-5 py-2 mb-2">
                         <p className="text-sm font-semibold text-red-700 mb-2">
@@ -542,8 +526,6 @@ export default function LearningPlanManager() {
                         </p>
                       </div>
                     </div>
-
-                    {/* ================= DETAILED ISSUES ================= */}
                     {pipelineReport.ruleBased?.errors?.length > 0 && (
                       <div className="mt-8">
                         <h4 className="font-semibold text-slate-900 mb-2">
@@ -581,8 +563,6 @@ export default function LearningPlanManager() {
                         </ul>
                       </div>
                     )}
-
-                    {/* ================= MISSING SECTIONS ================= */}
                     {pipelineReport.ruleBased?.missingFields?.length > 0 && (
                       <div className="mt-4">
                         <h4 className="font-semibold text-slate-900 mb-2">
@@ -632,8 +612,6 @@ export default function LearningPlanManager() {
                       </div>
                     )}
                   </section>
-
-                  {/* ================= ML QUALITY ASSESSMENT ================= */}
                   {pipelineReport.ml && (
                     <section className="mb-6 border-t pt-3">
                       <h3 className="text-lg font-semibold text-slate-900 mb-1">
@@ -717,7 +695,6 @@ export default function LearningPlanManager() {
                       </div>
                     </section>
                   )}
-                  {/* ================= FINAL DECISION ================= */}
                   <section className="mb-6 border-t pt-3">
                     <h3 className="text-lg font-semibold text-slate-900 mb-4">
                       Final Evaluation Decision
@@ -793,7 +770,6 @@ export default function LearningPlanManager() {
 
                     </div>
                   </section>
-                  {/* ================= AI ENRICHMENT SUMMARY ================= */}
                   {pipelineReport.phase === "Enrichment" && enrichedJson && (
                     <section className="mb-10 border-t pt-8">
                       <SectionTitle
@@ -829,8 +805,6 @@ export default function LearningPlanManager() {
                         ))}
 
                       </div>
-
-                      {/* ===== OPTIONAL RAW JSON (COLLAPSIBLE) ===== */}
                       <details className="mt-6">
                         <summary className="text-xs cursor-pointer text-slate-500">
                           View raw enriched JSON
@@ -841,7 +815,6 @@ export default function LearningPlanManager() {
                       </details>
                     </section>
                   )}
-                  {/* ================= ACTIONS ================= */}
                   <div className="flex justify-end gap-4 mt-10">
                     {pipelineReport.phase === "Evaluation" && (
                       <button
@@ -882,8 +855,6 @@ export default function LearningPlanManager() {
         `}
             >
               <div className="flex justify-between items-start gap-6">
-
-                {/* LEFT */}
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold text-slate-900">
                     {plan.title}
@@ -894,8 +865,8 @@ export default function LearningPlanManager() {
                   </p>
 
                   <div className="mt-4 flex gap-4 text-xs text-slate-500">
-                    <span>📅 <strong>{plan.durationWeeks}</strong> weeks</span>
-                    <span>⏱️ <strong>{plan.totalDays}</strong> days</span>
+                    <span> <strong>{plan.durationWeeks}</strong> weeks</span>
+                    <span> <strong>{plan.totalDays}</strong> days</span>
                   </div>
                 </div>
 
@@ -972,7 +943,6 @@ export default function LearningPlanManager() {
                 className="border rounded-xl p-3 bg-white hover:shadow-md"
               >
                 <div className="flex justify-between mb-0 items-start gap-3">
-                  {/* WEEK INFO */}
                   <div className="flex-1">
                     <h4 className="text-lg font-semibold text-slate-900">
                       Week {week.weekNumber}: {week.title}
@@ -985,11 +955,9 @@ export default function LearningPlanManager() {
                     )}
 
                     <div className="mt-4 text-xs text-slate-500">
-                      📦 Modules: {week.modules?.length ?? 0}
+                       Modules: {week.modules?.length ?? 0}
                     </div>
                   </div>
-
-                  {/* ACTIONS */}
                   <div className="flex gap-3">
                     <button
                       onClick={() => manageWeek(week)}
@@ -1070,7 +1038,6 @@ export default function LearningPlanManager() {
                 </div>
 
                 <div className="flex gap-3">
-                  {/* VIEW */}
                   <button
                     title="View Module"
                     onClick={() => openModuleDetail(mod)}
@@ -1078,8 +1045,6 @@ export default function LearningPlanManager() {
                   >
                     <FolderOpenIcon className="w-5 h-5 text-slate-700" />
                   </button>
-
-                  {/* EDIT */}
                   <button
                     title="Edit Module"
                     onClick={() => {
@@ -1090,8 +1055,6 @@ export default function LearningPlanManager() {
                   >
                     <PencilIcon className="w-5 h-5 text-emerald-700" />
                   </button>
-
-                  {/* DELETE */}
                   <button
                     title="Delete Module"
                     onClick={() => deleteModule(mod.moduleId)}
@@ -1227,12 +1190,9 @@ export default function LearningPlanManager() {
             )}
         </section>
       )}
-      {/* ================= MODALS (UNCHANGED) ================= */}
       {showUploadModal && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center">
           <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl overflow-hidden">
-
-            {/* HEADER */}
             <div className="flex justify-between items-center px-6 py-4 border-b">
               <h2 className="text-lg font-semibold text-gray-900">
                 Upload Learning Plan
@@ -1241,25 +1201,17 @@ export default function LearningPlanManager() {
                 <XMarkIcon className="w-5 h-5 text-gray-500 hover:text-gray-700" />
               </button>
             </div>
-
-            {/* BODY */}
             <div className="px-6 py-4 space-y-4">
 
               <p className="text-sm text-gray-600">
                 Upload a <strong>.docx</strong> document.
                 Our AI will read it, structure it, and help you refine it later in the UI.
               </p>
-
-              {/* GUIDELINES (COMPACT + FRIENDLY) */}
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm space-y-3">
-
-                {/* TITLE */}
                 <div className="flex items-center gap-2 text-slate-800 font-medium">
                   <InformationCircleIcon className="w-5 h-5 text-slate-500" />
                   <span>Upload guidance</span>
                 </div>
-
-                {/* GUIDELINES */}
                 <ul className="space-y-2 text-slate-600">
                   <li className="flex gap-2">
                     <CheckCircleIcon className="w-4 h-4 text-slate-400 mt-0.5" />
@@ -1282,19 +1234,14 @@ export default function LearningPlanManager() {
                     </span>
                   </li>
                 </ul>
-
-                {/* STRUCTURE SUMMARY */}
                 <div className="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
                   <span className="font-medium text-slate-700">Recommended structure:</span>{" "}
                   Learning Plan → Weeks → Modules → Lessons / Resources / Assessments
                 </div>
-
-                {/* REASSURANCE */}
                 <p className="text-xs text-slate-500">
                   You can review and edit all generated content after upload.
                 </p>
               </div>
-              {/* FILE INPUT */}
               <input
                 type="file"
                 accept=".docx"
@@ -1302,8 +1249,6 @@ export default function LearningPlanManager() {
                 className="w-full border rounded-md p-2 text-sm"
               />
             </div>
-
-            {/* FOOTER */}
             <div className="px-6 py-4 border-t">
               <button
                 onClick={uploadLearningPlan}

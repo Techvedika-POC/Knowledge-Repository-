@@ -21,7 +21,6 @@ namespace Knowledge_Repository.Application.Dtos
         public bool IsCompleted { get; set; } = false;
         public bool IsUnlocked { get; set; } = false;
 
-        // 🔑 REQUIRED – fixes refresh, buttons, unlocks
         public AssessmentResultDto? LatestResult { get; set; }
     }
 
@@ -40,7 +39,6 @@ namespace Knowledge_Repository.Application.Dtos
         public bool IsUnlocked { get; set; } = false;
         public bool IsCompleted { get; set; } = false;
 
-        // ✅ NEW – detailed lesson progress for this module
         public decimal LessonProgressPercent { get; set; } = 0m;
         public int CompletedLessons { get; set; }
         public int TotalLessons { get; set; }

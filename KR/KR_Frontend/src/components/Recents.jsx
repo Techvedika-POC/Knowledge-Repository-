@@ -36,7 +36,6 @@ export default function Recents() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
-      {/* Page Header */}
       <div className="mb-6 text-center">
         <h1 className="text-3xl font-bold text-gray-800 mb-1">
           Recent Knowledge Articles
@@ -45,25 +44,18 @@ export default function Recents() {
           Check out the latest knowledge items added to the platform.
         </p>
       </div>
-
-      {/* Container Card */}
       <div className="bg-white shadow-md rounded-xl p-6 max-w-7xl mx-auto">
-        {/* Loading */}
         {loading && (
           <p className="text-center text-gray-500 py-10 animate-pulse">
             Loading recent items...
           </p>
         )}
-        {/* Error */}
         {error && <p className="text-center text-red-500 py-10">{error}</p>}
-
-        {/* Empty State */}
         {!loading && !error && recents.length === 0 && (
           <p className="text-center text-gray-400 py-10">
             No recent items available.
           </p>
         )}
-        {/* Knowledge Cards */}
         {!loading && !error && recents.length > 0 && (
           <KnowledgeCardsDisplay
             items={recents}
@@ -72,8 +64,6 @@ export default function Recents() {
           />
         )}
       </div>
-
-      {/* Preview Modal */}
       {selectedItem && (
         <PreviewModal
           item={selectedItem}

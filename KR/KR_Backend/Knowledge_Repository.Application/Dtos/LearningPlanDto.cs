@@ -12,8 +12,6 @@ public class LearningPlanDto
     public string Prerequisites { get; set; }
     public string TechnicalRequirements { get; set; }
     public string SelfAssessmentChecklist { get; set; }
-
-    // ✅ MUST BE NULLABLE (matches entity)
     public DateTime? CreatedOn { get; set; }
     public DateTime? UpdatedOn { get; set; }
 

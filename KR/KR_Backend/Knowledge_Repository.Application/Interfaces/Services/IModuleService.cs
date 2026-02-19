@@ -9,7 +9,10 @@ namespace Knowledge_Repository.Application.Interfaces.Services
     public interface IModuleService
     {
         Task<ModuleDto> CreateModuleAsync(Guid weekId, ModuleDto moduleDto);
-        Task<IEnumerable<ModuleDto>> GetModulesByWeekAsync(Guid weekId);
+        Task<IEnumerable<ModuleDto>> GetModulesByWeekAsync(
+     Guid weekId,
+     Guid userId);
+
         Task<ModuleDetailDto?> GetModuleDetailAsync(Guid moduleId, Guid userId);
         Task<ModuleProgressDto?> GetModuleProgressAsync(Guid moduleId, Guid userId);
         Task UpdateModuleAsync(Guid moduleId, ModuleDto moduleDto);

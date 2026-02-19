@@ -1,5 +1,3 @@
-import React from "react";
-
 export default function SectionTabs({ activeSection, onSectionChange }) {
   const sections = [
     {
@@ -20,7 +18,7 @@ export default function SectionTabs({ activeSection, onSectionChange }) {
   ];
 
   return (
-    <div className="flex gap-4 overflow-x-auto mb-4">
+    <div className="flex gap-4 px-10 overflow-x-auto mb-1 mt-2">
       {sections.map((section) => (
         <button
           key={section.key}

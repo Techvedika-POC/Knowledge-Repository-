@@ -14,5 +14,6 @@ namespace Knowledge_Repository.Application.Dtos
         public string Overview { get; set; } = string.Empty;
         public string Prerequisites { get; set; } = string.Empty;
         public int? DurationMinutes { get; set; }
+        public bool IsCompleted { get; set; }
     }
 }

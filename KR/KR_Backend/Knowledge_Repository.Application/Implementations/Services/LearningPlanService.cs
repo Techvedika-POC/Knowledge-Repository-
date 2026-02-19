@@ -18,7 +18,8 @@ namespace Knowledge_Repository.Application.Implementations.Services
         private readonly ILessonRepository _lessonRepo;
         private readonly IResourceRepository _resourceRepo;
         private readonly IAssessmentRepository _assessmentRepo;
-        private readonly IUserProgressRepository _userProgressRepo;
+        private readonly IUserModuleProgressRepository _moduleProgressRepo;
+
 
         public LearningPlanService(
             ILearningPlanRepository planRepo,
@@ -27,7 +28,8 @@ namespace Knowledge_Repository.Application.Implementations.Services
             ILessonRepository lessonRepo,
             IResourceRepository resourceRepo,
             IAssessmentRepository assessmentRepo,
-            IUserProgressRepository userProgressRepo)
+            IUserModuleProgressRepository moduleProgressRepo
+)
         {
             _planRepo = planRepo ?? throw new ArgumentNullException(nameof(planRepo));
             _weekRepo = weekRepo ?? throw new ArgumentNullException(nameof(weekRepo));
@@ -35,7 +37,8 @@ namespace Knowledge_Repository.Application.Implementations.Services
             _lessonRepo = lessonRepo ?? throw new ArgumentNullException(nameof(lessonRepo));
             _resourceRepo = resourceRepo ?? throw new ArgumentNullException(nameof(resourceRepo));
             _assessmentRepo = assessmentRepo ?? throw new ArgumentNullException(nameof(assessmentRepo));
-            _userProgressRepo = userProgressRepo ?? throw new ArgumentNullException(nameof(userProgressRepo));
+            _moduleProgressRepo = moduleProgressRepo
+ ?? throw new ArgumentNullException(nameof(moduleProgressRepo));
         }
 
 
@@ -169,6 +172,7 @@ namespace Knowledge_Repository.Application.Implementations.Services
             if (userId.HasValue)
             {
                 var weekList = planDto.Weeks.ToList();
+
                 foreach (var week in weekList)
                 {
                     bool anyUnlocked = false;
@@ -176,12 +180,21 @@ namespace Knowledge_Repository.Application.Implementations.Services
 
                     foreach (var module in week.Modules ?? new List<ModuleDetailDto>())
                     {
-                        var progress = await _userProgressRepo.GetModuleProgressAsync(userId.Value, planId, module.ModuleId);
+                        var progress = await _moduleProgressRepo.GetAsync(
+                            userId.Value,
+                            module.ModuleId);
+
                         if (progress != null)
                         {
                             anyUnlocked = true;
-                            if (!string.Equals(progress.Status, "Completed", StringComparison.OrdinalIgnoreCase))
+
+                            if (!string.Equals(
+                                    progress.Status,
+                                    "Completed",
+                                    StringComparison.OrdinalIgnoreCase))
+                            {
                                 allCompleted = false;
+                            }
                         }
                         else
                         {
@@ -195,6 +208,7 @@ namespace Knowledge_Repository.Application.Implementations.Services
 
                 planDto.Weeks = weekList;
             }
+
 
             return planDto;
         }

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FileText, Tag, Calendar, User, Layers, Globe, Type } from "lucide-react";
+import { BookOpen, Tag, Calendar, User, Layers, Globe, Code2, X } from "lucide-react";
 
 export default function PreviewModal({ item, onClose }) {
   const [showFullDesc, setShowFullDesc] = useState(false);
@@ -8,17 +8,14 @@ export default function PreviewModal({ item, onClose }) {
   const parseDbJsonArray = (str) => {
     if (!str) return [];
     try {
-
       let cleaned = str.trim();
       if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
         cleaned = cleaned.slice(1, -1);
       }
-
       cleaned = cleaned.replace(/""/g, '"');
       const parsed = JSON.parse(cleaned);
       return Array.isArray(parsed) ? parsed.filter(Boolean) : [];
-    } catch (err) {
-      console.error("Error parsing DB array", err, str);
+    } catch {
       return [];
     }
   };
@@ -31,8 +28,7 @@ export default function PreviewModal({ item, onClose }) {
       cleaned = cleaned.replace(/""/g, '"');
       const parsed = JSON.parse(cleaned);
       return typeof parsed === "object" && parsed !== null ? parsed : {};
-    } catch (err) {
-      console.error("Error parsing DB object", err, str);
+    } catch {
       return {};
     }
   };
@@ -40,106 +36,121 @@ export default function PreviewModal({ item, onClose }) {
   const languages = parseDbJsonArray(item.language);
   const frameworks = parseDbJsonArray(item.framework);
   const metadataObj = parseDbJsonObject(item.metadata);
-  const description = item.description || item.Description || "No description available.";
+  const description = item.description || "No description available.";
 
   const details = [
-    { label: "Title", value: item.title || item.Title || "Untitled", icon: <Type className="w-4 h-4 text-purple-500" /> },
-    { label: "Owner", value: item.ownerName || "Unknown", icon: <User className="w-4 h-4 text-purple-500" /> },
-    { label: "Created On", value: item.createdOn ? new Date(item.createdOn).toLocaleString() : "Unknown", icon: <Calendar className="w-4 h-4 text-indigo-500" /> },
-    { label: "Category", value: item.categoryName || "N/A", icon: <Layers className="w-4 h-4 text-pink-500" /> },
-    { label: "Domain", value: item.domainName || "N/A", icon: <Globe className="w-4 h-4 text-green-500" /> },
-    { label: "Engagement Score", value: item.engagementScore ?? "0", icon: <Tag className="w-4 h-4 text-yellow-500" /> },
-    { label: "Languages", value: languages.length ? languages.join(", ") : "N/A", icon: <FileText className="w-4 h-4 text-indigo-500" /> },
-    { label: "Frameworks", value: frameworks.length ? frameworks.join(", ") : "N/A", icon: <Layers className="w-4 h-4 text-purple-500" /> },
+    { label: "Owner", value: item.ownerName || "Unknown", icon: <User size={14} /> },
+    { label: "Created", value: item.createdOn ? new Date(item.createdOn).toLocaleString() : "N/A", icon: <Calendar size={14} /> },
+    { label: "Category", value: item.categoryName || "N/A", icon: <Layers size={14} /> },
+    { label: "Domain", value: item.domainName || "N/A", icon: <Globe size={14} /> },
+    { label: "Languages", value: languages.join(", ") || "N/A", icon: <Code2 size={14} /> },
+    { label: "Frameworks", value: frameworks.join(", ") || "N/A", icon: <Layers size={14} /> },
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm animate-fadeIn p-4">
-      <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-4xl flex flex-col overflow-hidden max-h-[90vh]">
+    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+      <div className="bg-gray-50 w-full max-w-5xl rounded-xl shadow-2xl overflow-hidden">
 
-        {/* Header */}
-        <div className="flex justify-between items-center px-6 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md sticky top-0 z-10">
-          <h2 className="text-2xl font-bold text-white">Knowledge Article Preview</h2>
-          <button onClick={onClose} className="text-white text-2xl font-bold hover:text-gray-300 transition">&times;</button>
-        </div>
-
-        {/* Content */}
-        <div className="p-6 overflow-y-auto space-y-10">
-{item.status?.toLowerCase() === "rejected" && item.feedback && (
-  <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-    <p className="text-sm text-red-700">
-      <strong>Reviewer Feedback:</strong><br />
-      {item.feedback}
-    </p>
-  </div>
-)}
-
-          {/* Description */}
-          <div>
-            <div className="flex items-center gap-3 mb-3">
-              <FileText className="w-5 h-5 text-indigo-600" />
-              <h3 className="text-lg font-semibold text-indigo-700">Description</h3>
+        <div className="flex items-center justify-between px-6 py-2 border-b bg-white">
+          <div className="flex items-center gap-3">
+            <div className="p-1 rounded-md bg-indigo-50 text-indigo-600">
+              <BookOpen size={18} />
             </div>
-            <p className="text-gray-700 text-sm mb-2 break-words">
-              {showFullDesc ? description : `${description.slice(0, 150)}${description.length > 150 ? "..." : ""}`}
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">
+                {item.title || "Untitled Knowledge Article"}
+              </h2>
+              <p className="text-xs text-gray-500">
+                Knowledge Preview
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-md hover:bg-gray-100"
+          >
+            <X size={18} />
+          </button>
+        </div>
+        <div className="p-5 space-y-2 overflow-y-auto max-h-[75vh]">
+          {item.feedback && (
+            <section className="mb-4 rounded-lg border border-red-200 bg-red-50 p-4">
+              <h3 className="text-sm font-semibold text-red-700 mb-1">
+                Reviewer Feedback
+              </h3>
+              <p className="text-sm text-red-800 leading-relaxed">
+                {item.feedback}
+              </p>
+            </section>
+          )}
+          <section className="bg-white rounded-lg border p-2">
+            <h3 className="text-xs font-semibold text-gray-500 uppercase mb-1">
+              Description
+            </h3>
+            <p className="text-sm text-gray-700 leading-relaxed">
+              {showFullDesc ? description : description.slice(0, 300)}
+              {description.length > 300 && !showFullDesc && "…"}
             </p>
-            {description.length > 150 && (
+            {description.length > 300 && (
               <button
-                className="text-blue-600 font-medium text-sm hover:underline"
                 onClick={() => setShowFullDesc(!showFullDesc)}
+                className="mt-1 text-xs text-indigo-600 hover:underline"
               >
-                {showFullDesc ? "View Less" : "View More"}
+                {showFullDesc ? "Show less" : "Show more"}
               </button>
             )}
-          </div>
+          </section>
 
-          {/* Details Grid */}
-          <div>
-            <div className="flex items-center gap-3 mb-3">
-              <Layers className="w-5 h-5 text-indigo-600" />
-              <h3 className="text-lg font-semibold text-indigo-700">Details</h3>
-            </div>
-            <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
+          <section className="bg-white rounded-lg border p-4">
+            <h3 className="text-xs font-semibold text-gray-500 uppercase mb-3">
+              Details
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {details.map((d, idx) => (
-                <div key={idx} className="flex flex-col gap-2 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md p-4 transition transform hover:scale-[1.02]">
-                  <div className="flex items-center gap-2">
-                    {d.icon}
-                    <span className="text-xs font-semibold text-gray-500 uppercase">{d.label}</span>
+                <div
+                  key={idx}
+                  className="flex items-start gap-2 p-2 rounded-md bg-gray-50"
+                >
+                  <div className="text-indigo-600 mt-0.5">{d.icon}</div>
+                  <div>
+                    <p className="text-[11px] text-gray-500">{d.label}</p>
+                    <p className="text-sm font-medium text-gray-800 leading-tight">
+                      {d.value}
+                    </p>
                   </div>
-                  <span className="text-sm font-bold text-gray-800 break-words">{d.value}</span>
                 </div>
               ))}
             </div>
-          </div>
+          </section>
 
-          {/* Tags */}
           {item.tags?.length > 0 && (
-            <div>
-              <div className="flex items-center gap-3 mb-3">
-                <Tag className="w-5 h-5 text-pink-600" />
-                <h3 className="text-lg font-semibold text-pink-700">Tags</h3>
-              </div>
-              <div className="flex flex-wrap gap-2">
+            <section className="bg-white rounded-lg border p-4">
+              <h3 className="text-xs font-semibold text-gray-500 uppercase mb-2">
+                Tags
+              </h3>
+              <div className="flex flex-wrap gap-1.5">
                 {item.tags.map((tag, idx) => (
-                  <span key={idx} className="px-4 py-1 text-sm font-medium rounded-full bg-gradient-to-r from-pink-50 to-purple-50 text-purple-800 shadow-sm border border-purple-100">{tag}</span>
+                  <span
+                    key={idx}
+                    className="px-2 py-0.5 text-[11px] rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100"
+                  >
+                    {tag}
+                  </span>
                 ))}
               </div>
-            </div>
+            </section>
           )}
 
-          {/* Metadata */}
           {Object.keys(metadataObj).length > 0 && (
-            <div>
-              <div className="flex items-center gap-3 mb-3">
-                <FileText className="w-5 h-5 text-green-600" />
-                <h3 className="text-lg font-semibold text-green-700">Metadata</h3>
-              </div>
-              <pre className="p-4 bg-gray-50 rounded-xl shadow-inner text-sm text-gray-700 overflow-x-auto">
+            <section className="bg-white rounded-lg border p-4">
+              <h3 className="text-xs font-semibold text-gray-500 uppercase mb-2">
+                Metadata
+              </h3>
+              <pre className="text-[11px] bg-gray-50 p-3 rounded-md overflow-x-auto text-gray-700">
                 {JSON.stringify(metadataObj, null, 2)}
               </pre>
-            </div>
+            </section>
           )}
-
         </div>
       </div>
     </div>

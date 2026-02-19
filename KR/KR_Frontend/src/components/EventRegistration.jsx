@@ -194,15 +194,11 @@ export default function EventRegistration() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-100 px-3 py-6">
       <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl p-6 border border-blue-100">
-        {/* Header */}
         <div className="text-center mb-6">
           <h1 className="text-2xl font-bold text-blue-700 mb-1">Team Registration</h1>
           <p className="text-gray-600 text-sm">Register your team to participate in the events.</p>
         </div>
-
-        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Event Dropdown */}
           <div>
             <label className="block text-sm font-medium text-gray-800 mb-1">
               Select Event <span className="text-red-500">*</span>
@@ -230,8 +226,6 @@ export default function EventRegistration() {
               ) : null}
             </div>
           </div>
-
-          {/* TeamName */}
           <div>
             <label className="block text-sm font-medium text-gray-800 mb-1">
               Team Name <span className="text-red-500">*</span>
@@ -245,7 +239,6 @@ export default function EventRegistration() {
               required
             />
           </div>
-          {/* Team Members */}
           <div>
             <label className="block text-sm font-medium text-gray-800 mb-1">
               Team Members’ Emails <span className="text-red-500">*</span>
@@ -262,8 +255,6 @@ export default function EventRegistration() {
               Separate emails with commas. The logged-in user will be added automatically.
             </p>
           </div>
-
-          {/* Submit Button */}
           <button
             type="submit"
             disabled={loading || checkingRegistration || isRegistered}
@@ -272,8 +263,6 @@ export default function EventRegistration() {
             {loading ? "Registering..." : isRegistered ? "Already Registered" : "Register Team"}
           </button>
         </form>
-
-        {/* Footer Note */}
         <div className="text-center mt-6 text-xs text-gray-500">
           Once registered, you can submit your project idea.
         </div>

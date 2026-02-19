@@ -18,6 +18,9 @@ public class ModuleDto
 
     public bool IsAiGenerated { get; set; } = false;
     public string Metadata { get; set; } = string.Empty;
+    public bool IsUnlocked { get; set; } = false;
+    public bool IsCompleted { get; set; } = false;
+    public decimal LessonProgressPercent { get; set; } = 0;
 }
 
 

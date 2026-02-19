@@ -31,8 +31,6 @@ export default function MyContributions() {
     rejected: 0,
   });
   const searchTypes = ["Title", "Domain", "Category", "Status", "Date"];
-
-  // ----------------- FETCH METRICS -----------------
   const fetchMetrics = async () => {
     try {
       const token = localStorage.getItem("jwtToken");
@@ -60,7 +58,6 @@ export default function MyContributions() {
     }
   };
 
-  // ----------------- FETCH PAGED CONTRIBUTIONS -----------------
   const fetchContributions = async (filters = {}) => {
     const token = localStorage.getItem("jwtToken");
     if (!token) {
@@ -144,6 +141,22 @@ export default function MyContributions() {
   const openCardModal = (item) => {
     setSelectedItem(item);
     setModalOpen(true);
+  };
+  const openFullPreview = async (itemId, feedback) => {
+    try {
+      const token = localStorage.getItem("jwtToken");
+
+      const res = await api.get(`/KnowledgeItem/${itemId}/details`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setFullPreviewItem({
+        ...res.data,
+        feedback,
+      });
+    } catch (err) {
+      console.error("Failed to load full preview", err.response?.data || err);
+    }
   };
 
   const closeCardModal = () => {
@@ -244,52 +257,70 @@ export default function MyContributions() {
           </thead>
           <tbody>
             {contributions.map((c) => (
-              <tr key={c.itemId} className="border-t transition"
-                onMouseEnter={() => setHoveredItem(c)} onMouseLeave={() => setHoveredItem(null)}>
+              <tr key={c.itemId} className="border-t transition">
                 <td className="px-4 py-2">{c.title}</td>
                 <td className="px-4 py-2">{c.category}</td>
                 <td className="px-4 py-2">{c.date ? new Date(c.date).toLocaleDateString() : "-"}</td>
                 <td className="px-4 py-2 font-medium">
-                  {c.status}
-
-                  {c.status?.toLowerCase() === "rejected" && c.feedback && (
-                    <div className="mt-1 text-xs text-red-600">
-                      <strong>Feedback:</strong> {c.feedback}
-                    </div>
-                  )}
+                  <span
+                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold
+      ${c.status === "Rejected"
+                        ? "bg-red-50 text-red-700 border border-red-200"
+                        : c.status === "Approved"
+                          ? "bg-green-50 text-green-700 border border-green-200"
+                          : "bg-yellow-50 text-yellow-700 border border-yellow-200"}
+    `}
+                  >
+                    {c.status}
+                  </span>
                 </td>
-
                 <td className="px-4 py-2 flex gap-3 items-center">
-                  {/* Preview */}
                   <button
-                    onClick={() => setFullPreviewItem(c)}
-                    className="p-2 rounded-md hover:bg-[#fde68a] transition"
+                    onClick={() => openFullPreview(c.itemId)}
+                    className="p-2 rounded-md hover:bg-[#fde68a]"
                     title="Preview"
-                    aria-label={`Preview ${c.title}`}
                   >
                     <Eye size={18} />
                   </button>
-
-                  {/* Edit → opens Upload page WITH PREFILL */}
                   <button
                     onClick={() =>
                       navigate("/app/knowledge-article-upload", {
                         state: { itemId: c.itemId },
                       })
                     }
-                    className="p-2 rounded-md   hover:opacity-90 transition"
+                    className="p-2 rounded-md hover:opacity-90 transition"
                     title="Edit"
-                    aria-label={`Edit ${c.title}`}
                   >
                     <Pencil size={18} />
                   </button>
+                  {c.status === "Rejected" && c.feedback && (
+                    <button
+                      onClick={() => openFullPreview(c.itemId, c.feedback)}
+                      className="p-2 rounded-md hover:bg-red-50 text-red-600"
+                      title="View reviewer feedback"
+                      aria-label="View reviewer feedback"
+                    >
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                    </button>
+                  )}
+
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-
-        {/* PAGINATION */}
         <div className="flex justify-end items-center gap-3 p-3 mt-3">
           <button onClick={handlePrevPage} disabled={pageNumber === 1}
             className="px-4 py-2 bg-[#fef3c7] rounded-[8px] hover:bg-[#e5e7eb] text-center disabled:opacity-50 flex items-center gap-1">
@@ -305,7 +336,6 @@ export default function MyContributions() {
         </div>
       </div>
 
-      {/* TOOLTIP */}
       {hoveredItem && (
         <div className="fixed bottom-16 left-1/2 transform -translate-x-1/2 w-80 bg-white border border-gray-200 shadow rounded p-3 text-sm z-50">
           <h3 className="font-semibold text-[#1f2937]">{hoveredItem.title}</h3>
@@ -348,8 +378,6 @@ export default function MyContributions() {
           </div>
         </div>
       )}
-
-      {/* FULL PREVIEW MODAL (uses PreviewModal component) */}
       {fullPreviewItem && (
         <PreviewModal
           item={fullPreviewItem}

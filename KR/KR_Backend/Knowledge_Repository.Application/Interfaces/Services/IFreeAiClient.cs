@@ -1,4 +1,4 @@
-﻿// Application/Interfaces/Services/IFreeAiClient.cs
+﻿
 using System.Threading.Tasks;
 
 namespace Knowledge_Repository.Application.Interfaces.Services

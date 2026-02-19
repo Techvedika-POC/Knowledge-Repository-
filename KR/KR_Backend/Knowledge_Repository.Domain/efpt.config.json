@@ -20,6 +20,14 @@
          "ObjectType": 0
       },
       {
+         "Name": "public.ai_conversations",
+         "ObjectType": 0
+      },
+      {
+         "Name": "public.ai_insights",
+         "ObjectType": 0
+      },
+      {
          "Name": "public.announcements",
          "ObjectType": 0
       },
@@ -48,6 +56,18 @@
          "ObjectType": 0
       },
       {
+         "Name": "public.challenge_problems",
+         "ObjectType": 0
+      },
+      {
+         "Name": "public.code_submissions",
+         "ObjectType": 0
+      },
+      {
+         "Name": "public.coding_challenges",
+         "ObjectType": 0
+      },
+      {
          "Name": "public.departments",
          "ObjectType": 0
       },
@@ -57,6 +77,10 @@
       },
       {
          "Name": "public.engagements",
+         "ObjectType": 0
+      },
+      {
+         "Name": "public.evaluation_criteria",
          "ObjectType": 0
       },
       {
@@ -72,11 +96,23 @@
          "ObjectType": 0
       },
       {
+         "Name": "public.idea_submissions",
+         "ObjectType": 0
+      },
+      {
+         "Name": "public.interview_sessions",
+         "ObjectType": 0
+      },
+      {
          "Name": "public.JuryChatMessage",
          "ObjectType": 0
       },
       {
          "Name": "public.JuryFinalScore",
+         "ObjectType": 0
+      },
+      {
+         "Name": "public.JuryScoreDetails",
          "ObjectType": 0
       },
       {
@@ -104,6 +140,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "public.learning_events",
+         "ObjectType": 0
+      },
+      {
          "Name": "public.learning_plans",
          "ObjectType": 0
       },
@@ -128,11 +168,19 @@
          "ObjectType": 0
       },
       {
+         "Name": "public.problem_test_cases",
+         "ObjectType": 0
+      },
+      {
          "Name": "public.resources",
          "ObjectType": 0
       },
       {
          "Name": "public.roles",
+         "ObjectType": 0
+      },
+      {
+         "Name": "public.skills",
          "ObjectType": 0
       },
       {
@@ -145,6 +193,10 @@
       },
       {
          "Name": "public.team_members",
+         "ObjectType": 0
+      },
+      {
+         "Name": "public.team_tasks",
          "ObjectType": 0
       },
       {
@@ -164,11 +216,27 @@
          "ObjectType": 0
       },
       {
+         "Name": "public.user_assessment_progress",
+         "ObjectType": 0
+      },
+      {
+         "Name": "public.user_lesson_progress",
+         "ObjectType": 0
+      },
+      {
          "Name": "public.user_module_progress",
          "ObjectType": 0
       },
       {
+         "Name": "public.user_plan_enrollment",
+         "ObjectType": 0
+      },
+      {
          "Name": "public.user_roles",
+         "ObjectType": 0
+      },
+      {
+         "Name": "public.user_skills",
          "ObjectType": 0
       },
       {

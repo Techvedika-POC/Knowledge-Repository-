@@ -18,7 +18,6 @@ namespace Knowledge_Repository.Api.Controllers
             _service = service;
         }
 
-        // 1. Get all learning plans (for dropdown)
         [HttpGet("plans")]
         public async Task<IActionResult> GetAllPlans()
         {
@@ -47,8 +46,6 @@ namespace Knowledge_Repository.Api.Controllers
             return Ok(new { message = "Plan assigned successfully" });
         }
 
-
-        // 3. Track plan progress
         [HttpGet("plan/{planId}/progress")]
         public async Task<IActionResult> GetPlanProgress(Guid planId)
         {

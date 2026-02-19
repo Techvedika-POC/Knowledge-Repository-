@@ -21,8 +21,6 @@ namespace Knowledge_Repository.Application.Dtos
         public List<string> Prerequisites { get; set; }
 
         public string Metadata { get; set; }
-
-        // ✅ ADD THESE
         public List<TrainingResourceDto> Resources { get; set; } = new();
         public List<TrainingAssessmentDto> Assessments { get; set; } = new();
     }

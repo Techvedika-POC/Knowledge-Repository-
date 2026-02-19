@@ -39,7 +39,5 @@ public partial class Module
 
     public virtual ICollection<Resource> Resources { get; set; } = new List<Resource>();
 
-    public virtual ICollection<UserModuleProgress> UserModuleProgresses { get; set; } = new List<UserModuleProgress>();
-
     public virtual Week Week { get; set; }
 }

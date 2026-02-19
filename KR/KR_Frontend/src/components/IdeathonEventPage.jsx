@@ -353,7 +353,6 @@ export default function IdeathonAdminDashboard() {
 
             <p className="mb-6 text-gray-700 bg-white p-3 rounded shadow-sm">{eventData.description}</p>
           </div>
-          {/* Tabs */}
           <div className="flex gap-4 mb-6 border-b">
             {["teams", "jury", "presentations", "audit"].map((tab) => (
               <button
@@ -370,8 +369,6 @@ export default function IdeathonAdminDashboard() {
               </button>
             ))}
           </div>
-
-          {/* TEAMS */}
           {activeTab === "teams" && (
             <div className="mb-8">
               <div className="flex items-center gap-4 mb-4">
@@ -502,8 +499,6 @@ export default function IdeathonAdminDashboard() {
               </div>
             </div>
           )}
-
-          {/* JURY */}
           {activeTab === "jury" && (
             <div className="max-w-2xl mb-8">
               <div className="flex gap-3 items-center mb-4">
@@ -551,8 +546,6 @@ export default function IdeathonAdminDashboard() {
               </div>
             </div>
           )}
-
-          {/* PRESENTATIONS */}
           {activeTab === "presentations" && (
             <div className="mb-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -592,8 +585,6 @@ export default function IdeathonAdminDashboard() {
               </div>
             </div>
           )}
-
-          {/* AUDIT */}
           {activeTab === "audit" && (
             <div className="mt-6 border-t pt-4">
               <h3 className="font-semibold mb-2">Audit Log</h3>

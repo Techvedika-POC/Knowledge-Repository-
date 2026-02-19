@@ -33,9 +33,6 @@ namespace KR_Backend.Controllers
             _trainingPlanRepository = trainingPlanRepository;
         }
 
-        // --------------------------------------------------
-        // READ SAVED TRAINING PLAN
-        // --------------------------------------------------
         [HttpGet("{planId}")]
         public async Task<IActionResult> GetTrainingPlan(Guid planId)
         {
@@ -162,9 +159,6 @@ namespace KR_Backend.Controllers
 
             try
             {
-                // -------------------------------------------------
-                // 1️⃣ WRITE FILE TO DISK (CLOSE STREAM BEFORE PARSE)
-                // -------------------------------------------------
                 await using (var stream = new FileStream(
                     tempPath,
                     FileMode.Create,
@@ -172,16 +166,8 @@ namespace KR_Backend.Controllers
                     FileShare.None))
                 {
                     await file.CopyToAsync(stream);
-                } // 🔥 STREAM CLOSED HERE — CRITICAL
-
-                // -------------------------------------------------
-                // 2️⃣ EXECUTE PIPELINE (SAFE TO READ FILE)
-                // -------------------------------------------------
+                }
                 var result = await _pipeline.ExecuteAsync(tempPath);
-
-                // -------------------------------------------------
-                // 3️⃣ BUILD RESPONSE DTO (UI-FRIENDLY)
-                // -------------------------------------------------
                 var response = new EvaluationReportDto
                 {
                     Phase = "Evaluation",
@@ -237,31 +223,20 @@ namespace KR_Backend.Controllers
                     }
                 };
 
-                // -------------------------------------------------
-                // 4️⃣ DEBUG LOGGING (SAFE & OPTIONAL)
-                // -------------------------------------------------
-                Console.WriteLine("=========== PIPELINE RESULT (INTERNAL) ===========");
+                Console.WriteLine("=========== PIPELINE RESULT===========");
                 Console.WriteLine(JsonSerializer.Serialize(
                     result,
                     new JsonSerializerOptions { WriteIndented = true }));
-                Console.WriteLine("=================================================");
 
-                Console.WriteLine("=========== API RESPONSE (DTO SENT TO UI) =========");
+                Console.WriteLine("=========== API RESPONSE  =========");
                 Console.WriteLine(JsonSerializer.Serialize(
                     response,
                     new JsonSerializerOptions { WriteIndented = true }));
-                Console.WriteLine("=================================================");
 
-                // -------------------------------------------------
-                // 5️⃣ RETURN RESPONSE
-                // -------------------------------------------------
                 return Ok(response);
             }
             finally
             {
-                // -------------------------------------------------
-                // 6️⃣ CLEAN UP TEMP FILE
-                // -------------------------------------------------
                 if (System.IO.File.Exists(tempPath))
                     System.IO.File.Delete(tempPath);
             }
@@ -296,7 +271,7 @@ namespace KR_Backend.Controllers
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex); // 🔥 IMPORTANT
+                Console.WriteLine(ex); 
                 return StatusCode(500, new
                 {
                     Success = false,
@@ -308,9 +283,6 @@ namespace KR_Backend.Controllers
         }
 
 
-        // ==================================================
-        // FINAL STEP — USER CONFIRMS & PERSISTS
-        // ==================================================
         private static void NormalizeLessonArrays(JObject root)
         {
             var lessons = root
@@ -337,8 +309,6 @@ namespace KR_Backend.Controllers
                 obj[propertyName] = new JArray();
                 return;
             }
-
-            // Ensure array contains only objects (DTO-safe)
             obj[propertyName] = new JArray(token.OfType<JObject>());
         }
 
@@ -348,7 +318,6 @@ namespace KR_Backend.Controllers
         public async Task<IActionResult> PersistTrainingPlan(
             [FromBody] JsonElement body)
         {
-            // 🔥 Accept JSON object OR string safely
             string finalLlmJson =
                 body.ValueKind == JsonValueKind.String
                     ? body.GetString()!
@@ -363,9 +332,6 @@ namespace KR_Backend.Controllers
                 });
             }
 
-            // =====================================================
-            // 🔒 FINAL NORMALIZATION STEP (CRITICAL FIX)
-            // =====================================================
             JObject root;
             try
             {

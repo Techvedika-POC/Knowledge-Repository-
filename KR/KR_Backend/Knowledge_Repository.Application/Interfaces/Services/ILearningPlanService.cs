@@ -12,8 +12,6 @@ public interface ILearningPlanService
     Task<LearningPlanDto> GenerateLearningPlanAsync(string title, bool useAI);
 
     Task<LearningPlanFullDto> CreateFullLearningPlanAsync(LearningPlanFullDto dto);
-
-    // CRUD
     Task<bool> UpdateLearningPlanAsync(LearningPlanFullDto dto);
     Task<bool> DeleteLearningPlanAsync(Guid planId);
 

@@ -37,12 +37,9 @@ export default function LeaderboardSection() {
 
   return (
     <section className="w-full">
-      {/* Centered Heading */}
       <h3 className="text-2xl font-bold mb-8 text-blue-900 text-center tracking-wide">
         Leaderboard
       </h3>
-
-      {/* Premium Circular Layout */}
       <div className="flex justify-center gap-12 flex-wrap">
         {items.map((it, index) => {
           const imgSrc =
@@ -57,14 +54,10 @@ export default function LeaderboardSection() {
                 else if (it.userId) navigate(`/app/profile/${it.userId}`);
               }}
             >
-              {/* Circle Wrapper */}
               <div className="relative">
-                {/* Rank Badge */}
                 <div className="absolute -top-2 -right-2 bg-indigo-600 text-white text-xs font-semibold rounded-full px-2 py-1 shadow-md">
                   #{index + 1}
                 </div>
-
-                {/* Circle Image */}
                 <div className="w-36 h-36 rounded-full bg-white shadow-xl border-4 border-indigo-200 overflow-hidden flex items-center justify-center group-hover:border-indigo-500 transition-all">
                   <img
                     src={imgSrc}
@@ -76,8 +69,6 @@ export default function LeaderboardSection() {
                   />
                 </div>
               </div>
-
-              {/* Name */}
               <div
                 className="mt-3 text-base font-semibold text-gray-900 text-center w-36 truncate"
                 title={it.userName || it.itemTitle}

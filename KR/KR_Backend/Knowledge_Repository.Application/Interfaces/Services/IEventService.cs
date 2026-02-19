@@ -16,5 +16,8 @@ namespace Knowledge_Repository.Application.Interfaces.Services
         Task<List<EventWithTimelineDto>> GetCurrentIdeathonsAsync();
         Task<List<Event>> GetIdeathonsForMonthAsync(int year, int month);
         Task<IEnumerable<EventsByTypeDto>> GetEventsGroupedByTypeAndMonthAsync();
+        Task<int> GetTotalHackathonTeamsAsync();
+        Task<List<EventWithTimelineDto>> GetActiveEventsAsync();
+
     }
 }

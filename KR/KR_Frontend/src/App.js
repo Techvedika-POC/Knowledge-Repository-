@@ -23,11 +23,13 @@ import EventKnowledgeItemsPage from "./components/EventKnowledgeItemsPage";
 import JuryDashboard from "./components/JuryDashboard";
 // Event Pages
 import ManagerDashboard from "./components/ManagerDashboard";
+import CodingChallengeLeaderboardPage from "./components/CodingChallengeLeaderboardPage";
 
 import IdeathonPage from "./components/IdeathonPage";
 import HackathonPage from "./components/HackathonPage";
 import CodingChallengePage from "./components/CodingChallengePage";
 import LearningManagement from "./components/LearningManagement";
+import CodingChallengeEventsPage from "./components/CodingChallengeEventsPage";
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 console.log("DEBUG COMPONENTS:", {
@@ -63,17 +65,35 @@ function AppShell() {
     <div className="flex h-screen w-screen overflow-hidden">
       <Sidebar />
 
-      <main className="flex-1 overflow-y-auto bg-[#f9fafe] p-5 mt-0 pt-0">
+      <main className="flex-1 overflow-y-auto bg-[#f9fafe] mt-0 pt-0">
         <Routes>
 
           <Route path="home" element={<MainContent />} />
+          <Route
+  path="events/event-registration"
+  element={<EventRegistration />}
+/>
+
           <Route path="knowledge-article-upload" element={<UploadKnowledgeItem />} />
           <Route path="my-contributions" element={<MyContributions />} />
           <Route path="event-knowledge-articles" element={<EventKnowledgeItemsPage />} />
           {/* Event Pages */}
           <Route path="events/ideathon" element={<IdeathonPage />} />
           <Route path="events/hackathon" element={<HackathonPage />} />
-          <Route path="events/coding-challenge" element={<CodingChallengePage />} />
+          <Route
+            path="events/coding-challenge"
+            element={<CodingChallengeEventsPage />}
+          />
+          <Route
+            path="events/coding-challenge/:eventId"
+            element={<CodingChallengePage />}
+          />
+         <Route
+  path="coding/leaderboard"
+  element={<CodingChallengeLeaderboardPage />}
+/>
+
+
           <Route path="events/learning-management" element={<LearningManagement />} />
           <Route path="manager-dashboard" element={
             <ProtectedRoute requireManager>

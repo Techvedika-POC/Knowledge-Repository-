@@ -222,7 +222,6 @@ export default function Navbar() {
       <div className="sticky top-0 bg-white shadow-md border-b z-10 px-4 py-2 mb-0">
         <div className="flex justify-between items-center gap-3">
           <div className="flex gap-4 items-center">
-            {/* Domain */}
             <div className="relative" ref={domainDropdownRef}>
               <button
                 onClick={() => setShowDomainDropdown(!showDomainDropdown)}
@@ -250,7 +249,6 @@ export default function Navbar() {
               )}
             </div>
 
-            {/* Category */}
             <div className="relative" ref={categoryDropdownRef}>
               <button
                 onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
@@ -288,8 +286,6 @@ export default function Navbar() {
               Browse All
             </button>
           </div>
-
-          {/* Search Bar */}
           <form
             onSubmit={handleSearch}
             className="relative w-full sm:w-80 ml-4 flex items-center gap-2"

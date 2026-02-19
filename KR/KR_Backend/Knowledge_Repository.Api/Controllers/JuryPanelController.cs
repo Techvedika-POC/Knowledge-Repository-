@@ -1,5 +1,4 @@
-﻿// File: Knowledge_Repository.Controllers/JuryPanelController.cs
-using Knowledge_Repository.Application.Dtos.JuryCommunication;
+﻿using Knowledge_Repository.Application.Dtos.JuryCommunication;
 using Knowledge_Repository.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

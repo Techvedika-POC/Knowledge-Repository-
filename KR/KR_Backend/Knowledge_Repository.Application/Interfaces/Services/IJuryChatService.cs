@@ -1,4 +1,4 @@
-﻿// File: Knowledge_Repository.Application.Interfaces.Services/IJuryChatService.cs
+﻿
 using Knowledge_Repository.Application.Dtos.JuryCommunication;
 using Knowledge_Repository.Domain.Entities;
 using System;

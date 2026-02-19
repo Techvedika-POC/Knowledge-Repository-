@@ -1,114 +1,203 @@
 ﻿using Knowledge_Repository.Application.Dtos;
 using Knowledge_Repository.Application.Interfaces.Repositories;
 using Knowledge_Repository.Application.Interfaces.Services;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
-namespace Knowledge_Repository.Application.Implementations.Services
+public class UserProgressService : IUserProgressService
 {
-    public class UserProgressService : IUserProgressService
+    private readonly IUserLessonProgressRepository _lessonRepo;
+    private readonly IUserAssessmentProgressRepository _assessmentRepo;
+    private readonly IUserPlanEnrollmentRepository _enrollmentRepo;
+    private readonly ILearningEventRepository _eventRepo;
+    private readonly IModuleRepository _moduleRepo;
+    private readonly IUserModuleProgressRepository _moduleProgressRepo;
+
+    public UserProgressService(
+        IUserLessonProgressRepository lessonRepo,
+        IUserAssessmentProgressRepository assessmentRepo,
+        IUserPlanEnrollmentRepository enrollmentRepo,
+        ILearningEventRepository eventRepo,
+        IModuleRepository moduleRepo,
+        IUserModuleProgressRepository moduleProgressRepo)
     {
-        private readonly IModuleRepository _moduleRepo;
-        private readonly IUserProgressRepository _progressRepo;
+        _lessonRepo = lessonRepo;
+        _assessmentRepo = assessmentRepo;
+        _enrollmentRepo = enrollmentRepo;
+        _eventRepo = eventRepo;
+        _moduleRepo = moduleRepo;
+        _moduleProgressRepo = moduleProgressRepo;
+    }
 
-        public UserProgressService(
-            IModuleRepository moduleRepo,
-            IUserProgressRepository progressRepo)
-        {
-            _moduleRepo = moduleRepo;
-            _progressRepo = progressRepo;
-        }
-        public async Task<UserProgressDto> GetUserProgressAsync(Guid userId, Guid planId)
-        {
-            var modules = await _moduleRepo.GetModulesByPlanIdAsync(planId);
-            var moduleStatuses = new List<ModuleStatusDto>();
+    public async Task EnrollUserToPlanAsync(
+        Guid userId, Guid planId, Guid assignedBy)
+    {
+        await _enrollmentRepo.EnrollAsync(userId, planId, assignedBy);
 
-            foreach (var module in modules)
-            {
-                var progress = await _progressRepo.GetModuleProgressAsync(
-                    userId,
-                    module.WeekId,
-                    module.ModuleId
-                );
+        await _eventRepo.LogAsync(
+            userId,
+            "PLAN_ASSIGNED",
+            "PLAN",
+            planId);
+    }
 
-                var unlocked = await _progressRepo.IsModuleUnlockedAsync(
-                    userId,
-                    module.WeekId,
-                    module.ModuleId
-                );
+    public async Task StartPlanAsync(Guid userId, Guid planId)
+    {
+        await _enrollmentRepo.StartAsync(userId, planId);
 
-                bool isCompleted =
-                    progress?.Status == "Completed"
-                    || (
-                        progress != null
-                        && progress.CompletedLessonsCount >= progress.TotalLessonsCount
-                        && string.Equals(progress.TestStatus, "Passed", StringComparison.OrdinalIgnoreCase)
-                    );
+        await _eventRepo.LogAsync(
+            userId,
+            "PLAN_STARTED",
+            "PLAN",
+            planId);
+    }
 
-                moduleStatuses.Add(new ModuleStatusDto
-                {
-                    ModuleId = module.ModuleId,
-                    ModuleTitle = module.ModuleName,
-                    IsUnlocked = unlocked,
-                    IsCompleted = isCompleted,
-                    TestStatus = progress?.TestStatus ?? "NotTaken",
-                    LessonProgressPercent = progress?.LessonProgressPercent ?? 0m
-                });
-            }
+    public async Task StartLessonAsync(
+        Guid userId, Guid lessonId, Guid moduleId)
+    {
+        await _lessonRepo.StartAsync(userId, lessonId, moduleId);
+        await _moduleProgressRepo.TouchAsync(userId, moduleId);
 
-            return new UserProgressDto
-            {
-                UserId = userId,
-                PlanId = planId,
-                Modules = moduleStatuses
-            };
-        }
-        public async Task<bool> TryMarkModuleCompletedAsync(
-            Guid userId,
-            Guid weekId,
-            Guid moduleId)
+        await _eventRepo.LogAsync(
+            userId,
+            "LESSON_STARTED",
+            "LESSON",
+            lessonId);
+    }
+
+    public async Task CompleteLessonAsync(
+        Guid userId, Guid lessonId)
+    {
+        await _lessonRepo.CompleteAsync(userId, lessonId);
+
+        var lesson = await _lessonRepo.GetAsync(userId, lessonId);
+        if (lesson == null) return;
+        await RecalculateModuleProgress(userId, lesson.ModuleId);
+
+        await _eventRepo.LogAsync(
+            userId,
+            "LESSON_COMPLETED",
+            "LESSON",
+            lessonId);
+    }
+
+    public async Task StartAssessmentAsync(
+        Guid userId, Guid assessmentId, Guid moduleId)
+    {
+        await _assessmentRepo.StartAsync(
+            userId, assessmentId, moduleId);
+
+        await _moduleProgressRepo.TouchAsync(userId, moduleId);
+
+        await _eventRepo.LogAsync(
+            userId,
+            "ASSESSMENT_STARTED",
+            "ASSESSMENT",
+            assessmentId);
+    }
+    public async Task<AssessmentResultDto> SubmitAssessmentAsync(
+        SubmitAssessmentDto dto)
+    {
+        var progress =
+            await _assessmentRepo.GetAsync(dto.UserId, dto.AssessmentId);
+
+        if (progress == null)
+            throw new Exception("Assessment not started");
+        await RecalculateModuleProgress(dto.UserId, progress.ModuleId);
+
+        return new AssessmentResultDto
         {
-            return await _progressRepo.TryMarkModuleCompletedAsync(
-                userId,
-                weekId,
-                moduleId
-            );
-        }
-        public async Task UpdateTestStatusAsync(
-            Guid userId,
-            Guid weekId,
-            Guid moduleId,
-            string testStatus)
+            AssessmentId = dto.AssessmentId,
+            UserId = dto.UserId,
+            Passed = progress.Passed ?? false,
+            ScorePercentage = (double)(progress.Score ?? 0),
+            IsCompleted = progress.Status == "Passed",
+            AttemptedOn = progress.CompletedOn ?? DateTime.UtcNow
+        };
+    }
+
+
+    private async Task RecalculateModuleProgress(Guid userId, Guid moduleId)
+    {
+        var lessons =
+            await _lessonRepo.GetByModuleAsync(userId, moduleId);
+
+        var assessments =
+            await _assessmentRepo.GetByModuleAsync(userId, moduleId);
+
+        int total = lessons.Count + assessments.Count;
+
+        int completed =
+            lessons.Count(l => l.Status == "Completed") +
+            assessments.Count(a => a.Passed == true);
+
+        if (total == 0) return;
+
+        await _moduleProgressRepo.TouchAsync(userId, moduleId);
+
+        if (completed == total)
         {
-            await _progressRepo.UpdateTestStatusAsync(
-                userId,
-                weekId,
-                moduleId,
-                testStatus
-            );
+            await _moduleProgressRepo.CompleteAsync(userId, moduleId);
+            await UnlockNextModule(userId, moduleId);
         }
-        public async Task TrackLessonAccessAsync(
-            Guid userId,
-            Guid moduleId,
-            Guid lessonId)
-        {
-            await _progressRepo.TrackLessonAccessAsync(
-                userId,
-                moduleId,
-                lessonId
-            );
-        }
-        public async Task MarkLessonCompletedAsync(
-            Guid userId,
-            Guid moduleId,
-            Guid lessonId)
-        {
-            await _progressRepo.MarkLessonCompletedAsync(
-                userId,
-                moduleId,
-                lessonId
-            );
-        }
+    }
+
+
+
+    private async Task UnlockNextModule(Guid userId, Guid moduleId)
+    {
+        var module = await _moduleRepo.GetByIdAsync(moduleId);
+        if (module == null) return;
+
+        var modules =
+            await _moduleRepo.GetByWeekIdAsync(module.WeekId);
+
+        var ordered = modules
+            .OrderBy(m => m.OrderNo)
+            .ToList();
+
+        var index = ordered.FindIndex(m => m.ModuleId == moduleId);
+        if (index == -1 || index == ordered.Count - 1) return;
+
+        var next = ordered[index + 1];
+
+        await _moduleProgressRepo.TouchAsync(
+            userId,
+            next.ModuleId);
+    }
+
+    public async Task<decimal> GetModuleProgressAsync(
+        Guid userId, Guid moduleId)
+    {
+        var lessons =
+            await _lessonRepo.GetByModuleAsync(userId, moduleId);
+
+        var assessments =
+            await _assessmentRepo.GetByModuleAsync(userId, moduleId);
+
+        int total =
+            lessons.Count + assessments.Count;
+
+        if (total == 0) return 0;
+
+        int completed =
+            lessons.Count(l => l.Status == "Completed") +
+            assessments.Count(a => a.Passed == true);
+
+        return (decimal)completed / total * 100;
+    }
+
+    public async Task<decimal> GetPlanProgressAsync(
+        Guid userId, Guid planId)
+    {
+        var modules =
+            await _moduleRepo.GetModulesByPlanIdAsync(planId);
+
+        if (!modules.Any()) return 0;
+
+        decimal sum = 0;
+        foreach (var m in modules)
+            sum += await GetModuleProgressAsync(
+                userId, m.ModuleId);
+
+        return sum / modules.Count();
     }
 }
